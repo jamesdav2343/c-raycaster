@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
         return 3;
     }
 
+    SDL_FRect testRect = {0, 0, 100, 100};
+
     while (isRunning)
     {
         SDL_PollEvent(&event);
@@ -48,17 +50,12 @@ int main(int argc, char *argv[])
         {
             isRunning = false;
         }
-        SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
-        SDL_RenderClear(renderer);
-        SDL_RenderPresent(renderer);
-    }
 
-    draw_map(renderer);
+        draw_map(renderer, &testRect);
+    }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-
     SDL_Quit();
 
     return 0;
