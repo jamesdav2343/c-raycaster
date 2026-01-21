@@ -5,6 +5,7 @@ include_directories(./include)
 set(SRC_FILES
     main.c
     map.c
+    window.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)

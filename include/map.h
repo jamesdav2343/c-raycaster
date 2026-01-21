@@ -11,6 +11,12 @@ typedef struct _vector2
     double y;
 } Vector2;
 
-void draw_map(SDL_Renderer *renderer, SDL_FRect *rect);
+typedef struct MapGrid
+{
+    int xTilesCount;
+    int yTilesCount;
+} MapGrid;
+
+void draw_map(SDL_Renderer *renderer, SDL_FRect *rect, MapGrid *mapData);
 
 #endif

@@ -1,10 +1,12 @@
 #include "map.h"
 
-void draw_map(SDL_Renderer *renderer, SDL_FRect *rect)
+void draw_map(SDL_Renderer *renderer, SDL_FRect *rect, MapGrid *mapData)
 {
-    for (int i = 0; i < 3; i++)
+    printf("%d : %d\n", mapData->xTilesCount, mapData->yTilesCount);
+
+    for (int i = 0; i < mapData->yTilesCount; i++)
     {
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < mapData->xTilesCount; j++)
         {
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
             // SDL_RenderFillRect(renderer, rect);
