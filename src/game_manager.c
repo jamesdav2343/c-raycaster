@@ -1,6 +1,6 @@
 #include "game_manager.h"
 
-int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus **game_status)
+int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -14,8 +14,7 @@ int init(const char *title, int window_width, int window_height, SDL_WindowFlags
         return -1;
     }
 
-    (*game_status) = (GameStatus *)malloc(sizeof(GameStatus));
-    (*game_status)->is_running = true;
+    game_status->is_running = true;
 
     return 0;
 }
@@ -24,7 +23,7 @@ void update()
 {
 }
 
-void render()
+void render(SDL_Renderer *renderer)
 {
 }
 

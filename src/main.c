@@ -29,28 +29,31 @@ int main(int argc, char *argv[])
     SDL_Surface *surface;
     SDL_Texture *texture;
     SDL_Event event;
-    GameStatus *game_status;
+    GameStatus game_status;
 
     init("raycasting engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status);
 
-    MapGrid map_grid = {mapWidth, mapHeight};
     WindowDimensions window_dimensions = {SCREEN_WIDTH, SCREEN_HEIGHT};
-    SDL_FRect test_rect = {0, 0, window_dimensions.width_pixels / map_grid.x_tiles_count, window_dimensions.height_pixels / map_grid.y_tiles_count};
+    SDL_FRect test_rect = {0, 0, window_dimensions.width_pixels / mapWidth, window_dimensions.height_pixels / mapHeight};
+    MapGrid map_grid = {mapWidth, mapHeight, &test_rect};
 
-    while (game_status->is_running)
+    MapData map_data = {&map_grid};
+
+    print_map(map);
+
+    while (game_status.is_running)
     {
-        handle_events(&event, game_status);
+        handle_events(&event, &game_status);
         update();
-        render();
-        draw_map(renderer, &test_rect, &map_grid);
+        // render(renderer);
+        draw_map(renderer, &map_data, map);
     }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-    free(game_status);
     SDL_Quit();
 
-    printf("Game closed");
+    printf("Game closed.\n");
 
     return 0;
 }
