@@ -6,6 +6,7 @@ set(SRC_FILES
     main.c
     map.c
     window.c
+    game_manager.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)

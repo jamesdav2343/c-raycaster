@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "map.h"
 #include "window.h"
+#include "game_manager.h"
 
 #define mapWidth 10
 #define mapHeight 10
@@ -26,48 +27,30 @@ int main(int argc, char *argv[])
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Surface *surface;
-    SDL_Event event;
     SDL_Texture *texture;
-    bool isRunning = true;
+    SDL_Event event;
+    GameStatus *game_status;
 
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    init("raycasting engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status);
+
+    MapGrid map_grid = {mapWidth, mapHeight};
+    WindowDimensions window_dimensions = {SCREEN_WIDTH, SCREEN_HEIGHT};
+    SDL_FRect test_rect = {0, 0, window_dimensions.width_pixels / map_grid.x_tiles_count, window_dimensions.height_pixels / map_grid.y_tiles_count};
+
+    while (game_status->is_running)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
-        return -1;
-    }
-
-    if (!SDL_CreateWindowAndRenderer("Raycasting engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer))
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
-        return -1;
-    }
-
-    MapGrid mapData = {mapWidth, mapHeight};
-    WindowDimensions windowDimensions = {SCREEN_WIDTH, SCREEN_HEIGHT};
-    SDL_FRect testRect = {0, 0, windowDimensions.widthPixels / mapData.xTilesCount, windowDimensions.heightPixels / mapData.yTilesCount};
-
-    while (isRunning)
-    {
-        SDL_PollEvent(&event);
-
-        if (event.type == SDL_EVENT_QUIT)
-        {
-            isRunning = false;
-        }
-        else if (event.type == SDL_EVENT_WINDOW_RESIZED)
-        {
-            update_window(window, &windowDimensions);
-
-            testRect.w = windowDimensions.widthPixels / mapData.xTilesCount;
-            testRect.h = windowDimensions.heightPixels / mapData.yTilesCount;
-        }
-
-        draw_map(renderer, &testRect, &mapData);
+        handle_events(&event, game_status);
+        update();
+        render();
+        draw_map(renderer, &test_rect, &map_grid);
     }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    free(game_status);
     SDL_Quit();
+
+    printf("Game closed");
 
     return 0;
 }

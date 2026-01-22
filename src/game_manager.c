@@ -1,0 +1,39 @@
+#include "game_manager.h"
+
+int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus **game_status)
+{
+    if (!SDL_Init(SDL_INIT_VIDEO))
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
+        return -1;
+    }
+
+    if (!SDL_CreateWindowAndRenderer(title, window_width, window_height, SDL_WINDOW_RESIZABLE, window, renderer))
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
+        return -1;
+    }
+
+    (*game_status) = (GameStatus *)malloc(sizeof(GameStatus));
+    (*game_status)->is_running = true;
+
+    return 0;
+}
+
+void update()
+{
+}
+
+void render()
+{
+}
+
+void handle_events(SDL_Event *event, GameStatus *game_status)
+{
+    SDL_PollEvent(event);
+
+    if (event->type == SDL_EVENT_QUIT)
+    {
+        game_status->is_running = false;
+    }
+}

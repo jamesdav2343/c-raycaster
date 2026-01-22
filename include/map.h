@@ -5,7 +5,7 @@
 
 // Struct is named _vector2 (in struct namespace),
 // global namespace type definition is Vector2
-typedef struct _vector2
+typedef struct Vector2
 {
     double x;
     double y;
@@ -13,10 +13,16 @@ typedef struct _vector2
 
 typedef struct MapGrid
 {
-    int xTilesCount;
-    int yTilesCount;
+    int x_tiles_count;
+    int y_tiles_count;
 } MapGrid;
 
-void draw_map(SDL_Renderer *renderer, SDL_FRect *rect, MapGrid *mapData);
+typedef struct MapData
+{
+    MapGrid *map_grid;
+    // a field for the map layout, i.e. where the walls are, so will be 2d array
+} MapData;
+
+void draw_map(SDL_Renderer *renderer, SDL_FRect *rect, MapGrid *map_data);
 
 #endif

@@ -5,10 +5,10 @@
 
 typedef struct WindowDimensions
 {
-    int widthPixels;
-    int heightPixels;
+    int width_pixels;
+    int height_pixels;
 } WindowDimensions;
 
-void update_window(SDL_Window *window, WindowDimensions *windowDimensions);
+void update_window(SDL_Window *window, WindowDimensions *window_dimensions);
 
 #endif
