@@ -12,12 +12,12 @@
 Uint8 map[mapHeight][mapWidth] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 2, 2, 2, 0, 0, 1},
-    {1, 0, 0, 0, 2, 0, 2, 0, 0, 1},
-    {1, 0, 0, 0, 2, 2, 2, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 2, 2, 2, 0, 0, 0, 0, 1},
+    {1, 0, 2, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 2, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 2, 2, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 2, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 2, 0, 0, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
@@ -31,10 +31,10 @@ int main(int argc, char *argv[])
     SDL_Event event;
     GameStatus game_status;
 
-    init("raycasting engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status);
+    init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status);
 
     WindowDimensions window_dimensions = {SCREEN_WIDTH, SCREEN_HEIGHT};
-    SDL_FRect test_rect = {0, 0, window_dimensions.width_pixels / mapWidth, window_dimensions.height_pixels / mapHeight};
+    SDL_FRect test_rect = {0, 0, window_dimensions.height_pixels / mapHeight, window_dimensions.height_pixels / mapHeight};
     MapGrid map_grid = {mapWidth, mapHeight, &test_rect};
 
     MapData map_data = {&map_grid};

@@ -25,10 +25,17 @@ typedef struct MapData
     MapGrid *map_grid;
 } MapData;
 
+enum rect_colour
+{
+    WHITE = 0,
+    BLUE = 1,
+    ORANGE = 2
+};
+
 void draw_map(SDL_Renderer *renderer, MapData *map_data, Uint8 map[mapHeight][mapWidth]);
 
 void print_map(Uint8 *map);
 
-void set_rect_colour(SDL_FRect *rect, Uint8 value);
+SDL_Color get_tile_colour(Uint8 value);
 
 #endif

@@ -2,24 +2,22 @@
 
 void draw_map(SDL_Renderer *renderer, MapData *map_data, Uint8 map[mapHeight][mapWidth])
 {
-    // printf("%d : %d\n", map_data->x_tiles_count, map_data->y_tiles_count);
-
     SDL_FRect *tile = map_data->map_grid->tile;
+    SDL_Color tile_colour;
 
     for (int i = 0; i < map_data->map_grid->y_tiles_count; i++)
     {
         for (int j = 0; j < map_data->map_grid->x_tiles_count; j++)
         {
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            // set_rect_colour(tile, map[i][j]);
-            SDL_RenderRect(renderer, map_data->map_grid->tile);
-
-            // printf("%d ", map[i][j]);
+            tile_colour = get_tile_colour(map[i][j]);
+            SDL_SetRenderDrawColor(renderer, tile_colour.r, tile_colour.g, tile_colour.b, SDL_ALPHA_OPAQUE);
+            SDL_RenderFillRect(renderer, tile);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderRect(renderer, tile);
 
             // Move to next column
             tile->x = tile->x + tile->w;
         }
-        // printf("\n");
 
         // Move to start of next row
         tile->x = 0;
@@ -34,9 +32,27 @@ void draw_map(SDL_Renderer *renderer, MapData *map_data, Uint8 map[mapHeight][ma
     SDL_RenderClear(renderer);
 }
 
-void set_rect_colour(SDL_FRect *rect, Uint8 colour)
+SDL_Color get_tile_colour(Uint8 colourValue)
 {
-    // SDL_RenderFillRect(renderer, rect);
+    SDL_Color colour;
+
+    switch (colourValue)
+    {
+    case WHITE:
+        colour = (SDL_Color){255, 255, 255, 255};
+        break;
+    case BLUE:
+        colour = (SDL_Color){0, 0, 255, 255};
+        break;
+    case ORANGE:
+        colour = (SDL_Color){255, 165, 0, 255};
+        break;
+    default:
+        colour = (SDL_Color){0, 0, 0, 255};
+        break;
+    }
+
+    return colour;
 }
 
 // Prints array using pointer arithemtic
