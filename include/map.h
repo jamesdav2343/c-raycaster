@@ -1,7 +1,7 @@
 #ifndef MAP_H
 #define MAP_H
-#define mapHeight 10
-#define mapWidth 10
+#define rows 10
+#define cols 10
 
 #include <SDL3/SDL.h>
 
@@ -13,16 +13,12 @@ typedef struct Vector2
     double y;
 } Vector2;
 
-typedef struct MapGrid
+typedef struct MapData
 {
     int x_tiles_count;
     int y_tiles_count;
     SDL_FRect *tile;
-} MapGrid;
-
-typedef struct MapData
-{
-    MapGrid *map_grid;
+    Uint8 grid[rows][cols];
 } MapData;
 
 enum rect_colour
@@ -32,7 +28,7 @@ enum rect_colour
     ORANGE = 2
 };
 
-void draw_map(SDL_Renderer *renderer, MapData *map_data, Uint8 map[mapHeight][mapWidth]);
+void draw_map(SDL_Renderer *renderer, MapData *map_data);
 
 void print_map(Uint8 *map);
 

@@ -4,12 +4,10 @@
 #include "window.h"
 #include "game_manager.h"
 
-#define mapWidth 10
-#define mapHeight 10
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-Uint8 map[mapHeight][mapWidth] = {
+Uint8 map[rows][cols] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 0, 2, 2, 2, 0, 0, 0, 0, 1},
@@ -34,19 +32,16 @@ int main(int argc, char *argv[])
     init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status);
 
     WindowDimensions window_dimensions = {SCREEN_WIDTH, SCREEN_HEIGHT};
-    SDL_FRect test_rect = {0, 0, window_dimensions.height_pixels / mapHeight, window_dimensions.height_pixels / mapHeight};
-    MapGrid map_grid = {mapWidth, mapHeight, &test_rect};
+    SDL_FRect test_rect = {0, 0, window_dimensions.height_pixels / rows, window_dimensions.height_pixels / rows};
 
-    MapData map_data = {&map_grid};
-
-    print_map(map);
+    MapData map_data = {cols, rows, &test_rect};
+    memccpy(&map_data.grid, &map, rows, sizeof(map_data.grid));
 
     while (game_status.is_running)
     {
         handle_events(&event, &game_status);
         update();
-        // render(renderer);
-        draw_map(renderer, &map_data, map);
+        render(renderer, &map_data);
     }
 
     SDL_DestroyRenderer(renderer);

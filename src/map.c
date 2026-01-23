@@ -1,15 +1,16 @@
 #include "map.h"
 
-void draw_map(SDL_Renderer *renderer, MapData *map_data, Uint8 map[mapHeight][mapWidth])
+void draw_map(SDL_Renderer *renderer, MapData *map_data)
 {
-    SDL_FRect *tile = map_data->map_grid->tile;
+    SDL_FRect *tile = map_data->tile;
+    // SDL_FRect *tile = {0, 0, 0, 0};
     SDL_Color tile_colour;
 
-    for (int i = 0; i < map_data->map_grid->y_tiles_count; i++)
+    for (int i = 0; i < map_data->y_tiles_count; i++)
     {
-        for (int j = 0; j < map_data->map_grid->x_tiles_count; j++)
+        for (int j = 0; j < map_data->x_tiles_count; j++)
         {
-            tile_colour = get_tile_colour(map[i][j]);
+            tile_colour = get_tile_colour(map_data->grid[i][j]);
             SDL_SetRenderDrawColor(renderer, tile_colour.r, tile_colour.g, tile_colour.b, SDL_ALPHA_OPAQUE);
             SDL_RenderFillRect(renderer, tile);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);

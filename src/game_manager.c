@@ -23,8 +23,9 @@ void update()
 {
 }
 
-void render(SDL_Renderer *renderer)
+void render(SDL_Renderer *renderer, MapData *map_data)
 {
+    draw_map(renderer, map_data);
 }
 
 void handle_events(SDL_Event *event, GameStatus *game_status)
