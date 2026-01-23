@@ -5,14 +5,6 @@
 
 #include <SDL3/SDL.h>
 
-// Struct is named _vector2 (in struct namespace),
-// global namespace type definition is Vector2
-typedef struct Vector2
-{
-    double x;
-    double y;
-} Vector2;
-
 typedef struct MapData
 {
     int x_tiles_count;

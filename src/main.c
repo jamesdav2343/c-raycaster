@@ -3,6 +3,7 @@
 #include "map.h"
 #include "window.h"
 #include "game_manager.h"
+#include "player.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -37,11 +38,15 @@ int main(int argc, char *argv[])
     MapData map_data = {cols, rows, &test_rect};
     memccpy(&map_data.grid, &map, rows, sizeof(map_data.grid));
 
+    PlayerData player_data = {&(Vector2){0, 0}};
+
     while (game_status.is_running)
     {
         handle_events(&event, &game_status);
-        update();
+        update(&player_data);
         render(renderer, &map_data);
+
+        printf("player position: (%f, %f)\n", player_data.position->x, player_data.position->y);
     }
 
     SDL_DestroyRenderer(renderer);

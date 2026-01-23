@@ -1,4 +1,6 @@
 #include "game_manager.h"
+#include "map.h"
+#include "player.h"
 
 int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status)
 {
@@ -19,13 +21,15 @@ int init(const char *title, int window_width, int window_height, SDL_WindowFlags
     return 0;
 }
 
-void update()
+void update(PlayerData *player_data)
 {
+    update_player(player_data);
 }
 
 void render(SDL_Renderer *renderer, MapData *map_data)
 {
     draw_map(renderer, map_data);
+    draw_player(renderer);
 }
 
 void handle_events(SDL_Event *event, GameStatus *game_status)

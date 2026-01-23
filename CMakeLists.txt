@@ -7,6 +7,7 @@ set(SRC_FILES
     map.c
     window.c
     game_manager.c
+    player.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
