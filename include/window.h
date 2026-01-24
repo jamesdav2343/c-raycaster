@@ -3,6 +3,9 @@
 
 #include <SDL3/SDL.h>
 
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+
 typedef struct WindowDimensions
 {
     int width_pixels;

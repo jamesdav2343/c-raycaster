@@ -2,12 +2,8 @@
 #define PLAYER_H
 
 #include <SDL3/SDL.h>
-
-typedef struct Vector2
-{
-    float x;
-    float y;
-} Vector2;
+#include "transform.h"
+#include "controller.h"
 
 typedef struct PlayerData
 {

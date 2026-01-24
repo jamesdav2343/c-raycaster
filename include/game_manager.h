@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include "map.h"
 #include "player.h"
+#include "controller.h"
 
 // Holds data about the overall game state
 typedef struct GameStatus

@@ -5,9 +5,6 @@
 #include "game_manager.h"
 #include "player.h"
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
-
 Uint8 map[rows][cols] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -45,8 +42,6 @@ int main(int argc, char *argv[])
         handle_events(&event, &game_status);
         update(&player_data);
         render(renderer, &map_data);
-
-        printf("player position: (%f, %f)\n", player_data.position->x, player_data.position->y);
     }
 
     SDL_DestroyRenderer(renderer);

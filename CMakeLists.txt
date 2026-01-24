@@ -8,6 +8,8 @@ set(SRC_FILES
     window.c
     game_manager.c
     player.c
+    controller.c
+    transform.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
