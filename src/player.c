@@ -2,10 +2,7 @@
 
 void update_player(PlayerData *player_data)
 {
-    Vector2 inputDirection = get_input_direction();
-    Vector2 playerPosition = *player_data->position;
-
-    *player_data->position = vector2_add(*player_data->position, inputDirection);
+    *player_data->position = vector2_add(*player_data->position, get_input_direction());
 
     // Debugging
     vector2_print(player_data->position);

@@ -1,5 +1,6 @@
 #include "controller.h"
 
+// Returns a vector of the current keyboard input direction.
 Vector2 get_input_direction()
 {
     const bool *key_states = SDL_GetKeyboardState(NULL);
