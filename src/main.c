@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     {
         handle_events(&event, &game_status);
         update(&player_data);
-        render(renderer, &map_data);
+        render(renderer, &map_data, &player_data);
     }
 
     SDL_DestroyRenderer(renderer);

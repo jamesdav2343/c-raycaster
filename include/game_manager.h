@@ -14,7 +14,7 @@ typedef struct GameStatus
 
 int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status);
 void update(PlayerData *player_data);
-void render(SDL_Renderer *renderer, MapData *map_data);
+void render(SDL_Renderer *renderer, MapData *map_data, PlayerData *player_data);
 void handle_events(SDL_Event *event, GameStatus *game_status);
 
 #endif

@@ -14,6 +14,6 @@ typedef struct PlayerData
 
 void update_player(PlayerData *player_data);
 
-void draw_player(SDL_Renderer *renderer);
+void draw_player(SDL_Renderer *renderer, PlayerData *player_data);
 
 #endif

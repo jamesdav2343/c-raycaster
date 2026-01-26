@@ -26,10 +26,13 @@ void update(PlayerData *player_data)
     update_player(player_data);
 }
 
-void render(SDL_Renderer *renderer, MapData *map_data)
+void render(SDL_Renderer *renderer, MapData *map_data, PlayerData *player_data)
 {
     draw_map(renderer, map_data);
-    draw_player(renderer);
+    draw_player(renderer, player_data);
+
+    SDL_RenderPresent(renderer);
+    SDL_RenderClear(renderer);
 }
 
 void handle_events(SDL_Event *event, GameStatus *game_status)

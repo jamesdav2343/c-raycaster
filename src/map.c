@@ -3,34 +3,30 @@
 void draw_map(SDL_Renderer *renderer, MapData *map_data)
 {
     SDL_FRect *tile = map_data->tile;
-    // SDL_FRect *tile = {0, 0, 0, 0};
-    SDL_Color tile_colour;
 
     for (int i = 0; i < map_data->y_tiles_count; i++)
     {
         for (int j = 0; j < map_data->x_tiles_count; j++)
         {
-            tile_colour = get_tile_colour(map_data->grid[i][j]);
+            SDL_Color tile_colour = get_tile_colour(map_data->grid[i][j]);
             SDL_SetRenderDrawColor(renderer, tile_colour.r, tile_colour.g, tile_colour.b, SDL_ALPHA_OPAQUE);
             SDL_RenderFillRect(renderer, tile);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderRect(renderer, tile);
 
             // Move to next column
-            tile->x = tile->x + tile->w;
+            tile->x += tile->w;
         }
 
         // Move to start of next row
         tile->x = 0;
-        tile->y = tile->y + tile->h;
+        tile->y += tile->h;
     }
 
     // Reset
     tile->y = 0;
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderPresent(renderer);
-    SDL_RenderClear(renderer);
 }
 
 SDL_Color get_tile_colour(Uint8 colourValue)

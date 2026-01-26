@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 project(raycasting-engine C)
-include_directories(./include)
 
 set(SRC_FILES
     main.c
@@ -14,7 +13,14 @@ set(SRC_FILES
 
 list(TRANSFORM SRC_FILES PREPEND src/)
 
-find_package(SDL3 REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
+find_package(SDL3_image CONFIG REQUIRED)
+find_package(SDL3_ttf CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
-target_link_libraries(${PROJECT_NAME} SDL3::SDL3)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ./include)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_image::SDL3_image-static)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_ttf::SDL3_ttf-static)
