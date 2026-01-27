@@ -9,6 +9,7 @@ set(SRC_FILES
     player.c
     controller.c
     transform.c
+    ui.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
