@@ -6,8 +6,6 @@
 #include "player.h"
 #include "controller.h"
 
-#define FPS 60
-
 // Holds data about the overall game state
 typedef struct GameStatus
 {

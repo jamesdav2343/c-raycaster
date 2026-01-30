@@ -10,6 +10,7 @@ set(SRC_FILES
     controller.c
     transform.c
     ui.c
+    frame_rate.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
