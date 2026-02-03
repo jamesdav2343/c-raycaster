@@ -2,7 +2,17 @@
 
 void update_player(PlayerData *player_data)
 {
-    *player_data->position = vector2_add(*player_data->position, get_input_direction());
+    if (
+        vector2_equals(get_input_direction(), VECTOR2_UP) ||
+        vector2_equals(get_input_direction(), VECTOR2_DOWN))
+        *player_data->position = vector2_add(*player_data->position, get_input_direction());
+
+    if (
+        vector2_equals(get_input_direction(), VECTOR2_LEFT) ||
+        vector2_equals(get_input_direction(), VECTOR2_RIGHT))
+    {
+        printf("rotate player angle\n");
+    }
 
     // Debugging
     // vector2_print(player_data->position);

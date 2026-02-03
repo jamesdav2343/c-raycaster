@@ -8,6 +8,9 @@
 typedef struct PlayerData
 {
     Vector2 *position;
+    float dx;
+    float dy;
+    float angle;
     // Viewpoint angle
     // FOV value
 } PlayerData;
