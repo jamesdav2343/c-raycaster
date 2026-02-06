@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     MapData map_data = {cols, rows, &test_rect};
     memccpy(&map_data.grid, &map, rows, sizeof(map_data.grid));
 
-    PlayerData player_data = {&(Vector2){0, 0}};
+    PlayerData player_data = {&(Vector2){0, 0}, &(Vector2){0, 0}, 0};
     FrameData frame_data = (FrameData){0, 0, 0, 0, 0, 0};
 
     while (game_status.is_running)
