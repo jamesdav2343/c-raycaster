@@ -8,14 +8,15 @@
 #include <math.h>
 
 #define ROTATION_SPEED 0.1
-#define ANGLE_MULTIPLIER 5
+#define ANGLE_MULTIPLIER 3
+#define LINE_LENGTH_MULTIPLIER 20
 
 typedef struct PlayerData
 {
-    Vector2 *position;
-    Vector2 *deltaPosition;
+    Vector2 position;
+    Vector2 deltaPosition;
     float angle;
-    // Viewpoint angle
+    SDL_FRect rect;
     // FOV value
 } PlayerData;
 

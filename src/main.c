@@ -28,16 +28,20 @@ int main(int argc, char *argv[])
     SDL_Event event;
     GameStatus game_status;
 
-    char buffer[50];
-
     init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status);
 
-    SDL_FRect test_rect = {0, 0, SCREEN_HEIGHT / rows, SCREEN_HEIGHT / rows};
+    SDL_FRect tile = {0, 0, SCREEN_HEIGHT / rows, SCREEN_HEIGHT / rows};
 
-    MapData map_data = {cols, rows, &test_rect};
+    MapData map_data = {cols, rows, &tile};
     memccpy(&map_data.grid, &map, rows, sizeof(map_data.grid));
 
-    PlayerData player_data = {&(Vector2){0, 0}, &(Vector2){0, 0}, 0};
+    PlayerData player_data = {
+        (Vector2){0, 0},
+        (Vector2){0, 0},
+        0,
+        (SDL_FRect){0, 0, 10, 10},
+    };
+
     FrameData frame_data = (FrameData){0, 0, 0, 0, 0, 0};
 
     while (game_status.is_running)
