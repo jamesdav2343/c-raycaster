@@ -11,6 +11,7 @@ set(SRC_FILES
     transform.c
     ui.c
     frame_rate.c
+    raycaster.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
