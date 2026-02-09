@@ -5,6 +5,8 @@
 
 #include <SDL3/SDL.h>
 
+extern Uint8 map[rows][cols];
+
 typedef struct MapData
 {
     int x_tiles_count;

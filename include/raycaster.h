@@ -3,6 +3,7 @@
 
 #include <SDL3/SDL.h>
 #include "player.h"
+#include "map.h"
 
 typedef struct RayData
 {
