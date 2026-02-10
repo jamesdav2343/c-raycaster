@@ -1,18 +1,20 @@
 #ifndef MAP_H
 #define MAP_H
-#define rows 10
-#define cols 10
+
+#define ROWS 10
+#define COLS 10
+#define TILE_PIXEL_COUNT 64
 
 #include <SDL3/SDL.h>
 
-extern Uint8 map[rows][cols];
+extern Uint8 map[ROWS][COLS];
 
 typedef struct MapData
 {
     int x_tiles_count;
     int y_tiles_count;
     SDL_FRect *tile;
-    Uint8 grid[rows][cols];
+    Uint8 grid[ROWS][COLS];
 } MapData;
 
 enum rect_colour

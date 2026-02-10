@@ -17,10 +17,10 @@ int main(int argc, char *argv[])
 
     init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status);
 
-    SDL_FRect tile = {0, 0, SCREEN_HEIGHT / rows, SCREEN_HEIGHT / rows};
+    SDL_FRect tile = {0, 0, TILE_PIXEL_COUNT, TILE_PIXEL_COUNT};
 
-    MapData map_data = {cols, rows, &tile};
-    memccpy(&map_data.grid, &map, rows, sizeof(map_data.grid));
+    MapData map_data = {COLS, ROWS, &tile};
+    memccpy(&map_data.grid, &map, ROWS, sizeof(map_data.grid));
 
     PlayerData player_data = {
         (Vector2){0, 0},

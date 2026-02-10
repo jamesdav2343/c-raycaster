@@ -5,6 +5,7 @@
 #include "map.h"
 #include "player.h"
 #include "controller.h"
+#include "raycaster.h"
 
 // Holds data about the overall game state
 typedef struct GameStatus
