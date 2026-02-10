@@ -21,20 +21,17 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             y_offset = -TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
         }
-
         // Looking down
-        if (ray_angle < M_PI)
+        else if (ray_angle < M_PI)
         {
             ray_y = (((int)player_data->position.y >> 6) << 6) + TILE_PIXEL_COUNT;
             ray_x = (player_data->position.y - ray_y) * aTan + player_data->position.x;
             y_offset = TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
         }
-
         // Looking straight left or right
-        if (ray_angle == 0 || ray_angle == M_PI - EPSILON)
+        else
         {
-            printf("in floating point comparison conditional\n");
             ray_x = player_data->position.x;
             ray_y = player_data->position.y;
             depth_of_field = DOF_MAX;
