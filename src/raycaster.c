@@ -1,11 +1,26 @@
 #include "raycaster.h"
 
+// Clamps a value between a lower and upper boundary.
 int clamp_in_range(int value, int lower_boundary, int upper_boundary)
 {
     int max = fmax(value, lower_boundary);
     return (int)fmin(max, upper_boundary);
 }
 
+/*
+Notes on this function:
+
+    - map_position variable may not be necessary as original code represented
+    the map as a one dimensional array instead of the two dimensional
+    array used in this implementation.
+
+    - The map position index values are computed by dividing the coordinate value
+    by the TILE_PIXEL_COUNT value, which here is 64. Be aware that if the
+    TILE_PIXEL_COUNT value is changed then all bitshift operations
+    ( >> 6, which are just divisions by 64) here will have to be changed also to work
+    with the new value.
+
+*/
 void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
 {
     int map_x, map_y, map_position, depth_of_field;
