@@ -28,7 +28,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
 
     ray_angle = player_data->angle;
 
-    for (int ray = 0; ray < 1; ray++)
+    for (int ray_i = 0; ray_i < 1; ray_i++)
     {
         // Check horizontal lines
         depth_of_field = 0;
@@ -84,6 +84,62 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+
+            // Check vertical lines
+            depth_of_field = 0;
+            float nTan = -tan(ray_angle);
+
+            // Looking left
+            if (ray_angle > M_PI_2 && ray_angle < RCE_3PI_2)
+            {
+                ray_x = (((int)player_data->position.x >> 6) << 6) - EPSILON;
+                ray_y = (player_data->position.x - ray_x) * nTan + player_data->position.y;
+                x_offset = -TILE_PIXEL_COUNT;
+                y_offset = -x_offset * nTan;
+            }
+            // Looking right
+            else if (ray_angle < M_PI_2 || ray_angle > RCE_3PI_2)
+            {
+                ray_x = (((int)player_data->position.x >> 6) << 6) + TILE_PIXEL_COUNT;
+                ray_y = (player_data->position.x - ray_x) * nTan + player_data->position.y;
+                x_offset = TILE_PIXEL_COUNT;
+                y_offset = -x_offset * nTan;
+            }
+            // Looking straight up or down
+            else
+            {
+                ray_x = player_data->position.x;
+                ray_y = player_data->position.y;
+                depth_of_field = DOF_MAX;
+            }
+
+            while (depth_of_field < DOF_MAX)
+            {
+                map_x = (int)ray_x >> 6;
+                map_y = (int)ray_y >> 6;
+
+                map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
+                map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
+
+                map_position = map_y * COLS + map_x;
+
+                printf("(%d, %d)\n", map_x, map_y);
+
+                if (map_position < COLS * ROWS && map[map_y][map_x] >= 1)
+                {
+                    depth_of_field = DOF_MAX;
+                }
+                else
+                {
+                    ray_x += x_offset;
+                    ray_y += y_offset;
+                    depth_of_field += 1;
+                }
+
+                SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+                SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            }
         }
     }
 }

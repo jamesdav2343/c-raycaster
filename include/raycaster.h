@@ -10,6 +10,10 @@
 #define DOF_MAX 4
 #define MAP_COORD_MIN 0
 
+// Custom raycasting-engine (RCE) math helper (not a part of math.h)
+// 3pi/2
+#define RCE_3PI_2 3 * M_PI / 2
+
 // This macro assumes the map has an equal number of rows and columns.
 #define MAP_COORD_MAX ROWS
 
