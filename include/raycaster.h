@@ -7,7 +7,7 @@
 
 // Small amount for accuracy with floating point values.
 #define EPSILON 0.0001
-#define DOF_MAX 4
+#define DOF_MAX 2
 #define MAP_COORD_MIN 0
 
 // Custom raycasting-engine (RCE) math helper (not a part of math.h)
