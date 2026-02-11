@@ -1,5 +1,11 @@
 #include "raycaster.h"
 
+int clamp_in_range(int value, int lower_boundary, int upper_boundary)
+{
+    int max = fmax(value, lower_boundary);
+    return (int)fmin(max, upper_boundary);
+}
+
 void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
 {
     int map_x, map_y, map_position, depth_of_field;
@@ -39,8 +45,12 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
 
         while (depth_of_field < DOF_MAX)
         {
-            map_x = fmax((int)ray_x >> 6, MAP_COORD_MIN);
-            map_y = fmax((int)ray_y >> 6, MAP_COORD_MIN);
+            map_x = (int)ray_x >> 6;
+            map_y = (int)ray_y >> 6;
+
+            map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
+            map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
+
             map_position = map_y * COLS + map_x;
 
             printf("(%d, %d)\n", map_x, map_y);

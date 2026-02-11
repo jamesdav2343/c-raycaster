@@ -10,11 +10,16 @@
 #define DOF_MAX 4
 #define MAP_COORD_MIN 0
 
+// This macro assumes the map has an equal number of rows and columns.
+#define MAP_COORD_MAX ROWS
+
 typedef struct RayData
 {
     // TODO
 } RayData;
 
 void draw_rays(SDL_Renderer *renderer, PlayerData *player_data);
+
+int clamp_in_range(int value, int lower_boundary, int upper_boundary);
 
 #endif
