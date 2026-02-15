@@ -30,7 +30,7 @@ typedef struct RayData
 
 void draw_rays(SDL_Renderer *renderer, PlayerData *player_data);
 
-void draw_3d_walls(SDL_Renderer *renderer, float distance, int ray_index);
+void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall);
 
 int clamp_in_range(int value, int lower_boundary, int upper_boundary);
 

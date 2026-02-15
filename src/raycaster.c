@@ -147,6 +147,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
         float horizontal_distance = distance_between_two_points(horizontal_x, horizontal_y, player_data->position.x, player_data->position.y);
         float vertical_distance = distance_between_two_points(ray_x, ray_y, player_data->position.x, player_data->position.y);
         float shortest_distance;
+        bool hit_horizontal_wall = false;
 
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 
@@ -155,6 +156,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             shortest_distance = horizontal_distance;
             ray_x = horizontal_x;
             ray_y = horizontal_y;
+            hit_horizontal_wall = true;
         }
         else
         {
@@ -178,14 +180,25 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             ray_angle -= 2 * M_PI;
         }
 
-        draw_3d_walls(renderer, shortest_distance, ray_i);
+        draw_3d_walls(renderer, shortest_distance, player_data->angle - ray_angle, ray_i, hit_horizontal_wall);
     }
 }
 
-void draw_3d_walls(SDL_Renderer *renderer, float distance, int ray_index)
+void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall)
 {
+    if (delta_angle < 0)
+    {
+        delta_angle += 2 * M_PI;
+    }
+
+    if (delta_angle > 2 * M_PI)
+    {
+        delta_angle -= 2 * M_PI;
+    }
+
+    distance = distance * cos(delta_angle);
+
     int line_height = (TILE_PIXEL_COUNT * SCREEN_HEIGHT) / distance;
-    printf("line height: %d\n", line_height);
 
     int line_offset = SCREEN_HEIGHT / 2 - (line_height >> 1);
 
@@ -194,7 +207,9 @@ void draw_3d_walls(SDL_Renderer *renderer, float distance, int ray_index)
                       LINE_WIDTH,
                       line_height};
 
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    Uint8 rgb = hit_horizontal_wall ? 200 : 255;
+
+    SDL_SetRenderDrawColor(renderer, rgb, rgb, rgb, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &line);
     SDL_RenderRect(renderer, &line);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
