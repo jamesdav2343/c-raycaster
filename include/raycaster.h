@@ -7,12 +7,15 @@
 
 // Small amount for accuracy with floating point values.
 #define EPSILON 0.0001
-#define DOF_MAX 2
+#define DOF_MAX 8
 #define MAP_COORD_MIN 0
 
 // Custom raycasting-engine (RCE) math helper (not a part of math.h)
 // 3pi/2
 #define RCE_3PI_2 3 * M_PI / 2
+
+// One degree in radians
+#define RCE_1D 0.0174533
 
 // This macro assumes the map has an equal number of rows and columns.
 #define MAP_COORD_MAX ROWS
@@ -25,5 +28,7 @@ typedef struct RayData
 void draw_rays(SDL_Renderer *renderer, PlayerData *player_data);
 
 int clamp_in_range(int value, int lower_boundary, int upper_boundary);
+
+float distance_between_two_points(float ax, float ay, float bx, float by);
 
 #endif

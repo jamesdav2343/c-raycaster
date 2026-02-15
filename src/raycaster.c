@@ -7,6 +7,11 @@ int clamp_in_range(int value, int lower_boundary, int upper_boundary)
     return (int)fmin(max, upper_boundary);
 }
 
+float distance_between_two_points(float ax, float ay, float bx, float by)
+{
+    return sqrtf((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+}
+
 /*
 Notes on this function:
 
@@ -22,7 +27,17 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
     int map_x, map_y, depth_of_field;
     float ray_x, ray_y, ray_angle, x_offset, y_offset;
 
-    ray_angle = player_data->angle;
+    ray_angle = player_data->angle - RCE_1D * 30;
+
+    if (ray_angle < 0)
+    {
+        ray_angle += 2 * M_PI;
+    }
+
+    if (ray_angle > 2 * M_PI)
+    {
+        ray_angle -= 2 * M_PI;
+    }
 
     for (int ray_i = 0; ray_i < 1; ray_i++)
     {
@@ -62,7 +77,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
             map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
 
-            printf("(%d, %d)\n", map_x, map_y);
+            // printf("(%d, %d)\n", map_x, map_y);
 
             if (map[map_y][map_x] >= 1)
             {
@@ -76,9 +91,8 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        float horizontal_x = ray_x;
+        float horizontal_y = ray_y;
 
         // Check vertical lines
         depth_of_field = 0;
@@ -116,7 +130,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
             map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
 
-            printf("(%d, %d)\n", map_x, map_y);
+            // printf("(%d, %d)\n", map_x, map_y);
 
             if (map[map_y][map_x] >= 1)
             {
@@ -130,8 +144,16 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
+        float h_distance = distance_between_two_points(horizontal_x, horizontal_y, player_data->position.x, player_data->position.y);
+        float v_distance = distance_between_two_points(ray_x, ray_y, player_data->position.x, player_data->position.y);
+
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+
+        if (h_distance <= v_distance)
+            SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, horizontal_x, horizontal_y);
+        else
+            SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
+
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     }
 }

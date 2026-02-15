@@ -14,12 +14,12 @@ void update_player(PlayerData *player_data)
 
     if (vector2_equals(get_input_direction(), VECTOR2_LEFT))
     {
-        rotate_player(player_data, VECTOR2_LEFT);
+        rotate_player(player_data, VECTOR2_RIGHT);
     }
 
     if (vector2_equals(get_input_direction(), VECTOR2_RIGHT))
     {
-        rotate_player(player_data, VECTOR2_RIGHT);
+        rotate_player(player_data, VECTOR2_LEFT);
     }
 }
 
