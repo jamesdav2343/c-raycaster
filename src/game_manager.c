@@ -28,7 +28,7 @@ void update(PlayerData *player_data)
 
 void render(SDL_Renderer *renderer, MapData *map_data, PlayerData *player_data)
 {
-    draw_map(renderer, map_data);
+    // draw_map(renderer, map_data);
     draw_player(renderer, player_data);
     draw_rays(renderer, player_data);
 

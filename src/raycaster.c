@@ -144,16 +144,26 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             }
         }
 
-        float h_distance = distance_between_two_points(horizontal_x, horizontal_y, player_data->position.x, player_data->position.y);
-        float v_distance = distance_between_two_points(ray_x, ray_y, player_data->position.x, player_data->position.y);
+        float horizontal_distance = distance_between_two_points(horizontal_x, horizontal_y, player_data->position.x, player_data->position.y);
+        float vertical_distance = distance_between_two_points(ray_x, ray_y, player_data->position.x, player_data->position.y);
+        float shortest_distance;
 
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 
-        if (h_distance <= v_distance)
-            SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, horizontal_x, horizontal_y);
+        if (horizontal_distance <= vertical_distance)
+        {
+            shortest_distance = horizontal_distance;
+            ray_x = horizontal_x;
+            ray_y = horizontal_y;
+        }
         else
-            SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
+        {
+            shortest_distance = vertical_distance;
+        }
 
+        printf("distance: %f\n", shortest_distance);
+
+        // SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
         ray_angle += RCE_1D;
@@ -167,5 +177,25 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
         {
             ray_angle -= 2 * M_PI;
         }
+
+        draw_3d_walls(renderer, shortest_distance, ray_i);
     }
+}
+
+void draw_3d_walls(SDL_Renderer *renderer, float distance, int ray_index)
+{
+    int line_height = (TILE_PIXEL_COUNT * SCREEN_HEIGHT) / distance;
+    printf("line height: %d\n", line_height);
+
+    int line_offset = SCREEN_HEIGHT / 2 - (line_height >> 1);
+
+    SDL_FRect line = {ray_index * LINE_WIDTH,
+                      line_offset,
+                      LINE_WIDTH,
+                      line_height};
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer, &line);
+    SDL_RenderRect(renderer, &line);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 }

@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     memccpy(&map_data.grid, &map, ROWS, sizeof(map_data.grid));
 
     PlayerData player_data = {
-        (Vector2){0, 0},
+        (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
         (Vector2){0, 0},
         0,
         (SDL_FRect){0, 0, 10, 10},

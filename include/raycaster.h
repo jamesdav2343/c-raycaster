@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include "player.h"
 #include "map.h"
+#include "window.h"
 
 // Small amount for accuracy with floating point values.
 #define EPSILON 0.0001
@@ -20,6 +21,7 @@
 
 // This macro assumes the map has an equal number of rows and columns.
 #define MAP_COORD_MAX ROWS
+#define LINE_WIDTH 8
 
 typedef struct RayData
 {
@@ -27,6 +29,8 @@ typedef struct RayData
 } RayData;
 
 void draw_rays(SDL_Renderer *renderer, PlayerData *player_data);
+
+void draw_3d_walls(SDL_Renderer *renderer, float distance, int ray_index);
 
 int clamp_in_range(int value, int lower_boundary, int upper_boundary);
 
