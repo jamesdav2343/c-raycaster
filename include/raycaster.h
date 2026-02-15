@@ -15,7 +15,8 @@
 #define RCE_3PI_2 3 * M_PI / 2
 
 // One degree in radians
-#define RCE_1D 0.0174533
+#define RCE_1D 0.0174532925
+#define RAY_COUNT 60
 
 // This macro assumes the map has an equal number of rows and columns.
 #define MAP_COORD_MAX ROWS

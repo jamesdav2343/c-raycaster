@@ -7,7 +7,7 @@
 #include "controller.h"
 #include <math.h>
 
-#define ROTATION_SPEED 0.1
+#define ROTATION_SPEED 0.05
 #define ANGLE_MULTIPLIER 3
 #define LINE_LENGTH_MULTIPLIER 20
 

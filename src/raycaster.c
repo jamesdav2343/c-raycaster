@@ -39,7 +39,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
         ray_angle -= 2 * M_PI;
     }
 
-    for (int ray_i = 0; ray_i < 1; ray_i++)
+    for (int ray_i = 0; ray_i < 60; ray_i++)
     {
         // Check horizontal lines
         depth_of_field = 0;
@@ -155,5 +155,17 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+
+        ray_angle += RCE_1D;
+
+        if (ray_angle < 0)
+        {
+            ray_angle += 2 * M_PI;
+        }
+
+        if (ray_angle > 2 * M_PI)
+        {
+            ray_angle -= 2 * M_PI;
+        }
     }
 }
