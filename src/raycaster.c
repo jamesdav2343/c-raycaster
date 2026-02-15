@@ -163,7 +163,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
             shortest_distance = vertical_distance;
         }
 
-        printf("distance: %f\n", shortest_distance);
+        // printf("distance: %f\n", shortest_distance);
 
         // SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);

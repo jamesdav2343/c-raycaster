@@ -2,22 +2,22 @@
 
 void update_player(PlayerData *player_data)
 {
-    if (vector2_equals(get_input_direction(), VECTOR2_UP))
+    if (get_input_direction().y == VECTOR2_UP.y)
     {
         player_data->position = vector2_add(player_data->position, player_data->deltaPosition);
     }
 
-    if (vector2_equals(get_input_direction(), VECTOR2_DOWN))
+    if (get_input_direction().y == VECTOR2_DOWN.y)
     {
         player_data->position = vector2_subtract(player_data->position, player_data->deltaPosition);
     }
 
-    if (vector2_equals(get_input_direction(), VECTOR2_LEFT))
+    if (get_input_direction().x == VECTOR2_LEFT.x)
     {
         rotate_player(player_data, VECTOR2_RIGHT);
     }
 
-    if (vector2_equals(get_input_direction(), VECTOR2_RIGHT))
+    if (get_input_direction().x == VECTOR2_RIGHT.x)
     {
         rotate_player(player_data, VECTOR2_LEFT);
     }
