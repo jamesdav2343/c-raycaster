@@ -30,5 +30,3 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_image::SDL3_image-static)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_ttf::SDL3_ttf-static)
 target_link_libraries(${PROJECT_NAME} PRIVATE flecs::flecs_static)
-
-message(STATUS "in cmake here, prefix is ${CMAKE_PREFIX_PATH}")
