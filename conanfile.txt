@@ -2,6 +2,7 @@
 sdl/3.2.20
 sdl_image/3.2.4
 sdl_ttf/3.2.2
+flecs/4.1.1
 
 [generators]
 CMakeDeps

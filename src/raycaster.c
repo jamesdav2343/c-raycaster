@@ -39,7 +39,7 @@ void draw_rays(SDL_Renderer *renderer, PlayerData *player_data)
         ray_angle -= 2 * M_PI;
     }
 
-    for (int ray_i = 0; ray_i < 60; ray_i++)
+    for (int ray_i = 0; ray_i < RAY_COUNT; ray_i++)
     {
         // Check horizontal lines
         depth_of_field = 0;

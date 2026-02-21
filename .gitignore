@@ -1,6 +1,7 @@
 out/
 venv/
 **.DS_Store
+.vscode
 
 build/
 CMakeLists.txt.user
