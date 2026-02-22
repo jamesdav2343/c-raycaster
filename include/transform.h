@@ -3,12 +3,28 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <flecs.h>
+#include <SDL3/SDL.h>
+
+ECS_COMPONENT_DECLARE(Transform);
 
 typedef struct Vector2
 {
     float x;
     float y;
 } Vector2;
+
+typedef struct Transform
+{
+    Vector2 position;
+    Vector2 delta;
+    float rotation;
+} Transform;
+
+typedef struct Sprite
+{
+    SDL_FRect rect;
+} Sprite;
 
 extern const Vector2 VECTOR2_ZERO;
 extern const Vector2 VECTOR2_ONE;

@@ -1,5 +1,14 @@
 #include "player.h"
 
+ecs_entity_t *create_player(ecs_world_t *world, float starting_x, float starting_y)
+{
+    ecs_entity_t player = ecs_new(world);
+
+    ecs_set(world, player, Vector2, {starting_x, starting_y});
+
+    return player;
+}
+
 void update_player(PlayerData *player_data)
 {
     if (get_input_direction().y == VECTOR2_UP.y)

@@ -2,7 +2,7 @@
 #include "map.h"
 #include "player.h"
 
-int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status)
+int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status, ecs_world_t **world)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -15,6 +15,9 @@ int init(const char *title, int window_width, int window_height, SDL_WindowFlags
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
         return -1;
     }
+
+    *world = ecs_init();
+    rce_init_ecs(*world);
 
     game_status->is_running = true;
 

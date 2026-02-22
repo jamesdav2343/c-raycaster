@@ -6,6 +6,8 @@
 #include "transform.h"
 #include "controller.h"
 #include <math.h>
+#include <flecs.h>
+#include "ecs.h"
 
 #define ROTATION_SPEED 0.05
 #define ANGLE_MULTIPLIER 3
@@ -19,6 +21,8 @@ typedef struct PlayerData
     SDL_FRect rect;
     // FOV value
 } PlayerData;
+
+ecs_entity_t *create_player(ecs_world_t *world, float starting_x, float starting_y);
 
 void update_player(PlayerData *player_data);
 
