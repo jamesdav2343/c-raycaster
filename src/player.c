@@ -1,6 +1,6 @@
 #include "player.h"
 
-ecs_entity_t *create_player(ecs_world_t *world, float starting_x, float starting_y)
+ecs_entity_t create_player(ecs_world_t *world, float starting_x, float starting_y)
 {
     ecs_entity_t player = ecs_new(world);
 
