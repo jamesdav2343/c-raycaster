@@ -24,7 +24,7 @@ typedef struct PlayerData
 
 ecs_entity_t create_player(ecs_world_t *world, float starting_x, float starting_y);
 
-void update_player(PlayerData *player_data);
+void update_player(ecs_world_t *world, PlayerData *player_data, ecs_entity_t player);
 
 void draw_player(SDL_Renderer *renderer, PlayerData *player_data);
 

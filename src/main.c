@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     GameStatus game_status;
 
     ecs_world_t *world;
-    ecs_entity_t *player;
+    ecs_entity_t player;
 
     init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status, &world);
 
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         frame_data.frame_start_time = SDL_GetTicks();
 
         handle_events(&event, &game_status);
-        update(&player_data);
+        update(world, &player_data, player);
         render(renderer, &map_data, &player_data);
 
         update_frame_data(&frame_data);

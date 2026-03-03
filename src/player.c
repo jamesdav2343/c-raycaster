@@ -4,31 +4,51 @@ ecs_entity_t create_player(ecs_world_t *world, float starting_x, float starting_
 {
     ecs_entity_t player = ecs_new(world);
 
-    ecs_set(world, player, Vector2, {starting_x, starting_y});
+    ecs_set(world, player, Transform, {{starting_x, starting_y}, DEFAULT_TRANSFORM.deltaPosition, DEFAULT_TRANSFORM.rotation});
 
     return player;
 }
 
-void update_player(PlayerData *player_data)
+void update_player(ecs_world_t *world, PlayerData *player_data, ecs_entity_t player)
 {
+    bool is_updated = false;
+    Transform *transform = ecs_get_mut(world, player, Transform);
+
     if (get_input_direction().y == VECTOR2_UP.y)
     {
+        is_updated = true;
         player_data->position = vector2_add(player_data->position, player_data->deltaPosition);
+
+        // Updating entity
+        transform->position = vector2_add(transform->position, player_data->deltaPosition);
     }
 
     if (get_input_direction().y == VECTOR2_DOWN.y)
     {
+        is_updated = true;
         player_data->position = vector2_subtract(player_data->position, player_data->deltaPosition);
+
+        // Updating entity
+        transform->position = vector2_subtract(transform->position, player_data->deltaPosition);
     }
 
     if (get_input_direction().x == VECTOR2_LEFT.x)
     {
+        is_updated = true;
         rotate_player(player_data, VECTOR2_RIGHT);
     }
 
     if (get_input_direction().x == VECTOR2_RIGHT.x)
     {
+        is_updated = true;
         rotate_player(player_data, VECTOR2_LEFT);
+    }
+
+    if (is_updated)
+    {
+        ecs_modified(world, player, Transform);
+        vector2_print(&player_data->position);
+        vector2_print(&transform->position);
     }
 }
 

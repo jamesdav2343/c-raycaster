@@ -16,7 +16,7 @@ typedef struct GameStatus
 } GameStatus;
 
 int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status, ecs_world_t **world);
-void update(PlayerData *player_data);
+void update(ecs_world_t *world, PlayerData *player_data, ecs_entity_t player);
 void render(SDL_Renderer *renderer, MapData *map_data, PlayerData *player_data);
 void handle_events(SDL_Event *event, GameStatus *game_status);
 

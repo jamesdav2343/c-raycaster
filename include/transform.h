@@ -17,7 +17,7 @@ typedef struct Vector2
 typedef struct Transform
 {
     Vector2 position;
-    Vector2 delta;
+    Vector2 deltaPosition;
     float rotation;
 } Transform;
 
@@ -32,6 +32,8 @@ extern const Vector2 VECTOR2_LEFT;
 extern const Vector2 VECTOR2_RIGHT;
 extern const Vector2 VECTOR2_UP;
 extern const Vector2 VECTOR2_DOWN;
+
+extern const Transform DEFAULT_TRANSFORM;
 
 Vector2 vector2_add(Vector2 v1, Vector2 v2);
 

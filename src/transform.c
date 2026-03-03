@@ -7,6 +7,8 @@ const Vector2 VECTOR2_RIGHT = {1, 0};
 const Vector2 VECTOR2_UP = {0, -1};
 const Vector2 VECTOR2_DOWN = {0, 1};
 
+const Transform DEFAULT_TRANSFORM = {{0, 0}, {0, 0}, 0};
+
 Vector2 vector2_add(Vector2 v1, Vector2 v2)
 {
     return (Vector2){v1.x + v2.x, v1.y + v2.y};
