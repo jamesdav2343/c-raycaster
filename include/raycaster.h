@@ -28,7 +28,7 @@ typedef struct RayData
     // TODO
 } RayData;
 
-void draw_rays(SDL_Renderer *renderer, PlayerData *player_data);
+void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player);
 
 void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall);
 

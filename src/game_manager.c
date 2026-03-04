@@ -22,16 +22,16 @@ int init(const char *title, int window_width, int window_height, SDL_WindowFlags
     return 0;
 }
 
-void update(ecs_world_t *world, PlayerData *player_data, ecs_entity_t player)
+void update(ecs_world_t *world, ecs_entity_t player)
 {
-    update_player(world, player_data, player);
+    update_player(world, player);
 }
 
-void render(SDL_Renderer *renderer, MapData *map_data, PlayerData *player_data)
+void render(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, MapData *map_data)
 {
     // draw_map(renderer, map_data);
-    draw_player(renderer, player_data);
-    draw_rays(renderer, player_data);
+    // draw_player(renderer, player_data);
+    draw_rays(renderer, world, player);
 
     SDL_RenderPresent(renderer);
     SDL_RenderClear(renderer);

@@ -28,14 +28,6 @@ int main(int argc, char *argv[])
     MapData map_data = {COLS, ROWS, &tile};
     memccpy(&map_data.grid, &map, ROWS, sizeof(map_data.grid));
 
-    // Creating a player entity to replace the player_data struct
-    PlayerData player_data = {
-        (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
-        (Vector2){0, 0},
-        0,
-        (SDL_FRect){0, 0, 10, 10},
-    };
-
     FrameData frame_data = (FrameData){0, 0, 0, 0, 0, 0};
 
     while (game_status.is_running)
@@ -43,8 +35,8 @@ int main(int argc, char *argv[])
         frame_data.frame_start_time = SDL_GetTicks();
 
         handle_events(&event, &game_status);
-        update(world, &player_data, player);
-        render(renderer, &map_data, &player_data);
+        update(world, player);
+        render(renderer, world, player, &map_data);
 
         update_frame_data(&frame_data);
         limit_frame_rate(frame_data.delta);
