@@ -7,18 +7,22 @@
 #include "controller.h"
 #include <math.h>
 #include <flecs.h>
-#include "ecs.h"
 
 #define ROTATION_SPEED 0.05
 #define ANGLE_MULTIPLIER 3
 #define LINE_LENGTH_MULTIPLIER 20
 
-ecs_entity_t create_player(ecs_world_t *world, float starting_x, float starting_y);
+extern ECS_TAG_DECLARE(Player);
+extern ECS_SYSTEM_DECLARE(PlayerUpdate);
 
-void update_player(ecs_world_t *world, ecs_entity_t player);
+extern ecs_entity_t Player;
+
+void PlayerModuleImport(ecs_world_t *world);
+
+void PlayerUpdate(ecs_iter_t *it);
 
 // void draw_player(SDL_Renderer *renderer, PlayerData *player_data);
 
-void rotate_player(ecs_world_t *world, ecs_entity_t player, Vector2 direction);
+void rotate_player(ecs_world_t *world, ecs_entity_t player, Position direction);
 
 #endif

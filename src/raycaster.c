@@ -24,12 +24,14 @@ Notes on this function:
 */
 void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 {
-    Transform *transform = ecs_get_mut(world, player, Transform);
+    Position *position = ecs_get_mut(world, player, Position);
+    DeltaPosition *deltaPosition = ecs_get_mut(world, player, DeltaPosition);
+    Rotation *rotation = ecs_get_mut(world, player, Rotation);
 
     int map_x, map_y, depth_of_field;
     float ray_x, ray_y, ray_angle, x_offset, y_offset;
 
-    ray_angle = transform->rotation - RCE_1D * 30;
+    ray_angle = rotation->rotation - RCE_1D * 30;
 
     if (ray_angle < 0)
     {
@@ -50,24 +52,24 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking up
         if (ray_angle > M_PI)
         {
-            ray_y = (((int)transform->position.y >> 6) << 6) - EPSILON;
-            ray_x = (transform->position.y - ray_y) * aTan + transform->position.x;
+            ray_y = (((int)position->y >> 6) << 6) - EPSILON;
+            ray_x = (position->y - ray_y) * aTan + position->x;
             y_offset = -TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
         }
         // Looking down
         else if (ray_angle < M_PI)
         {
-            ray_y = (((int)transform->position.y >> 6) << 6) + TILE_PIXEL_COUNT;
-            ray_x = (transform->position.y - ray_y) * aTan + transform->position.x;
+            ray_y = (((int)position->y >> 6) << 6) + TILE_PIXEL_COUNT;
+            ray_x = (position->y - ray_y) * aTan + position->x;
             y_offset = TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
         }
         // Looking straight left or right
         else
         {
-            ray_x = transform->position.x;
-            ray_y = transform->position.y;
+            ray_x = position->x;
+            ray_y = position->y;
             depth_of_field = DOF_MAX;
         }
 
@@ -103,24 +105,24 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking left
         if (ray_angle > M_PI_2 && ray_angle < RCE_3PI_2)
         {
-            ray_x = (((int)transform->position.x >> 6) << 6) - EPSILON;
-            ray_y = (transform->position.x - ray_x) * nTan + transform->position.y;
+            ray_x = (((int)position->x >> 6) << 6) - EPSILON;
+            ray_y = (position->x - ray_x) * nTan + position->y;
             x_offset = -TILE_PIXEL_COUNT;
             y_offset = -x_offset * nTan;
         }
         // Looking right
         else if (ray_angle < M_PI_2 || ray_angle > RCE_3PI_2)
         {
-            ray_x = (((int)transform->position.x >> 6) << 6) + TILE_PIXEL_COUNT;
-            ray_y = (transform->position.x - ray_x) * nTan + transform->position.y;
+            ray_x = (((int)position->x >> 6) << 6) + TILE_PIXEL_COUNT;
+            ray_y = (position->x - ray_x) * nTan + position->y;
             x_offset = TILE_PIXEL_COUNT;
             y_offset = -x_offset * nTan;
         }
         // Looking straight up or down
         else
         {
-            ray_x = transform->position.x;
-            ray_y = transform->position.y;
+            ray_x = position->x;
+            ray_y = position->y;
             depth_of_field = DOF_MAX;
         }
 
@@ -146,8 +148,8 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
             }
         }
 
-        float horizontal_distance = distance_between_two_points(horizontal_x, horizontal_y, transform->position.x, transform->position.y);
-        float vertical_distance = distance_between_two_points(ray_x, ray_y, transform->position.x, transform->position.y);
+        float horizontal_distance = distance_between_two_points(horizontal_x, horizontal_y, position->x, position->y);
+        float vertical_distance = distance_between_two_points(ray_x, ray_y, position->x, position->y);
         float shortest_distance;
         bool hit_horizontal_wall = false;
 
@@ -182,7 +184,7 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
             ray_angle -= 2 * M_PI;
         }
 
-        draw_3d_walls(renderer, shortest_distance, transform->rotation - ray_angle, ray_i, hit_horizontal_wall);
+        draw_3d_walls(renderer, shortest_distance, rotation->rotation - ray_angle, ray_i, hit_horizontal_wall);
     }
 }
 

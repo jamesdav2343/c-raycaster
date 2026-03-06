@@ -4,6 +4,6 @@
 #include <SDL3/SDL.h>
 #include "transform.h"
 
-Vector2 get_input_direction();
+Position get_input_direction();
 
 #endif

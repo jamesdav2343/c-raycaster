@@ -15,16 +15,10 @@ int init(const char *title, int window_width, int window_height, SDL_WindowFlags
     }
 
     *world = ecs_init();
-    rce_init_ecs(*world);
 
     game_status->is_running = true;
 
     return 0;
-}
-
-void update(ecs_world_t *world, ecs_entity_t player)
-{
-    update_player(world, player);
 }
 
 void render(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, MapData *map_data)
@@ -46,5 +40,5 @@ void handle_events(SDL_Event *event, GameStatus *game_status)
         game_status->is_running = false;
     }
 
-    Vector2 inputDirection = get_input_direction();
+    Position inputDirection = get_input_direction();
 }

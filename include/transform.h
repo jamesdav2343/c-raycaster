@@ -6,41 +6,42 @@
 #include <flecs.h>
 #include <SDL3/SDL.h>
 
-#define VECTOR2_ZERO (Vector2){0.0f, 0.0f}
-#define VECTOR2_ONE (Vector2){1.0f, 1.0f}
-#define VECTOR2_LEFT (Vector2){-1.0f, 0.0f}
-#define VECTOR2_RIGHT (Vector2){1.0f, 0.0f}
-#define VECTOR2_UP (Vector2){0.0f, -1.0f}
-#define VECTOR2_DOWN (Vector2){0.0f, 1.0f}
+#define VECTOR2_ZERO (Position){0.0f, 0.0f}
+#define VECTOR2_ONE (Position){1.0f, 1.0f}
+#define VECTOR2_LEFT (Position){-1.0f, 0.0f}
+#define VECTOR2_RIGHT (Position){1.0f, 0.0f}
+#define VECTOR2_UP (Position){0.0f, -1.0f}
+#define VECTOR2_DOWN (Position){0.0f, 1.0f}
 
-#define TRANSFORM_ZERO (Transform){VECTOR2_ZERO, VECTOR2_ZERO, 0.0f}
+extern ECS_COMPONENT_DECLARE(Position);
+extern ECS_COMPONENT_DECLARE(DeltaPosition);
+extern ECS_COMPONENT_DECLARE(Rotation);
 
-ECS_COMPONENT_DECLARE(Transform);
-
-typedef struct Vector2
+typedef struct Position
 {
     float x;
     float y;
-} Vector2;
+} Position;
 
-typedef struct Transform
+typedef struct DeltaPosition
 {
-    Vector2 position;
-    Vector2 deltaPosition;
+    float x;
+    float y;
+} DeltaPosition;
+
+typedef struct Rotation
+{
     float rotation;
-} Transform;
+} Rotation;
 
-typedef struct Sprite
-{
-    SDL_FRect rect;
-} Sprite;
+void TransformModuleImport(ecs_world_t *world);
 
-Vector2 vector2_add(Vector2 v1, Vector2 v2);
+Position vector2_add(Position v1, Position v2);
 
-Vector2 vector2_subtract(Vector2 v1, Vector2 v2);
+Position vector2_subtract(Position v1, Position v2);
 
-bool vector2_equals(Vector2 v1, Vector2 v2);
+bool vector2_equals(Position v1, Position v2);
 
-void vector2_print(Vector2 vector);
+void vector2_print(Position vector);
 
 #endif

@@ -7,7 +7,6 @@
 #include "controller.h"
 #include "raycaster.h"
 #include "flecs.h"
-#include "ecs.h"
 
 // Holds data about the overall game state
 typedef struct GameStatus
@@ -16,7 +15,6 @@ typedef struct GameStatus
 } GameStatus;
 
 int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status, ecs_world_t **world);
-void update(ecs_world_t *world, ecs_entity_t player);
 void render(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, MapData *map_data);
 void handle_events(SDL_Event *event, GameStatus *game_status);
 
