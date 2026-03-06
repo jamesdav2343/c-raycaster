@@ -1,7 +1,6 @@
 #include "transform.h"
 
 ECS_COMPONENT_DECLARE(Position);
-ECS_COMPONENT_DECLARE(DeltaPosition);
 ECS_COMPONENT_DECLARE(Rotation);
 
 void TransformModuleImport(ecs_world_t *world)
@@ -9,7 +8,6 @@ void TransformModuleImport(ecs_world_t *world)
     ECS_MODULE(world, TransformModule);
 
     ECS_COMPONENT_DEFINE(world, Position);
-    ECS_COMPONENT_DEFINE(world, DeltaPosition);
     ECS_COMPONENT_DEFINE(world, Rotation);
 }
 

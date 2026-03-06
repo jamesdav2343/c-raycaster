@@ -20,11 +20,12 @@ int main(int argc, char *argv[])
 
     init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status, &world);
 
-    ECS_IMPORT(world, TransformModule);
+    // ECS_IMPORT(world, TransformModule);
     ECS_IMPORT(world, PlayerModule);
 
     // Instantiates a player from a prefab
     ecs_entity_t p = ecs_new_w_pair(world, EcsIsA, Player);
+    ecs_set(world, p, Position, {240, 160});
 
     SDL_FRect tile = {0, 0, TILE_PIXEL_COUNT, TILE_PIXEL_COUNT};
     MapData map_data = {COLS, ROWS, &tile};
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
         frame_data.frame_start_time = SDL_GetTicks();
 
         handle_events(&event, &game_status);
-        // render(renderer, world, p, &map_data);
+        render(renderer, world, p, &map_data);
 
         ecs_progress(world, 0);
 

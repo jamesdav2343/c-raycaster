@@ -25,7 +25,6 @@ Notes on this function:
 void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 {
     Position *position = ecs_get_mut(world, player, Position);
-    DeltaPosition *deltaPosition = ecs_get_mut(world, player, DeltaPosition);
     Rotation *rotation = ecs_get_mut(world, player, Rotation);
 
     int map_x, map_y, depth_of_field;

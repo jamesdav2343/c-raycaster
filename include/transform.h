@@ -14,7 +14,6 @@
 #define VECTOR2_DOWN (Position){0.0f, 1.0f}
 
 extern ECS_COMPONENT_DECLARE(Position);
-extern ECS_COMPONENT_DECLARE(DeltaPosition);
 extern ECS_COMPONENT_DECLARE(Rotation);
 
 typedef struct Position
@@ -22,12 +21,6 @@ typedef struct Position
     float x;
     float y;
 } Position;
-
-typedef struct DeltaPosition
-{
-    float x;
-    float y;
-} DeltaPosition;
 
 typedef struct Rotation
 {
