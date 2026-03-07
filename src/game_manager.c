@@ -23,8 +23,8 @@ int init(const char *title, int window_width, int window_height, SDL_WindowFlags
 
 void render(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, MapData *map_data)
 {
-    // draw_map(renderer, map_data);
-    // draw_player(renderer, player_data);
+    draw_map(renderer, map_data);
+    draw_player(renderer, world, player);
     draw_rays(renderer, world, player);
 
     SDL_RenderPresent(renderer);

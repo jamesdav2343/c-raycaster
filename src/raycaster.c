@@ -153,12 +153,12 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
             shortest_distance = vertical_distance;
         }
 
-        // SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
+        SDL_RenderLine(renderer, player_position->x, player_position->y, ray_x, ray_y);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
         ray_angle = rotation_add_angle(ray_rotation, RCE_1D);
 
-        draw_3d_walls(renderer, shortest_distance, rotation_get_angle(player_rotation) - ray_angle, ray_i, hit_horizontal_wall);
+        // draw_3d_walls(renderer, shortest_distance, rotation_get_angle(player_rotation) - ray_angle, ray_i, hit_horizontal_wall);
     }
 
     free(ray_rotation);

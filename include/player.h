@@ -6,6 +6,7 @@
 #include <math.h>
 #include <flecs.h>
 #include "transform.h"
+#include "sprite.h"
 #include "controller.h"
 
 #define ROTATION_SPEED 0.05
@@ -21,6 +22,6 @@ void PlayerModuleImport(ecs_world_t *world);
 
 void PlayerUpdate(ecs_iter_t *it);
 
-// void draw_player(SDL_Renderer *renderer, PlayerData *player_data);
+void draw_player(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t *player);
 
 #endif

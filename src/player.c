@@ -7,6 +7,7 @@ void PlayerModuleImport(ecs_world_t *world)
     ECS_MODULE(world, PlayerModule);
 
     ECS_IMPORT(world, TransformModule);
+    ECS_IMPORT(world, SpriteModule);
 
     // Macro not working but explicit definition below does
     // ECS_SYSTEM_DEFINE(world, PlayerUpdate, EcsOnUpdate, Position, Rotation);
@@ -28,6 +29,8 @@ void PlayerModuleImport(ecs_world_t *world)
     ecs_modified(world, Player, Rotation);
 
     ecs_set_pair(world, Player, Position, HasDelta, {0.0f, 0.0f});
+
+    ecs_set(world, Player, Sprite, {0, 0, 20, 20});
 }
 
 void rotate_player(ecs_world_t *world, ecs_entity_t player, Position direction)
@@ -82,19 +85,23 @@ void PlayerUpdate(ecs_iter_t *it)
     }
 }
 
-// void draw_player(SDL_Renderer *renderer, PlayerData *player_data)
-// {
-//     player_data->rect.x = player_data->position.x;
-//     player_data->rect.y = player_data->position.y;
+void draw_player(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t *player)
+{
+    Position *position = ecs_get_mut(world, player, Position);
+    Position *delta_position = ecs_get_mut_pair(world, player, Position, HasDelta);
+    Sprite *sprite = ecs_get_mut(world, Player, Sprite);
 
-//     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-//     SDL_RenderFillRect(renderer, &player_data->rect);
-//     SDL_RenderRect(renderer, &player_data->rect);
+    sprite->rect.x = position->x;
+    sprite->rect.y = position->y;
 
-//     SDL_RenderLine(
-//         renderer,
-//         player_data->position.x,
-//         player_data->position.y,
-//         player_data->position.x + player_data->deltaPosition.x * LINE_LENGTH_MULTIPLIER,
-//         player_data->position.y + player_data->deltaPosition.y * LINE_LENGTH_MULTIPLIER);
-// }
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer, &sprite->rect);
+    SDL_RenderRect(renderer, &sprite->rect);
+
+    SDL_RenderLine(
+        renderer,
+        position->x,
+        position->y,
+        position->x + delta_position->x * LINE_LENGTH_MULTIPLIER,
+        position->y + delta_position->y * LINE_LENGTH_MULTIPLIER);
+}
