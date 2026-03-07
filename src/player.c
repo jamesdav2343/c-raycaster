@@ -11,20 +11,22 @@ void PlayerModuleImport(ecs_world_t *world)
     // Macro not working but explicit definition below does
     // ECS_SYSTEM_DEFINE(world, PlayerUpdate, EcsOnUpdate, Position, Rotation);
 
-    ecs_system(world, {.entity = ecs_entity(world, {.name = "PlayerUpdate",
-                                                    .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
-                       .query.terms = {
-                           {ecs_id(Position)},
-                           {ecs_id(Rotation)}},
-                       .callback = PlayerUpdate});
+    ecs_system(
+        world, {.entity = ecs_entity(world, {.name = "PlayerUpdate", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+                .query.terms = {{ecs_id(Position)}, {ecs_id(Rotation)}},
+                .callback = PlayerUpdate});
 
-    Player = ecs_entity(world, {.name = "Player",
-                                .add = ecs_ids(EcsPrefab)});
+    Player = ecs_entity(world, {.name = "Player", .add = ecs_ids(EcsPrefab)});
 
     HasDelta = ecs_new(world);
 
     ecs_set(world, Player, Position, {0.0f, 0.0f});
-    ecs_set(world, Player, Rotation, {0.0f});
+
+    ecs_add(world, Player, Rotation);
+    Rotation *rotation = ecs_get_mut(world, Player, Rotation);
+    rotation_set_angle(rotation, 0);
+    ecs_modified(world, Player, Rotation);
+
     ecs_set_pair(world, Player, Position, HasDelta, {0.0f, 0.0f});
 }
 
@@ -34,19 +36,9 @@ void rotate_player(ecs_world_t *world, ecs_entity_t player, Position direction)
     Rotation *rotation = ecs_get_mut(world, player, Rotation);
     Position *delta_position = ecs_get_mut_pair(world, player, Position, HasDelta);
 
-    if (rotation->rotation < 0)
-    {
-        rotation->rotation += 2 * M_PI;
-    }
-
-    if (rotation->rotation > 2 * M_PI)
-    {
-        rotation->rotation -= 2 * M_PI;
-    }
-
-    rotation->rotation -= ROTATION_SPEED * direction.x;
-    delta_position->x = cos(rotation->rotation) * ANGLE_MULTIPLIER;
-    delta_position->y = sin(rotation->rotation) * ANGLE_MULTIPLIER;
+    rotation_add_angle(rotation, -ROTATION_SPEED * direction.x);
+    delta_position->x = cos(rotation_get_angle(rotation)) * ANGLE_MULTIPLIER;
+    delta_position->y = sin(rotation_get_angle(rotation)) * ANGLE_MULTIPLIER;
 }
 
 void PlayerUpdate(ecs_iter_t *it)

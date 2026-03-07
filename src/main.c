@@ -20,7 +20,6 @@ int main(int argc, char *argv[])
 
     init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status, &world);
 
-    // ECS_IMPORT(world, TransformModule);
     ECS_IMPORT(world, PlayerModule);
 
     // Instantiates a player from a prefab

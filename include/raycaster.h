@@ -23,17 +23,8 @@
 #define MAP_COORD_MAX ROWS
 #define LINE_WIDTH 8
 
-typedef struct RayData
-{
-    // TODO
-} RayData;
-
 void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player);
 
 void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall);
-
-int clamp_in_range(int value, int lower_boundary, int upper_boundary);
-
-float distance_between_two_points(float ax, float ay, float bx, float by);
 
 #endif

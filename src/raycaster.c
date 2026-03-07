@@ -24,23 +24,14 @@ Notes on this function:
 */
 void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 {
-    Position *position = ecs_get_mut(world, player, Position);
-    Rotation *rotation = ecs_get_mut(world, player, Rotation);
+    Position *player_position = ecs_get_mut(world, player, Position);
+    Rotation *player_rotation = ecs_get_mut(world, player, Rotation);
 
     int map_x, map_y, depth_of_field;
-    float ray_x, ray_y, ray_angle, x_offset, y_offset;
+    float ray_x, ray_y, x_offset, y_offset;
 
-    ray_angle = rotation->rotation - RCE_1D * 30;
-
-    if (ray_angle < 0)
-    {
-        ray_angle += 2 * M_PI;
-    }
-
-    if (ray_angle > 2 * M_PI)
-    {
-        ray_angle -= 2 * M_PI;
-    }
+    Rotation *ray_rotation = create_rotation(rotation_get_angle(player_rotation));
+    float ray_angle = rotation_add_angle(ray_rotation, -RCE_1D * 30);
 
     for (int ray_i = 0; ray_i < RAY_COUNT; ray_i++)
     {
@@ -51,24 +42,24 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking up
         if (ray_angle > M_PI)
         {
-            ray_y = (((int)position->y >> 6) << 6) - EPSILON;
-            ray_x = (position->y - ray_y) * aTan + position->x;
+            ray_y = (((int)player_position->y >> 6) << 6) - EPSILON;
+            ray_x = (player_position->y - ray_y) * aTan + player_position->x;
             y_offset = -TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
         }
         // Looking down
         else if (ray_angle < M_PI)
         {
-            ray_y = (((int)position->y >> 6) << 6) + TILE_PIXEL_COUNT;
-            ray_x = (position->y - ray_y) * aTan + position->x;
+            ray_y = (((int)player_position->y >> 6) << 6) + TILE_PIXEL_COUNT;
+            ray_x = (player_position->y - ray_y) * aTan + player_position->x;
             y_offset = TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
         }
         // Looking straight left or right
         else
         {
-            ray_x = position->x;
-            ray_y = position->y;
+            ray_x = player_position->x;
+            ray_y = player_position->y;
             depth_of_field = DOF_MAX;
         }
 
@@ -79,8 +70,6 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 
             map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
             map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
-
-            // printf("(%d, %d)\n", map_x, map_y);
 
             if (map[map_y][map_x] >= 1)
             {
@@ -104,24 +93,24 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking left
         if (ray_angle > M_PI_2 && ray_angle < RCE_3PI_2)
         {
-            ray_x = (((int)position->x >> 6) << 6) - EPSILON;
-            ray_y = (position->x - ray_x) * nTan + position->y;
+            ray_x = (((int)player_position->x >> 6) << 6) - EPSILON;
+            ray_y = (player_position->x - ray_x) * nTan + player_position->y;
             x_offset = -TILE_PIXEL_COUNT;
             y_offset = -x_offset * nTan;
         }
         // Looking right
         else if (ray_angle < M_PI_2 || ray_angle > RCE_3PI_2)
         {
-            ray_x = (((int)position->x >> 6) << 6) + TILE_PIXEL_COUNT;
-            ray_y = (position->x - ray_x) * nTan + position->y;
+            ray_x = (((int)player_position->x >> 6) << 6) + TILE_PIXEL_COUNT;
+            ray_y = (player_position->x - ray_x) * nTan + player_position->y;
             x_offset = TILE_PIXEL_COUNT;
             y_offset = -x_offset * nTan;
         }
         // Looking straight up or down
         else
         {
-            ray_x = position->x;
-            ray_y = position->y;
+            ray_x = player_position->x;
+            ray_y = player_position->y;
             depth_of_field = DOF_MAX;
         }
 
@@ -132,8 +121,6 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 
             map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
             map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
-
-            // printf("(%d, %d)\n", map_x, map_y);
 
             if (map[map_y][map_x] >= 1)
             {
@@ -147,8 +134,8 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
             }
         }
 
-        float horizontal_distance = distance_between_two_points(horizontal_x, horizontal_y, position->x, position->y);
-        float vertical_distance = distance_between_two_points(ray_x, ray_y, position->x, position->y);
+        float horizontal_distance = distance_between_two_points(horizontal_x, horizontal_y, player_position->x, player_position->y);
+        float vertical_distance = distance_between_two_points(ray_x, ray_y, player_position->x, player_position->y);
         float shortest_distance;
         bool hit_horizontal_wall = false;
 
@@ -166,39 +153,19 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
             shortest_distance = vertical_distance;
         }
 
-        // printf("distance: %f\n", shortest_distance);
-
         // SDL_RenderLine(renderer, player_data->position.x, player_data->position.y, ray_x, ray_y);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
-        ray_angle += RCE_1D;
+        ray_angle = rotation_add_angle(ray_rotation, RCE_1D);
 
-        if (ray_angle < 0)
-        {
-            ray_angle += 2 * M_PI;
-        }
-
-        if (ray_angle > 2 * M_PI)
-        {
-            ray_angle -= 2 * M_PI;
-        }
-
-        draw_3d_walls(renderer, shortest_distance, rotation->rotation - ray_angle, ray_i, hit_horizontal_wall);
+        draw_3d_walls(renderer, shortest_distance, rotation_get_angle(player_rotation) - ray_angle, ray_i, hit_horizontal_wall);
     }
+
+    free(ray_rotation);
 }
 
 void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall)
 {
-    if (delta_angle < 0)
-    {
-        delta_angle += 2 * M_PI;
-    }
-
-    if (delta_angle > 2 * M_PI)
-    {
-        delta_angle -= 2 * M_PI;
-    }
-
     distance = distance * cos(delta_angle);
 
     int line_height = (TILE_PIXEL_COUNT * SCREEN_HEIGHT) / distance;
