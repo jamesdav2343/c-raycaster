@@ -1,8 +1,8 @@
 #ifndef MAP_H
 #define MAP_H
 
-#define ROWS 10
-#define COLS 10
+#define ROWS 24
+#define COLS 24
 #define TILE_PIXEL_COUNT 64
 
 #include <SDL3/SDL.h>

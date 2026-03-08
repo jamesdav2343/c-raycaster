@@ -48,40 +48,40 @@ void PlayerUpdate(ecs_iter_t *it)
 {
     for (int i = 0; i < it->count; i++)
     {
-        ecs_entity_t entity = it->entities[i];
+        // ecs_entity_t entity = it->entities[i];
 
-        bool is_updated = false;
-        Position *position = ecs_get_mut(it->world, entity, Position);
-        Position *delta_position = ecs_get_mut_pair(it->world, entity, Position, HasDelta);
+        // bool is_updated = false;
+        // Position *position = ecs_get_mut(it->world, entity, Position);
+        // Position *delta_position = ecs_get_mut_pair(it->world, entity, Position, HasDelta);
 
-        if (get_input_direction().y == VECTOR2_UP.y)
-        {
-            is_updated = true;
-            position->x += delta_position->x;
-            position->y += delta_position->y;
-        }
+        // if (get_input_direction().y == VECTOR2_UP.y)
+        // {
+        //     is_updated = true;
+        //     position->x += delta_position->x;
+        //     position->y += delta_position->y;
+        // }
 
-        if (get_input_direction().y == VECTOR2_DOWN.y)
-        {
-            is_updated = true;
-            position->x -= delta_position->x;
-            position->y -= delta_position->y;
-        }
+        // if (get_input_direction().y == VECTOR2_DOWN.y)
+        // {
+        //     is_updated = true;
+        //     position->x -= delta_position->x;
+        //     position->y -= delta_position->y;
+        // }
 
-        if (get_input_direction().x == VECTOR2_LEFT.x)
-        {
-            is_updated = true;
-            rotate_player(it->world, entity, VECTOR2_RIGHT);
-        }
+        // if (get_input_direction().x == VECTOR2_LEFT.x)
+        // {
+        //     is_updated = true;
+        //     rotate_player(it->world, entity, VECTOR2_RIGHT);
+        // }
 
-        if (get_input_direction().x == VECTOR2_RIGHT.x)
-        {
-            is_updated = true;
-            rotate_player(it->world, entity, VECTOR2_LEFT);
-        }
+        // if (get_input_direction().x == VECTOR2_RIGHT.x)
+        // {
+        //     is_updated = true;
+        //     rotate_player(it->world, entity, VECTOR2_LEFT);
+        // }
 
-        if (is_updated)
-            ecs_modified(it->world, entity, Position);
+        // if (is_updated)
+        //     ecs_modified(it->world, entity, Position);
     }
 }
 

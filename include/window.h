@@ -3,8 +3,8 @@
 
 #include <SDL3/SDL.h>
 
-#define SCREEN_WIDTH 480
-#define SCREEN_HEIGHT 320
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
 
 typedef struct WindowDimensions
 {

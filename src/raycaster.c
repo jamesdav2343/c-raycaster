@@ -1,5 +1,12 @@
 #include "raycaster.h"
 
+void ver_line(SDL_Renderer *renderer, int x, int y1, int y2, SDL_Color color)
+{
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
+    SDL_RenderLine(renderer, x, y1, x, y2);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+}
+
 // Clamps a value between a lower and upper boundary.
 int clamp_in_range(int value, int lower_boundary, int upper_boundary)
 {
@@ -14,174 +21,190 @@ float distance_between_two_points(float ax, float ay, float bx, float by)
 
 /*
 Notes on this function:
-
-    - The map position index values are computed by dividing the coordinate value
-    by the TILE_PIXEL_COUNT value, which here is 64. Be aware that if the
-    TILE_PIXEL_COUNT value is changed then all bitshift operations
-    ( >> 6, which are just divisions by 64) here will have to be changed also to work
-    with the new value.
-
+Lodev's implementation of raycaster DDA algorithm
 */
 void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 {
+    const bool *key_states = SDL_GetKeyboardState(NULL);
+
     Position *player_position = ecs_get_mut(world, player, Position);
     Rotation *player_rotation = ecs_get_mut(world, player, Rotation);
-
-    int map_x, map_y, depth_of_field;
-    float ray_x, ray_y, x_offset, y_offset;
-
     Rotation *ray_rotation = create_rotation(rotation_get_angle(player_rotation));
 
-    float ray_angle = rotation_add_angle(ray_rotation, -RCE_1D * (RAY_COUNT / 2));
+    printf("(%f, %f)\n", player_position->x, player_position->y);
 
-    for (int ray_i = 0; ray_i < RAY_COUNT; ray_i++)
+    // The initial direction vector
+    Position dir = {-1, 0};
+    Position plane = {0, 0.66};
+
+    int w = SCREEN_WIDTH;
+    int h = SCREEN_HEIGHT;
+
+    for (int x = 0; x < w; x++)
     {
-        // Check horizontal lines
-        depth_of_field = 0;
-        float aTan = -1 / tan(ray_angle);
+        double camera_x = 2 * x / (double)w - 1;
+        Position ray_dir = {dir.x + plane.x * camera_x, dir.y + plane.y * camera_x};
 
-        // Looking up
-        if (ray_angle > M_PI)
+        // Which box of the map we're in
+        int map_x = (int)player_position->x;
+        int map_y = (int)player_position->y;
+
+        // Length of ray from current position to next x or y-side
+        Position side_dist = {0, 0};
+
+        Position delta_dist = {
+            (ray_dir.x == 0) ? 1e30 : fabs(1 / ray_dir.x),
+            (ray_dir.y == 0) ? 1e30 : fabs(1 / ray_dir.y)};
+
+        double perp_wall_dist;
+
+        int step_x;
+        int step_y;
+
+        int hit = 0;
+        int side;
+
+        if (ray_dir.x < 0)
         {
-            ray_y = (((int)player_position->y / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) - EPSILON;
-            ray_x = (player_position->y - ray_y) * aTan + player_position->x;
-            y_offset = -TILE_PIXEL_COUNT;
-            x_offset = -y_offset * aTan;
+            step_x = -1;
+            side_dist.x = (player_position->x - map_x) * delta_dist.x;
         }
-        // Looking down
-        else if (ray_angle < M_PI)
-        {
-            ray_y = (((int)player_position->y / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) + TILE_PIXEL_COUNT;
-            ray_x = (player_position->y - ray_y) * aTan + player_position->x;
-            y_offset = TILE_PIXEL_COUNT;
-            x_offset = -y_offset * aTan;
-        }
-        // Looking straight left or right
         else
         {
-            ray_x = player_position->x;
-            ray_y = player_position->y;
-            depth_of_field = DOF_MAX;
+            step_x = 1;
+            side_dist.x = (map_x + 1.0 - player_position->x) * delta_dist.x;
         }
 
-        while (depth_of_field < DOF_MAX)
+        if (ray_dir.y < 0)
         {
-            map_x = (int)ray_x / TILE_PIXEL_COUNT;
-            map_y = (int)ray_y / TILE_PIXEL_COUNT;
+            step_y = -1;
+            side_dist.y = (player_position->y - map_y) * delta_dist.y;
+        }
+        else
+        {
+            step_y = 1;
+            side_dist.y = (map_y + 1.0 - player_position->y) * delta_dist.y;
+        }
 
-            map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
-            map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
-
-            if (map[map_y][map_x] >= 1)
+        // Perform DDA
+        while (hit == 0)
+        {
+            // jump to next map square, either in x-direction, or in y-direction
+            if (side_dist.x < side_dist.y)
             {
-                depth_of_field = DOF_MAX;
+                side_dist.x += delta_dist.x;
+                map_x += step_x;
+                side = 0;
             }
             else
             {
-                ray_x += x_offset;
-                ray_y += y_offset;
-                depth_of_field += 1;
+                side_dist.y += delta_dist.y;
+                map_y += step_y;
+                side = 1;
             }
+            // Check if ray has hit a wall
+            if (map[map_x][map_y] > 0)
+                hit = 1;
         }
 
-        float horizontal_x = ray_x;
-        float horizontal_y = ray_y;
-
-        // Check vertical lines
-        depth_of_field = 0;
-        float nTan = -tan(ray_angle);
-
-        // Looking left
-        if (ray_angle > M_PI_2 && ray_angle < RCE_3PI_2)
+        if (side == 0)
         {
-            ray_x = (((int)player_position->x / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) - EPSILON;
-            ray_y = (player_position->x - ray_x) * nTan + player_position->y;
-            x_offset = -TILE_PIXEL_COUNT;
-            y_offset = -x_offset * nTan;
-        }
-        // Looking right
-        else if (ray_angle < M_PI_2 || ray_angle > RCE_3PI_2)
-        {
-            ray_x = (((int)player_position->x / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) + TILE_PIXEL_COUNT;
-            ray_y = (player_position->x - ray_x) * nTan + player_position->y;
-            x_offset = TILE_PIXEL_COUNT;
-            y_offset = -x_offset * nTan;
-        }
-        // Looking straight up or down
-        else
-        {
-            ray_x = player_position->x;
-            ray_y = player_position->y;
-            depth_of_field = DOF_MAX;
-        }
-
-        while (depth_of_field < DOF_MAX)
-        {
-            map_x = (int)ray_x / TILE_PIXEL_COUNT;
-            map_y = (int)ray_y / TILE_PIXEL_COUNT;
-
-            map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
-            map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
-
-            if (map[map_y][map_x] >= 1)
-            {
-                depth_of_field = DOF_MAX;
-            }
-            else
-            {
-                ray_x += x_offset;
-                ray_y += y_offset;
-                depth_of_field += 1;
-            }
-        }
-
-        float horizontal_distance = distance_between_two_points(horizontal_x, horizontal_y, player_position->x, player_position->y);
-        float vertical_distance = distance_between_two_points(ray_x, ray_y, player_position->x, player_position->y);
-        float shortest_distance;
-        bool hit_horizontal_wall = false;
-
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-
-        if (horizontal_distance <= vertical_distance)
-        {
-            shortest_distance = horizontal_distance;
-            ray_x = horizontal_x;
-            ray_y = horizontal_y;
-            hit_horizontal_wall = true;
+            perp_wall_dist = (side_dist.x - delta_dist.x);
         }
         else
         {
-            shortest_distance = vertical_distance;
+            perp_wall_dist = (side_dist.y - delta_dist.y);
         }
 
-        SDL_RenderLine(renderer, player_position->x, player_position->y, ray_x, ray_y);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        int line_height = (int)(h / perp_wall_dist);
 
-        ray_angle = rotation_add_angle(ray_rotation, RCE_1D);
+        int draw_start = -line_height / 2 + h / 2;
+        if (draw_start < 0)
+            draw_start = 0;
+        int draw_end = line_height / 2 + h / 2;
+        if (draw_end >= h)
+            draw_end = h - 1;
 
-        // draw_3d_walls(renderer, shortest_distance, rotation_get_angle(player_rotation) - ray_angle, ray_i, hit_horizontal_wall);
+        // Choose wall color
+        SDL_Color color;
+        switch (map[map_x][map_y])
+        {
+        case 1:
+            color = (SDL_Color){255, 0, 0, SDL_ALPHA_OPAQUE};
+            break; // red
+        case 2:
+            color = (SDL_Color){0, 255, 0, SDL_ALPHA_OPAQUE};
+            break; // green
+        case 3:
+            color = (SDL_Color){0, 0, 255, SDL_ALPHA_OPAQUE};
+            break; // blue
+        case 4:
+            color = (SDL_Color){255, 255, 255, SDL_ALPHA_OPAQUE};
+            break; // white
+        default:
+            color = (SDL_Color){255, 222, 33, SDL_ALPHA_OPAQUE};
+            break; // yellow
+        }
+
+        // draw the pixels of the stripe as a vertical line
+        ver_line(renderer, x, draw_start, draw_end, color);
     }
 
-    free(ray_rotation);
+    double moveSpeed = 1.0; // the constant value is in squares/second
+    double rotSpeed = 3.0;  // the constant value is in radians/second
+    // move forward if no wall in front of you
+    if (key_states[SDL_SCANCODE_W])
+    {
+        player_position->x += dir.x * moveSpeed;
+        player_position->y += dir.y * moveSpeed;
+    }
+    // move backwards if no wall behind you
+    if (key_states[SDL_SCANCODE_S])
+    {
+        player_position->x -= dir.x * moveSpeed;
+        player_position->y -= dir.y * moveSpeed;
+    }
+    // rotate to the right
+    if (key_states[SDL_SCANCODE_D])
+    {
+        // both camera direction and camera plane must be rotated
+        double oldDirX = dir.x;
+        dir.x = dir.x * cos(-rotSpeed) - dir.y * sin(-rotSpeed);
+        dir.y = oldDirX * sin(-rotSpeed) + dir.y * cos(-rotSpeed);
+        double old_plane_x = plane.x;
+        plane.x = plane.x * cos(-rotSpeed) - plane.y * sin(-rotSpeed);
+        plane.y = old_plane_x * sin(-rotSpeed) + plane.y * cos(-rotSpeed);
+    }
+    // rotate to the left
+    if (key_states[SDL_SCANCODE_A])
+    {
+        // both camera direction and camera plane must be rotated
+        double oldDirX = dir.x;
+        dir.x = dir.x * cos(rotSpeed) - dir.y * sin(rotSpeed);
+        dir.y = oldDirX * sin(rotSpeed) + dir.y * cos(rotSpeed);
+        double old_plane_x = plane.x;
+        plane.x = plane.x * cos(rotSpeed) - plane.y * sin(rotSpeed);
+        plane.y = old_plane_x * sin(rotSpeed) + plane.y * cos(rotSpeed);
+    }
 }
 
-void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall)
-{
-    distance = distance * cos(delta_angle);
+// void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall)
+// {
+//     distance = distance * cos(delta_angle);
 
-    int line_height = (TILE_PIXEL_COUNT * SCREEN_HEIGHT) / distance;
+//     int line_height = (TILE_PIXEL_COUNT * SCREEN_HEIGHT) / distance;
 
-    int line_offset = SCREEN_HEIGHT / 2 - (line_height / 2);
+//     int line_offset = SCREEN_HEIGHT / 2 - (line_height / 2);
 
-    SDL_FRect line = {ray_index * LINE_WIDTH,
-                      line_offset,
-                      LINE_WIDTH,
-                      line_height};
+//     SDL_FRect line = {ray_index * LINE_WIDTH,
+//                       line_offset,
+//                       LINE_WIDTH,
+//                       line_height};
 
-    Uint8 rgb = hit_horizontal_wall ? 200 : 255;
+//     Uint8 rgb = hit_horizontal_wall ? 200 : 255;
 
-    SDL_SetRenderDrawColor(renderer, rgb, rgb, rgb, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &line);
-    SDL_RenderRect(renderer, &line);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-}
+//     SDL_SetRenderDrawColor(renderer, rgb, rgb, rgb, SDL_ALPHA_OPAQUE);
+//     SDL_RenderFillRect(renderer, &line);
+//     SDL_RenderRect(renderer, &line);
+//     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+// }
