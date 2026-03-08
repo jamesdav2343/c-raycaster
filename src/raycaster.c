@@ -31,7 +31,8 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
     float ray_x, ray_y, x_offset, y_offset;
 
     Rotation *ray_rotation = create_rotation(rotation_get_angle(player_rotation));
-    float ray_angle = rotation_add_angle(ray_rotation, -RCE_1D * 30);
+
+    float ray_angle = rotation_add_angle(ray_rotation, -RCE_1D * (RAY_COUNT / 2));
 
     for (int ray_i = 0; ray_i < RAY_COUNT; ray_i++)
     {
@@ -42,7 +43,7 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking up
         if (ray_angle > M_PI)
         {
-            ray_y = (((int)player_position->y >> 6) << 6) - EPSILON;
+            ray_y = (((int)player_position->y / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) - EPSILON;
             ray_x = (player_position->y - ray_y) * aTan + player_position->x;
             y_offset = -TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
@@ -50,7 +51,7 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking down
         else if (ray_angle < M_PI)
         {
-            ray_y = (((int)player_position->y >> 6) << 6) + TILE_PIXEL_COUNT;
+            ray_y = (((int)player_position->y / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) + TILE_PIXEL_COUNT;
             ray_x = (player_position->y - ray_y) * aTan + player_position->x;
             y_offset = TILE_PIXEL_COUNT;
             x_offset = -y_offset * aTan;
@@ -65,8 +66,8 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 
         while (depth_of_field < DOF_MAX)
         {
-            map_x = (int)ray_x >> 6;
-            map_y = (int)ray_y >> 6;
+            map_x = (int)ray_x / TILE_PIXEL_COUNT;
+            map_y = (int)ray_y / TILE_PIXEL_COUNT;
 
             map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
             map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
@@ -93,7 +94,7 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking left
         if (ray_angle > M_PI_2 && ray_angle < RCE_3PI_2)
         {
-            ray_x = (((int)player_position->x >> 6) << 6) - EPSILON;
+            ray_x = (((int)player_position->x / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) - EPSILON;
             ray_y = (player_position->x - ray_x) * nTan + player_position->y;
             x_offset = -TILE_PIXEL_COUNT;
             y_offset = -x_offset * nTan;
@@ -101,7 +102,7 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         // Looking right
         else if (ray_angle < M_PI_2 || ray_angle > RCE_3PI_2)
         {
-            ray_x = (((int)player_position->x >> 6) << 6) + TILE_PIXEL_COUNT;
+            ray_x = (((int)player_position->x / TILE_PIXEL_COUNT) * TILE_PIXEL_COUNT) + TILE_PIXEL_COUNT;
             ray_y = (player_position->x - ray_x) * nTan + player_position->y;
             x_offset = TILE_PIXEL_COUNT;
             y_offset = -x_offset * nTan;
@@ -116,8 +117,8 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 
         while (depth_of_field < DOF_MAX)
         {
-            map_x = (int)ray_x >> 6;
-            map_y = (int)ray_y >> 6;
+            map_x = (int)ray_x / TILE_PIXEL_COUNT;
+            map_y = (int)ray_y / TILE_PIXEL_COUNT;
 
             map_x = clamp_in_range(map_x, MAP_COORD_MIN, MAP_COORD_MAX);
             map_y = clamp_in_range(map_y, MAP_COORD_MIN, MAP_COORD_MAX);
@@ -170,7 +171,7 @@ void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, in
 
     int line_height = (TILE_PIXEL_COUNT * SCREEN_HEIGHT) / distance;
 
-    int line_offset = SCREEN_HEIGHT / 2 - (line_height >> 1);
+    int line_offset = SCREEN_HEIGHT / 2 - (line_height / 2);
 
     SDL_FRect line = {ray_index * LINE_WIDTH,
                       line_offset,

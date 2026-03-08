@@ -21,7 +21,7 @@
 
 // This macro assumes the map has an equal number of rows and columns.
 #define MAP_COORD_MAX ROWS
-#define LINE_WIDTH 8
+#define LINE_WIDTH 1
 
 void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player);
 
