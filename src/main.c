@@ -1,11 +1,11 @@
 #include <SDL3/SDL.h>
 #include <stdio.h>
+#include <flecs.h>
 #include "map.h"
 #include "window.h"
 #include "game_manager.h"
 #include "player.h"
 #include "frame_rate.h"
-#include <flecs.h>
 
 int main(int argc, char *argv[])
 {

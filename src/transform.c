@@ -1,6 +1,7 @@
 #include "transform.h"
 
 ECS_COMPONENT_DECLARE(Position);
+ECS_COMPONENT_DECLARE(Direction);
 ECS_COMPONENT_DECLARE(Rotation);
 
 typedef struct Rotation
@@ -13,25 +14,26 @@ void TransformModuleImport(ecs_world_t *world)
     ECS_MODULE(world, TransformModule);
 
     ECS_COMPONENT_DEFINE(world, Position);
+    ECS_COMPONENT_DEFINE(world, Direction);
     ECS_COMPONENT_DEFINE(world, Rotation);
 }
 
-Position vector2_add(Position v1, Position v2)
+Vector2 vector2_add(Vector2 v1, Vector2 v2)
 {
-    return (Position){v1.x + v2.x, v1.y + v2.y};
+    return (Vector2){v1.x + v2.x, v1.y + v2.y};
 }
 
-Position vector2_subtract(Position v1, Position v2)
+Vector2 vector2_subtract(Vector2 v1, Vector2 v2)
 {
-    return (Position){v1.x - v2.x, v1.y - v2.y};
+    return (Vector2){v1.x - v2.x, v1.y - v2.y};
 }
 
-bool vector2_equals(Position v1, Position v2)
+bool vector2_equals(Vector2 v1, Vector2 v2)
 {
     return v1.x == v2.x && v1.y == v2.y;
 }
 
-void vector2_print(Position vector)
+void vector2_print(Vector2 vector)
 {
     printf("(%f, %f)\n", vector.x, vector.y);
 }

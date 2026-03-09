@@ -28,14 +28,8 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
     const bool *key_states = SDL_GetKeyboardState(NULL);
 
     Position *player_position = ecs_get_mut(world, player, Position);
-    Rotation *player_rotation = ecs_get_mut(world, player, Rotation);
-    Rotation *ray_rotation = create_rotation(rotation_get_angle(player_rotation));
-
-    printf("(%f, %f)\n", player_position->x, player_position->y);
-
-    // The initial direction vector
-    Position dir = {-1, 0};
-    Position plane = {0, 0.66};
+    Direction *player_direction = ecs_get_mut(world, player, Direction);
+    CameraPlane *camera_plane = ecs_get_mut(world, player, CameraPlane);
 
     int w = SCREEN_WIDTH;
     int h = SCREEN_HEIGHT;
@@ -43,16 +37,16 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
     for (int x = 0; x < w; x++)
     {
         double camera_x = 2 * x / (double)w - 1;
-        Position ray_dir = {dir.x + plane.x * camera_x, dir.y + plane.y * camera_x};
+        Vector2 ray_dir = {player_direction->x + camera_plane->x * camera_x, player_direction->y + camera_plane->y * camera_x};
 
         // Which box of the map we're in
-        int map_x = (int)player_position->x;
-        int map_y = (int)player_position->y;
+        int map_x = (int)floorf(player_position->x);
+        int map_y = (int)floorf(player_position->y);
 
         // Length of ray from current position to next x or y-side
-        Position side_dist = {0, 0};
+        Vector2 side_dist = {0, 0};
 
-        Position delta_dist = {
+        Vector2 delta_dist = {
             (ray_dir.x == 0) ? 1e30 : fabs(1 / ray_dir.x),
             (ray_dir.y == 0) ? 1e30 : fabs(1 / ray_dir.y)};
 
@@ -109,18 +103,20 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 
         if (side == 0)
         {
-            perp_wall_dist = (side_dist.x - delta_dist.x);
+            perp_wall_dist = side_dist.x - delta_dist.x;
         }
         else
         {
-            perp_wall_dist = (side_dist.y - delta_dist.y);
+            perp_wall_dist = side_dist.y - delta_dist.y;
         }
 
         int line_height = (int)(h / perp_wall_dist);
 
         int draw_start = -line_height / 2 + h / 2;
+
         if (draw_start < 0)
             draw_start = 0;
+
         int draw_end = line_height / 2 + h / 2;
         if (draw_end >= h)
             draw_end = h - 1;
@@ -150,41 +146,41 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
         ver_line(renderer, x, draw_start, draw_end, color);
     }
 
-    double moveSpeed = 1.0; // the constant value is in squares/second
-    double rotSpeed = 3.0;  // the constant value is in radians/second
+    double move_speed = 0.1; // the constant value is in squares/second
+    double rot_speed = 0.1;  // the constant value is in radians/second
     // move forward if no wall in front of you
     if (key_states[SDL_SCANCODE_W])
     {
-        player_position->x += dir.x * moveSpeed;
-        player_position->y += dir.y * moveSpeed;
+        player_position->x += player_direction->x * move_speed;
+        player_position->y += player_direction->y * move_speed;
     }
     // move backwards if no wall behind you
     if (key_states[SDL_SCANCODE_S])
     {
-        player_position->x -= dir.x * moveSpeed;
-        player_position->y -= dir.y * moveSpeed;
+        player_position->x -= player_direction->x * move_speed;
+        player_position->y -= player_direction->y * move_speed;
     }
     // rotate to the right
     if (key_states[SDL_SCANCODE_D])
     {
         // both camera direction and camera plane must be rotated
-        double oldDirX = dir.x;
-        dir.x = dir.x * cos(-rotSpeed) - dir.y * sin(-rotSpeed);
-        dir.y = oldDirX * sin(-rotSpeed) + dir.y * cos(-rotSpeed);
-        double old_plane_x = plane.x;
-        plane.x = plane.x * cos(-rotSpeed) - plane.y * sin(-rotSpeed);
-        plane.y = old_plane_x * sin(-rotSpeed) + plane.y * cos(-rotSpeed);
+        double oldDirX = player_direction->x;
+        player_direction->x = player_direction->x * cos(-rot_speed) - player_direction->y * sin(-rot_speed);
+        player_direction->y = oldDirX * sin(-rot_speed) + player_direction->y * cos(-rot_speed);
+        double old_plane_x = camera_plane->x;
+        camera_plane->x = camera_plane->x * cos(-rot_speed) - camera_plane->y * sin(-rot_speed);
+        camera_plane->y = old_plane_x * sin(-rot_speed) + camera_plane->y * cos(-rot_speed);
     }
     // rotate to the left
     if (key_states[SDL_SCANCODE_A])
     {
         // both camera direction and camera plane must be rotated
-        double oldDirX = dir.x;
-        dir.x = dir.x * cos(rotSpeed) - dir.y * sin(rotSpeed);
-        dir.y = oldDirX * sin(rotSpeed) + dir.y * cos(rotSpeed);
-        double old_plane_x = plane.x;
-        plane.x = plane.x * cos(rotSpeed) - plane.y * sin(rotSpeed);
-        plane.y = old_plane_x * sin(rotSpeed) + plane.y * cos(rotSpeed);
+        double oldDirX = player_direction->x;
+        player_direction->x = player_direction->x * cos(rot_speed) - player_direction->y * sin(rot_speed);
+        player_direction->y = oldDirX * sin(rot_speed) + player_direction->y * cos(rot_speed);
+        double old_plane_x = camera_plane->x;
+        camera_plane->x = camera_plane->x * cos(rot_speed) - camera_plane->y * sin(rot_speed);
+        camera_plane->y = old_plane_x * sin(rot_speed) + camera_plane->y * cos(rot_speed);
     }
 }
 

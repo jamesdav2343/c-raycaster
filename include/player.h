@@ -8,6 +8,7 @@
 #include "transform.h"
 #include "sprite.h"
 #include "controller.h"
+#include "camera.h"
 
 #define ROTATION_SPEED 0.05
 #define ANGLE_MULTIPLIER 3
@@ -16,7 +17,6 @@
 extern ECS_SYSTEM_DECLARE(PlayerUpdate);
 
 ecs_entity_t Player;
-ecs_entity_t HasDelta;
 
 void PlayerModuleImport(ecs_world_t *world);
 

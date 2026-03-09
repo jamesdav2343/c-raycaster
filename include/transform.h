@@ -7,31 +7,38 @@
 #include <SDL3/SDL.h>
 #include <math.h>
 
-#define VECTOR2_ZERO (Position){0.0f, 0.0f}
-#define VECTOR2_ONE (Position){1.0f, 1.0f}
-#define VECTOR2_LEFT (Position){-1.0f, 0.0f}
-#define VECTOR2_RIGHT (Position){1.0f, 0.0f}
-#define VECTOR2_UP (Position){0.0f, -1.0f}
-#define VECTOR2_DOWN (Position){0.0f, 1.0f}
+#define VECTOR2_ZERO (Vector2){0.0f, 0.0f}
+#define VECTOR2_ONE (Vector2){1.0f, 1.0f}
+#define VECTOR2_LEFT (Vector2){-1.0f, 0.0f}
+#define VECTOR2_RIGHT (Vector2){1.0f, 0.0f}
+#define VECTOR2_UP (Vector2){0.0f, -1.0f}
+#define VECTOR2_DOWN (Vector2){0.0f, 1.0f}
 
 extern ECS_COMPONENT_DECLARE(Position);
+extern ECS_COMPONENT_DECLARE(Direction);
 extern ECS_COMPONENT_DECLARE(Rotation);
 
 void TransformModuleImport(ecs_world_t *world);
 
-typedef struct Position
+typedef struct Vector2
 {
     float x;
     float y;
-} Position;
+} Vector2;
 
-Position vector2_add(Position v1, Position v2);
+// Represents a position in a 2D plane. Holds an x and y coordinate.
+typedef Vector2 Position;
 
-Position vector2_subtract(Position v1, Position v2);
+// Represents the orientation of a position vector.
+typedef Vector2 Direction;
 
-bool vector2_equals(Position v1, Position v2);
+Vector2 vector2_add(Vector2 v1, Vector2 v2);
 
-void vector2_print(Position vector);
+Vector2 vector2_subtract(Vector2 v1, Vector2 v2);
+
+bool vector2_equals(Vector2 v1, Vector2 v2);
+
+void vector2_print(Vector2 vector);
 
 typedef struct Rotation Rotation;
 

@@ -14,6 +14,7 @@ set(SRC_FILES
     frame_rate.c
     raycaster.c
     sprite.c
+    camera.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)

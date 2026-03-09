@@ -40,5 +40,5 @@ void handle_events(SDL_Event *event, GameStatus *game_status)
         game_status->is_running = false;
     }
 
-    Position inputDirection = get_input_direction();
+    Vector2 inputDirection = get_input_direction();
 }
