@@ -1,6 +1,7 @@
 #include "raycaster.h"
 
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
+ECS_SYSTEM_DECLARE(RaycasterDestroy);
 ECS_TAG_DECLARE(Renderer);
 
 void RaycasterModuleImport(ecs_world_t *world)
@@ -13,13 +14,25 @@ void RaycasterModuleImport(ecs_world_t *world)
 
     ECS_TAG_DEFINE(world, Renderer);
     ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Renderer);
+    ECS_SYSTEM_DEFINE(world, RaycasterDestroy, EcsOnDelete, Renderer);
 }
 
 void RaycasterUpdate(ecs_iter_t *it)
 {
-    printf("raycaster update running\n");
     ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
-    printf("%s\n", ecs_get_name(it->world, player));
+
+    draw_rays_dda(renderer, it->world, player, it->delta_time);
+
+    SDL_RenderPresent(renderer);
+    SDL_RenderClear(renderer);
+}
+
+void RaycasterDestroy(ecs_iter_t *it)
+{
+    SDL_DestroyRenderer(renderer);
+    SDL_Quit();
+
+    printf("Game closed.\n");
 }
 
 void ver_line(SDL_Renderer *renderer, int x, int start_y, int end_y, SDL_Color color)
@@ -45,7 +58,7 @@ float distance_between_two_points(float ax, float ay, float bx, float by)
 Notes on this function:
 Lodev's implementation of raycaster DDA algorithm
 */
-void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
+void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, float delta_time)
 {
     const bool *key_states = SDL_GetKeyboardState(NULL);
 
@@ -118,6 +131,7 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
                 map_y += step_y;
                 side = 1;
             }
+
             // Check if ray has hit a wall
             if (map[map_x][map_y] > 0)
                 hit = 1;
@@ -140,6 +154,7 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
             draw_start = 0;
 
         int draw_end = line_height / 2 + h / 2;
+
         if (draw_end >= h)
             draw_end = h - 1;
 
@@ -168,8 +183,8 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
         ver_line(renderer, x, draw_start, draw_end, color);
     }
 
-    double move_speed = 0.1; // the constant value is in squares/second
-    double rot_speed = 0.05; // the constant value is in radians/second
+    float move_speed = MOVEMENT_SPEED * delta_time; // the constant value is in squares/second
+    float rot_speed = ROTATION_SPEED * delta_time; // the constant value is in radians/second
     // move forward if no wall in front of you
     if (key_states[SDL_SCANCODE_W])
     {
@@ -205,24 +220,3 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
         camera_plane->y = old_plane_x * sin(rot_speed) + camera_plane->y * cos(rot_speed);
     }
 }
-
-// void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall)
-// {
-//     distance = distance * cos(delta_angle);
-
-//     int line_height = (TILE_PIXEL_COUNT * SCREEN_HEIGHT) / distance;
-
-//     int line_offset = SCREEN_HEIGHT / 2 - (line_height / 2);
-
-//     SDL_FRect line = {ray_index * LINE_WIDTH,
-//                       line_offset,
-//                       LINE_WIDTH,
-//                       line_height};
-
-//     Uint8 rgb = hit_horizontal_wall ? 200 : 255;
-
-//     SDL_SetRenderDrawColor(renderer, rgb, rgb, rgb, SDL_ALPHA_OPAQUE);
-//     SDL_RenderFillRect(renderer, &line);
-//     SDL_RenderRect(renderer, &line);
-//     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-// }

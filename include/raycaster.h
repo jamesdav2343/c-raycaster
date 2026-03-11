@@ -8,7 +8,10 @@
 #include "window.h"
 
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
+extern ECS_SYSTEM_DECLARE(RaycasterDestroy);
 extern ECS_TAG_DECLARE(Renderer);
+
+SDL_Renderer *renderer;
 
 void RaycasterModuleImport(ecs_world_t *world);
 
@@ -29,10 +32,10 @@ void RaycasterModuleImport(ecs_world_t *world);
 #define MAP_COORD_MAX ROWS
 #define LINE_WIDTH 1
 
-void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player);
-
-void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall);
+void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, float delta_time);
 
 void RaycasterUpdate(ecs_iter_t *it);
+
+void RaycasterDestroy(ecs_iter_t *it);
 
 #endif

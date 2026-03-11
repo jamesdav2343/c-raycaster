@@ -11,7 +11,6 @@ set(SRC_FILES
     controller.c
     transform.c
     ui.c
-    frame_rate.c
     raycaster.c
     sprite.c
     camera.c

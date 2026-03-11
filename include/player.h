@@ -10,9 +10,11 @@
 #include "controller.h"
 #include "camera.h"
 
-#define ROTATION_SPEED 0.05
 #define ANGLE_MULTIPLIER 3
 #define LINE_LENGTH_MULTIPLIER 20
+
+#define MOVEMENT_SPEED 5.0f
+#define ROTATION_SPEED 0.5f
 
 #define PLAYER_ENTITY_NAME "_player_"
 
