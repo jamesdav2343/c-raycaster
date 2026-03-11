@@ -2,9 +2,15 @@
 #define RAYCASTER_H
 
 #include <SDL3/SDL.h>
+#include <flecs.h>
 #include "player.h"
 #include "map.h"
 #include "window.h"
+
+extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
+extern ECS_TAG_DECLARE(Renderer);
+
+void RaycasterModuleImport(ecs_world_t *world);
 
 // Small amount for accuracy with floating point values.
 #define EPSILON 0.0001
@@ -23,8 +29,10 @@
 #define MAP_COORD_MAX ROWS
 #define LINE_WIDTH 1
 
-void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player);
+void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player);
 
 void draw_3d_walls(SDL_Renderer *renderer, float distance, float delta_angle, int ray_index, bool hit_horizontal_wall);
+
+void RaycasterUpdate(ecs_iter_t *it);
 
 #endif

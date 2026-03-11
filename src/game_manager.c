@@ -25,7 +25,7 @@ void render(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, Map
 {
     // draw_map(renderer, map_data);
     // draw_player(renderer, world, player);
-    draw_rays(renderer, world, player);
+    draw_rays_dda(renderer, world, player);
 
     SDL_RenderPresent(renderer);
     SDL_RenderClear(renderer);

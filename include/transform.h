@@ -20,6 +20,7 @@ extern ECS_COMPONENT_DECLARE(Rotation);
 
 void TransformModuleImport(ecs_world_t *world);
 
+// Represents a 2D coordinate.
 typedef struct Vector2
 {
     float x;

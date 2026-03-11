@@ -21,10 +21,16 @@ int main(int argc, char *argv[])
     init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status, &world);
 
     ECS_IMPORT(world, PlayerModule);
+    ECS_IMPORT(world, RaycasterModule);
 
     // Instantiates a player from a prefab
     ecs_entity_t player = ecs_new_w_pair(world, EcsIsA, Player);
     ecs_set(world, player, Position, {14, 160});
+    ecs_set_name(world, player, PLAYER_ENTITY_NAME);
+
+    // Instantiates the raycaster entity
+    ecs_entity_t raycaster = ecs_new(world);
+    ecs_add(world, raycaster, Renderer);
 
     SDL_FRect tile = {0, 0, TILE_PIXEL_COUNT, TILE_PIXEL_COUNT};
     MapData map_data = {COLS, ROWS, &tile};
@@ -43,7 +49,7 @@ int main(int argc, char *argv[])
 
         ecs_progress(world, 0);
 
-        draw_rays(renderer, world, player);
+        draw_rays_dda(renderer, world, player);
 
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);

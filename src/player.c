@@ -18,7 +18,7 @@ void PlayerModuleImport(ecs_world_t *world)
                 .query.terms = {{ecs_id(Position)}, {ecs_id(Rotation)}},
                 .callback = PlayerUpdate});
 
-    Player = ecs_entity(world, {.name = "Player", .add = ecs_ids(EcsPrefab)});
+    Player = ecs_entity(world, {.add = ecs_ids(EcsPrefab)});
 
     ecs_set(world, Player, Position, {0.0f, 0.0f});
     ecs_set(world, Player, Direction, {-1.0f, 0.0f});

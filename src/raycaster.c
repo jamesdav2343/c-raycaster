@@ -1,9 +1,31 @@
 #include "raycaster.h"
 
-void ver_line(SDL_Renderer *renderer, int x, int y1, int y2, SDL_Color color)
+ECS_SYSTEM_DECLARE(RaycasterUpdate);
+ECS_TAG_DECLARE(Renderer);
+
+void RaycasterModuleImport(ecs_world_t *world)
+{
+    ECS_MODULE(world, RaycasterModule);
+
+    ECS_IMPORT(world, TransformModule);
+    ECS_IMPORT(world, SpriteModule);
+    ECS_IMPORT(world, CameraModule);
+
+    ECS_TAG_DEFINE(world, Renderer);
+    ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Renderer);
+}
+
+void RaycasterUpdate(ecs_iter_t *it)
+{
+    printf("raycaster update running\n");
+    ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
+    printf("%s\n", ecs_get_name(it->world, player));
+}
+
+void ver_line(SDL_Renderer *renderer, int x, int start_y, int end_y, SDL_Color color)
 {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-    SDL_RenderLine(renderer, x, y1, x, y2);
+    SDL_RenderLine(renderer, x, start_y, x, end_y);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 }
 
@@ -23,7 +45,7 @@ float distance_between_two_points(float ax, float ay, float bx, float by)
 Notes on this function:
 Lodev's implementation of raycaster DDA algorithm
 */
-void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
+void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 {
     const bool *key_states = SDL_GetKeyboardState(NULL);
 
@@ -147,7 +169,7 @@ void draw_rays(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
     }
 
     double move_speed = 0.1; // the constant value is in squares/second
-    double rot_speed = 0.1;  // the constant value is in radians/second
+    double rot_speed = 0.05; // the constant value is in radians/second
     // move forward if no wall in front of you
     if (key_states[SDL_SCANCODE_W])
     {

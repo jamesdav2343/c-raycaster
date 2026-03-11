@@ -14,6 +14,8 @@
 #define ANGLE_MULTIPLIER 3
 #define LINE_LENGTH_MULTIPLIER 20
 
+#define PLAYER_ENTITY_NAME "_player_"
+
 extern ECS_SYSTEM_DECLARE(PlayerUpdate);
 
 ecs_entity_t Player;
