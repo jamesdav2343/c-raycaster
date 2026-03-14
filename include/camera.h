@@ -4,9 +4,10 @@
 #include <flecs.h>
 #include "transform.h"
 
-extern ECS_COMPONENT_DECLARE(CameraPlane);
+extern ECS_COMPONENT_DECLARE(Plane);
 
-typedef Vector2 CameraPlane;
+// Represents the camera plane
+typedef Vector2 Plane;
 
 void CameraModuleImport(ecs_world_t *world);
 

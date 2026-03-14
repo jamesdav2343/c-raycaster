@@ -56,7 +56,7 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
 {
     Position *player_position = ecs_get_mut(world, player, Position);
     Direction *player_direction = ecs_get_mut(world, player, Direction);
-    CameraPlane *camera_plane = ecs_get_mut(world, player, CameraPlane);
+    Plane *camera_plane = ecs_get_mut(world, player, Plane);
 
     int w = SCREEN_WIDTH;
     int h = SCREEN_HEIGHT;
