@@ -31,7 +31,7 @@ void RaycasterModuleImport(ecs_world_t *world);
 #define MAP_COORD_MAX ROWS
 #define LINE_WIDTH 1
 
-void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, float delta_time);
+void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player);
 
 void RaycasterUpdate(ecs_iter_t *it);
 

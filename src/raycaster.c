@@ -24,7 +24,7 @@ void RaycasterUpdate(ecs_iter_t *it)
         ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
         SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->ptr;
 
-        draw_rays_dda(renderer, it->world, player, it->delta_time);
+        draw_rays_dda(renderer, it->world, player);
 
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
@@ -52,10 +52,8 @@ void ver_line(SDL_Renderer *renderer, int x, int start_y, int end_y, SDL_Color c
 Notes on this function:
 Lodev's implementation of raycaster DDA algorithm
 */
-void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, float delta_time)
+void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
 {
-    const bool *key_states = SDL_GetKeyboardState(NULL);
-
     Position *player_position = ecs_get_mut(world, player, Position);
     Direction *player_direction = ecs_get_mut(world, player, Direction);
     CameraPlane *camera_plane = ecs_get_mut(world, player, CameraPlane);
@@ -177,40 +175,4 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
         ver_line(renderer, x, draw_start, draw_end, color);
     }
 
-    float move_speed = MOVEMENT_SPEED * delta_time; // the constant value is in squares/second
-    float rot_speed = ROTATION_SPEED * delta_time;  // the constant value is in radians/second
-    // move forward if no wall in front of you
-    if (key_states[SDL_SCANCODE_W])
-    {
-        player_position->x += player_direction->x * move_speed;
-        player_position->y += player_direction->y * move_speed;
-    }
-    // move backwards if no wall behind you
-    if (key_states[SDL_SCANCODE_S])
-    {
-        player_position->x -= player_direction->x * move_speed;
-        player_position->y -= player_direction->y * move_speed;
-    }
-    // rotate to the right
-    if (key_states[SDL_SCANCODE_D])
-    {
-        // both camera direction and camera plane must be rotated
-        double oldDirX = player_direction->x;
-        player_direction->x = player_direction->x * cos(-rot_speed) - player_direction->y * sin(-rot_speed);
-        player_direction->y = oldDirX * sin(-rot_speed) + player_direction->y * cos(-rot_speed);
-        double old_plane_x = camera_plane->x;
-        camera_plane->x = camera_plane->x * cos(-rot_speed) - camera_plane->y * sin(-rot_speed);
-        camera_plane->y = old_plane_x * sin(-rot_speed) + camera_plane->y * cos(-rot_speed);
-    }
-    // rotate to the left
-    if (key_states[SDL_SCANCODE_A])
-    {
-        // both camera direction and camera plane must be rotated
-        double oldDirX = player_direction->x;
-        player_direction->x = player_direction->x * cos(rot_speed) - player_direction->y * sin(rot_speed);
-        player_direction->y = oldDirX * sin(rot_speed) + player_direction->y * cos(rot_speed);
-        double old_plane_x = camera_plane->x;
-        camera_plane->x = camera_plane->x * cos(rot_speed) - camera_plane->y * sin(rot_speed);
-        camera_plane->y = old_plane_x * sin(rot_speed) + camera_plane->y * cos(rot_speed);
-    }
 }
