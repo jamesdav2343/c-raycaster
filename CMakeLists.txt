@@ -14,6 +14,7 @@ set(SRC_FILES
     raycaster.c
     sprite.c
     camera.c
+    math_utils.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)

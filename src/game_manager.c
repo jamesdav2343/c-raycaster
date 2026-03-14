@@ -1,34 +1,35 @@
 #include "game_manager.h"
 
-int init(const char *title, int window_width, int window_height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer, GameStatus *game_status, ecs_world_t **world)
+ECS_COMPONENT_DECLARE(Window);
+ECS_COMPONENT_DECLARE(Renderer);
+
+void GameManagerModuleImport(ecs_world_t *world)
 {
+    ECS_MODULE(world, GameManager);
+
+    ECS_COMPONENT_DEFINE(world, Window);
+    ECS_COMPONENT_DEFINE(world, Renderer);
+
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
-        return -1;
+        return;
     }
 
-    if (!SDL_CreateWindowAndRenderer(title, window_width, window_height, SDL_WINDOW_RESIZABLE, window, renderer))
+    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer))
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
-        return -1;
+        return;
     }
 
-    *world = ecs_init();
+    ecs_add_id(world, ecs_id(Window), EcsSingleton);
+    ecs_singleton_set(world, Window, {window});
 
-    game_status->is_running = true;
-
-    return 0;
-}
-
-void render(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player, MapData *map_data)
-{
-    // draw_map(renderer, map_data);
-    // draw_player(renderer, world, player);
-    // draw_rays_dda(renderer, world, player);
-
-    SDL_RenderPresent(renderer);
-    SDL_RenderClear(renderer);
+    ecs_add_id(world, ecs_id(Renderer), EcsSingleton);
+    ecs_singleton_set(world, Renderer, {renderer});
 }
 
 void handle_events(SDL_Event *event, GameStatus *game_status)

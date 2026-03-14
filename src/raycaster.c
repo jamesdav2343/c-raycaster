@@ -2,7 +2,7 @@
 
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDestroy);
-ECS_TAG_DECLARE(Renderer);
+ECS_TAG_DECLARE(Raycaster);
 
 void RaycasterModuleImport(ecs_world_t *world)
 {
@@ -12,23 +12,29 @@ void RaycasterModuleImport(ecs_world_t *world)
     ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
 
-    ECS_TAG_DEFINE(world, Renderer);
-    ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Renderer);
-    ECS_SYSTEM_DEFINE(world, RaycasterDestroy, EcsOnDelete, Renderer);
+    ECS_TAG_DEFINE(world, Raycaster);
+    ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
+    ECS_SYSTEM_DEFINE(world, RaycasterDestroy, EcsOnDelete, Raycaster);
 }
 
 void RaycasterUpdate(ecs_iter_t *it)
 {
-    ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
+        SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->ptr;
 
-    draw_rays_dda(renderer, it->world, player, it->delta_time);
+        draw_rays_dda(renderer, it->world, player, it->delta_time);
 
-    SDL_RenderPresent(renderer);
-    SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
+        SDL_RenderClear(renderer);
+    }
 }
 
 void RaycasterDestroy(ecs_iter_t *it)
 {
+    SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->ptr;
+
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
 
@@ -40,18 +46,6 @@ void ver_line(SDL_Renderer *renderer, int x, int start_y, int end_y, SDL_Color c
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
     SDL_RenderLine(renderer, x, start_y, x, end_y);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-}
-
-// Clamps a value between a lower and upper boundary.
-int clamp_in_range(int value, int lower_boundary, int upper_boundary)
-{
-    int max = fmax(value, lower_boundary);
-    return (int)fmin(max, upper_boundary);
-}
-
-float distance_between_two_points(float ax, float ay, float bx, float by)
-{
-    return sqrtf((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
 }
 
 /*
@@ -184,7 +178,7 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
     }
 
     float move_speed = MOVEMENT_SPEED * delta_time; // the constant value is in squares/second
-    float rot_speed = ROTATION_SPEED * delta_time; // the constant value is in radians/second
+    float rot_speed = ROTATION_SPEED * delta_time;  // the constant value is in radians/second
     // move forward if no wall in front of you
     if (key_states[SDL_SCANCODE_W])
     {

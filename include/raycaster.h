@@ -6,12 +6,11 @@
 #include "player.h"
 #include "map.h"
 #include "window.h"
+#include "game_manager.h"
 
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
 extern ECS_SYSTEM_DECLARE(RaycasterDestroy);
-extern ECS_TAG_DECLARE(Renderer);
-
-SDL_Renderer *renderer;
+extern ECS_TAG_DECLARE(Raycaster);
 
 void RaycasterModuleImport(ecs_world_t *world);
 

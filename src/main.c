@@ -10,14 +10,13 @@
 
 int main(int argc, char *argv[])
 {
-    SDL_Window *window;
     SDL_Event event;
     GameStatus game_status;
 
-    ecs_world_t *world;
+    ecs_world_t *world = ecs_init();
+    game_status.is_running = true;
 
-    init("raycasting-engine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer, &game_status, &world);
-
+    ECS_IMPORT(world, GameManagerModule);
     ECS_IMPORT(world, PlayerModule);
     ECS_IMPORT(world, RaycasterModule);
 
@@ -28,7 +27,7 @@ int main(int argc, char *argv[])
 
     // Instantiates the raycaster entity
     ecs_entity_t raycaster = ecs_new(world);
-    ecs_add(world, raycaster, Renderer);
+    ecs_add(world, raycaster, Raycaster);
 
     ecs_set_target_fps(world, FPS);
 
@@ -41,8 +40,6 @@ int main(int argc, char *argv[])
 
     ecs_delete(world, raycaster);
     ecs_fini(world);
-
-    SDL_DestroyWindow(window);
 
     return 0;
 }
