@@ -14,11 +14,6 @@ typedef struct Controller
     int y;
 } Controller;
 
-typedef struct Command
-{
-    void (*execute)();
-} Command;
-
 void ControllerModuleImport(ecs_world_t *world);
 
 void ControllerUpdate(ecs_iter_t *it);

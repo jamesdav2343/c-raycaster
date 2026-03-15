@@ -23,8 +23,9 @@ void RaycasterUpdate(ecs_iter_t *it)
     {
         ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
         SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->ptr;
+        SDL_Window *window = ecs_get(it->world, ecs_id(Window), Window)->ptr;
 
-        draw_rays_dda(renderer, it->world, player);
+        draw_rays_dda(renderer, window, it->world, player);
 
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
@@ -52,14 +53,18 @@ void ver_line(SDL_Renderer *renderer, int x, int start_y, int end_y, SDL_Color c
 Notes on this function:
 Lodev's implementation of raycaster DDA algorithm
 */
-void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t player)
+void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_entity_t player)
 {
-    Position *player_position = ecs_get_mut(world, player, Position);
-    Direction *player_direction = ecs_get_mut(world, player, Direction);
-    Plane *camera_plane = ecs_get_mut(world, player, Plane);
+    const Position *player_position = ecs_get(world, player, Position);
+    const Direction *player_direction = ecs_get(world, player, Direction);
+    const Plane *camera_plane = ecs_get(world, player, Plane);
 
-    int w = SCREEN_WIDTH;
-    int h = SCREEN_HEIGHT;
+    int w;
+    int h;
+
+    SDL_GetWindowSize(window, &w, &h);
+
+    printf("w: %d, h: %d\n", w, h);
 
     for (int x = 0; x < w; x++)
     {
@@ -171,8 +176,10 @@ void draw_rays_dda(SDL_Renderer *renderer, ecs_world_t *world, ecs_entity_t play
             break; // yellow
         }
 
+        if (x == w / 2)
+            color = (SDL_Color){255, 255, 255, SDL_ALPHA_OPAQUE};
+
         // draw the pixels of the stripe as a vertical line
         ver_line(renderer, x, draw_start, draw_end, color);
     }
-
 }
