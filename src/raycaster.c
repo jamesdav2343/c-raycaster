@@ -4,6 +4,8 @@ ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDestroy);
 ECS_TAG_DECLARE(Raycaster);
 
+Uint8 buffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+
 void RaycasterModuleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, RaycasterModule);
@@ -15,6 +17,53 @@ void RaycasterModuleImport(ecs_world_t *world)
     ECS_TAG_DEFINE(world, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterDestroy, EcsOnDelete, Raycaster);
+
+    SDL_Renderer *renderer = ecs_get(world, ecs_id(Renderer), Renderer)->ptr;
+
+    texture_pixels = NULL;
+    texture_pitch = 0;
+
+    pixels = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_RGBA32,
+        SDL_TEXTUREACCESS_STREAMING,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT);
+
+    if (pixels == NULL)
+    {
+        SDL_Log("Unabled to create pixels texture: %s\n", SDL_GetError());
+        return;
+    }
+
+    for (int i = 3; i < sizeof(buffer) / 4; i += 4)
+    {
+        // blue line
+        buffer[i - 1] = 255;
+        buffer[i] = 255;
+    }
+
+    buffer[4 * 0 + 1] = 255;
+    buffer[4 * 1 + 1] = 255;
+    buffer[4 * 2 + 1] = 255;
+    buffer[46400 + 4 * 0 + 0] = 255;
+    buffer[46400 + 4 * 1 + 1] = 255;
+    buffer[46400 + 4 * 2 + 2] = 255;
+    buffer[46400 + 4 * 3 + 0] = 255;
+    buffer[46400 + 4 * 4 + 1] = 255;
+    buffer[46400 + 4 * 5 + 2] = 255;
+
+    // Use the SDL3 bool return style
+    if (SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
+    {
+        memcpy(texture_pixels, buffer, sizeof(buffer));
+        SDL_UnlockTexture(pixels);
+    }
+    else
+    {
+        // Log the actual error string to see WHY it's failing
+        SDL_Log("Lock failed: %s", SDL_GetError());
+    }
 }
 
 void RaycasterUpdate(ecs_iter_t *it)
@@ -25,7 +74,11 @@ void RaycasterUpdate(ecs_iter_t *it)
         SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->ptr;
         SDL_Window *window = ecs_get(it->world, ecs_id(Window), Window)->ptr;
 
-        draw_rays_dda(renderer, window, it->world, player);
+        // draw_rays_dda(renderer, window, it->world, player);
+
+        // --- RENDER ---
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderTexture(renderer, pixels, NULL, NULL);
 
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);

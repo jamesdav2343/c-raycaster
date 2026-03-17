@@ -31,6 +31,12 @@ void RaycasterModuleImport(ecs_world_t *world);
 #define MAP_COORD_MAX ROWS
 #define LINE_WIDTH 1
 
+SDL_Texture *pixels;
+void *texture_pixels;
+int texture_pitch;
+
+extern Uint8 buffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+
 void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_entity_t player);
 
 void RaycasterUpdate(ecs_iter_t *it);
