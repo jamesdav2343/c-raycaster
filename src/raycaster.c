@@ -36,24 +36,23 @@ void RaycasterModuleImport(ecs_world_t *world)
         return;
     }
 
-    for (int i = 3; i < sizeof(buffer) / 4; i += 4)
-    {
-        // blue line
-        buffer[i - 1] = 255;
-        buffer[i] = 255;
-    }
+    // for (int i = 3; i < sizeof(buffer) / 4; i += 4)
+    // {
+    //     // blue line
+    //     buffer[i - 1] = 255;
+    //     buffer[i] = 255;
+    // }
 
-    buffer[4 * 0 + 1] = 255;
-    buffer[4 * 1 + 1] = 255;
-    buffer[4 * 2 + 1] = 255;
-    buffer[46400 + 4 * 0 + 0] = 255;
-    buffer[46400 + 4 * 1 + 1] = 255;
-    buffer[46400 + 4 * 2 + 2] = 255;
-    buffer[46400 + 4 * 3 + 0] = 255;
-    buffer[46400 + 4 * 4 + 1] = 255;
-    buffer[46400 + 4 * 5 + 2] = 255;
+    // buffer[4 * 0 + 1] = 255;
+    // buffer[4 * 1 + 1] = 255;
+    // buffer[4 * 2 + 1] = 255;
+    // buffer[46400 + 4 * 0 + 0] = 255;
+    // buffer[46400 + 4 * 1 + 1] = 255;
+    // buffer[46400 + 4 * 2 + 2] = 255;
+    // buffer[46400 + 4 * 3 + 0] = 255;
+    // buffer[46400 + 4 * 4 + 1] = 255;
+    // buffer[46400 + 4 * 5 + 2] = 255;
 
-    // Use the SDL3 bool return style
     if (SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
     {
         memcpy(texture_pixels, buffer, sizeof(buffer));
@@ -61,8 +60,40 @@ void RaycasterModuleImport(ecs_world_t *world)
     }
     else
     {
-        // Log the actual error string to see WHY it's failing
         SDL_Log("Lock failed: %s", SDL_GetError());
+    }
+
+    // Generate some textures
+    Uint32 *textures[8];
+
+    for (int i = 0; i < 8; i++)
+    {
+        textures[i] = (Uint32 *)malloc(TEXTURE_HEIGHT * TEXTURE_WIDTH * sizeof(Uint32));
+
+        if (textures[i] == NULL)
+        {
+            SDL_Log("Unable to init textures.");
+            return;
+        }
+    }
+
+    for (int x = 0; x < TEXTURE_WIDTH; x++)
+    {
+        for (int y = 0; y < TEXTURE_HEIGHT; y++)
+        {
+            int xorcolor = (x * 256 / TEXTURE_WIDTH) ^ (y * 256 / TEXTURE_HEIGHT);
+            // int xcolor = x * 256 / TEXTURE_WIDTH;
+            int ycolor = y * 256 / TEXTURE_HEIGHT;
+            int xycolor = y * 128 / TEXTURE_HEIGHT + x * 128 / TEXTURE_WIDTH;
+            textures[0][TEXTURE_WIDTH * y + x] = 65536 * 254 * (x != y && x != TEXTURE_WIDTH - y); // flat red texture with black cross
+            textures[1][TEXTURE_WIDTH * y + x] = xycolor + 256 * xycolor + 65536 * xycolor;        // sloped greyscale
+            textures[2][TEXTURE_WIDTH * y + x] = 256 * xycolor + 65536 * xycolor;                  // sloped yellow gradient
+            textures[3][TEXTURE_WIDTH * y + x] = xorcolor + 256 * xorcolor + 65536 * xorcolor;     // xor greyscale
+            textures[4][TEXTURE_WIDTH * y + x] = 256 * xorcolor;                                   // xor green
+            textures[5][TEXTURE_WIDTH * y + x] = 65536 * 192 * (x % 16 && y % 16);                 // red bricks
+            textures[6][TEXTURE_WIDTH * y + x] = 65536 * ycolor;                                   // red gradient
+            textures[7][TEXTURE_WIDTH * y + x] = 128 + 256 * 128 + 65536 * 128;                    // flat grey texture
+        }
     }
 }
 
@@ -74,9 +105,8 @@ void RaycasterUpdate(ecs_iter_t *it)
         SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->ptr;
         SDL_Window *window = ecs_get(it->world, ecs_id(Window), Window)->ptr;
 
-        // draw_rays_dda(renderer, window, it->world, player);
+        draw_rays_dda(renderer, window, it->world, player);
 
-        // --- RENDER ---
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderTexture(renderer, pixels, NULL, NULL);
 

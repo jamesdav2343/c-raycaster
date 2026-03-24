@@ -31,10 +31,14 @@ void RaycasterModuleImport(ecs_world_t *world);
 #define MAP_COORD_MAX ROWS
 #define LINE_WIDTH 1
 
+#define TEXTURE_WIDTH 64
+#define TEXTURE_HEIGHT 64
+
 SDL_Texture *pixels;
 void *texture_pixels;
 int texture_pitch;
 
+// The pixel buffer that will be rendered.
 extern Uint8 buffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_entity_t player);
