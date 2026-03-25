@@ -4,7 +4,7 @@ ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDestroy);
 ECS_TAG_DECLARE(Raycaster);
 
-Uint8 buffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
 void RaycasterModuleImport(ecs_world_t *world)
 {
@@ -21,11 +21,11 @@ void RaycasterModuleImport(ecs_world_t *world)
     SDL_Renderer *renderer = ecs_get(world, ecs_id(Renderer), Renderer)->ptr;
 
     texture_pixels = NULL;
-    texture_pitch = 0;
+    texture_pitch = SCREEN_WIDTH * sizeof(Uint32);
 
     pixels = SDL_CreateTexture(
         renderer,
-        SDL_PIXELFORMAT_RGBA32,
+        SDL_PIXELFORMAT_ARGB8888,
         SDL_TEXTUREACCESS_STREAMING,
         SCREEN_WIDTH,
         SCREEN_HEIGHT);
@@ -36,12 +36,13 @@ void RaycasterModuleImport(ecs_world_t *world)
         return;
     }
 
-    // for (int i = 3; i < sizeof(buffer) / 4; i += 4)
-    // {
-    //     // blue line
-    //     buffer[i - 1] = 255;
-    //     buffer[i] = 255;
-    // }
+    for (int y = 0; y < SCREEN_HEIGHT; y++)
+    {
+        for (int x = 0; x < SCREEN_WIDTH; x++)
+        {
+            buffer[y][x] = 0xFFFF0000;
+        }
+    }
 
     // buffer[4 * 0 + 1] = 255;
     // buffer[4 * 1 + 1] = 255;
@@ -64,8 +65,6 @@ void RaycasterModuleImport(ecs_world_t *world)
     }
 
     // Generate some textures
-    Uint32 *textures[8];
-
     for (int i = 0; i < 8; i++)
     {
         textures[i] = (Uint32 *)malloc(TEXTURE_HEIGHT * TEXTURE_WIDTH * sizeof(Uint32));
@@ -238,31 +237,52 @@ void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *worl
         if (draw_end >= h)
             draw_end = h - 1;
 
-        // Choose wall color
-        SDL_Color color;
-        switch (map[map_x][map_y])
+        int tex_num = map[map_x][map_y] - 1;
+
+        // calculate value of wallX
+        double wall_x; // where exactly the wall was hit
+        if (side == 0)
+            wall_x = player_position->y + perp_wall_dist * ray_dir.y;
+        else
+            wall_x = player_position->x + perp_wall_dist * ray_dir.x;
+        wall_x -= floor((wall_x));
+
+        // x coordinate on the texture
+        int tex_x = (int)(wall_x * (double)TEXTURE_WIDTH);
+
+        if (side == 0 && ray_dir.x > 0)
+            tex_x = TEXTURE_WIDTH - tex_x - 1;
+
+        if (side == 1 && ray_dir.y < 0)
+            tex_x = TEXTURE_WIDTH - tex_x - 1;
+
+        double step = 1.0 * TEXTURE_HEIGHT / line_height;
+
+        // Starting texture coordinate
+        double tex_pos = (draw_start - h / 2 + line_height / 2) * step;
+
+        if (SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
         {
-        case 1:
-            color = (SDL_Color){255, 0, 0, SDL_ALPHA_OPAQUE};
-            break; // red
-        case 2:
-            color = (SDL_Color){0, 255, 0, SDL_ALPHA_OPAQUE};
-            break; // green
-        case 3:
-            color = (SDL_Color){0, 0, 255, SDL_ALPHA_OPAQUE};
-            break; // blue
-        case 4:
-            color = (SDL_Color){255, 255, 255, SDL_ALPHA_OPAQUE};
-            break; // white
-        default:
-            color = (SDL_Color){255, 222, 33, SDL_ALPHA_OPAQUE};
-            break; // yellow
+            for (int y = draw_start; y < draw_end; y++)
+            {
+                // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
+                int tex_y = (int)tex_pos & (TEXTURE_HEIGHT - 1);
+                tex_pos += step;
+                Uint32 color = textures[tex_num][TEXTURE_HEIGHT * tex_y + tex_x];
+                // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+                if (side == 1)
+                    color = (color >> 1) & 8355711;
+
+                buffer[y][x] = color;
+            }
+
+            memcpy(texture_pixels, buffer, sizeof(buffer));
+
+            SDL_UnlockTexture(pixels);
         }
-
-        if (x == w / 2)
-            color = (SDL_Color){255, 255, 255, SDL_ALPHA_OPAQUE};
-
-        // draw the pixels of the stripe as a vertical line
-        ver_line(renderer, x, draw_start, draw_end, color);
+        else
+        {
+            SDL_Log("Lock failed: %s", SDL_GetError());
+        }
     }
 }

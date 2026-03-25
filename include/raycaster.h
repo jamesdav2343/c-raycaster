@@ -37,9 +37,10 @@ void RaycasterModuleImport(ecs_world_t *world);
 SDL_Texture *pixels;
 void *texture_pixels;
 int texture_pitch;
+Uint32 *textures[8];
 
 // The pixel buffer that will be rendered.
-extern Uint8 buffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+extern Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
 void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_entity_t player);
 
