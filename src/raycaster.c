@@ -20,9 +20,6 @@ void RaycasterModuleImport(ecs_world_t *world)
 
     SDL_Renderer *renderer = ecs_get(world, ecs_id(Renderer), Renderer)->ptr;
 
-    texture_pixels = NULL;
-    texture_pitch = SCREEN_WIDTH * sizeof(Uint32);
-
     pixels = SDL_CreateTexture(
         renderer,
         SDL_PIXELFORMAT_ARGB8888,
@@ -34,34 +31,6 @@ void RaycasterModuleImport(ecs_world_t *world)
     {
         SDL_Log("Unabled to create pixels texture: %s\n", SDL_GetError());
         return;
-    }
-
-    for (int y = 0; y < SCREEN_HEIGHT; y++)
-    {
-        for (int x = 0; x < SCREEN_WIDTH; x++)
-        {
-            buffer[y][x] = 0xFFFF0000;
-        }
-    }
-
-    // buffer[4 * 0 + 1] = 255;
-    // buffer[4 * 1 + 1] = 255;
-    // buffer[4 * 2 + 1] = 255;
-    // buffer[46400 + 4 * 0 + 0] = 255;
-    // buffer[46400 + 4 * 1 + 1] = 255;
-    // buffer[46400 + 4 * 2 + 2] = 255;
-    // buffer[46400 + 4 * 3 + 0] = 255;
-    // buffer[46400 + 4 * 4 + 1] = 255;
-    // buffer[46400 + 4 * 5 + 2] = 255;
-
-    if (SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
-    {
-        memcpy(texture_pixels, buffer, sizeof(buffer));
-        SDL_UnlockTexture(pixels);
-    }
-    else
-    {
-        SDL_Log("Lock failed: %s", SDL_GetError());
     }
 
     // Generate some textures
@@ -104,9 +73,11 @@ void RaycasterUpdate(ecs_iter_t *it)
         SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->ptr;
         SDL_Window *window = ecs_get(it->world, ecs_id(Window), Window)->ptr;
 
+        // Clear the buffer
+        memset(buffer, 0xFF000000, sizeof(buffer));
+
         draw_rays_dda(renderer, window, it->world, player);
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderTexture(renderer, pixels, NULL, NULL);
 
         SDL_RenderPresent(renderer);
@@ -148,8 +119,15 @@ void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *worl
 
     printf("w: %d, h: %d\n", w, h);
 
+    texture_pixels = NULL;
+    texture_pitch = w * sizeof(Uint32);
+
+    if (!SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
+        return;
+
     for (int x = 0; x < w; x++)
     {
+        // ----- Main algorithm starts ----
         double camera_x = 2 * x / (double)w - 1;
         Vector2 ray_dir = {player_direction->x + camera_plane->x * camera_x, player_direction->y + camera_plane->y * camera_x};
 
@@ -237,6 +215,9 @@ void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *worl
         if (draw_end >= h)
             draw_end = h - 1;
 
+        // ----- Main algorithm ends ----
+
+        // Drawing starts
         int tex_num = map[map_x][map_y] - 1;
 
         // calculate value of wallX
@@ -261,28 +242,24 @@ void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *worl
         // Starting texture coordinate
         double tex_pos = (draw_start - h / 2 + line_height / 2) * step;
 
-        if (SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
+        for (int y = draw_start; y < draw_end; y++)
         {
-            for (int y = draw_start; y < draw_end; y++)
-            {
-                // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
-                int tex_y = (int)tex_pos & (TEXTURE_HEIGHT - 1);
-                tex_pos += step;
-                Uint32 color = textures[tex_num][TEXTURE_HEIGHT * tex_y + tex_x];
-                // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-                if (side == 1)
-                    color = (color >> 1) & 8355711;
+            // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
+            int tex_y = (int)tex_pos & (TEXTURE_HEIGHT - 1);
+            tex_pos += step;
+            // Uint32 color = textures[tex_num][TEXTURE_HEIGHT * tex_y + tex_x];
 
-                buffer[y][x] = color;
-            }
+            Uint32 color = 0xFFFF0000;
 
-            memcpy(texture_pixels, buffer, sizeof(buffer));
+            // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+            // if (side == 1)
+            //     color = (color >> 1) & 8355711;
 
-            SDL_UnlockTexture(pixels);
-        }
-        else
-        {
-            SDL_Log("Lock failed: %s", SDL_GetError());
+            buffer[y][x] = color;
         }
     }
+
+    memcpy(texture_pixels, buffer, sizeof(buffer));
+
+    SDL_UnlockTexture(pixels);
 }
