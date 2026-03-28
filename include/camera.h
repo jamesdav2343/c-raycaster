@@ -6,7 +6,7 @@
 
 extern ECS_COMPONENT_DECLARE(Plane);
 
-// Represents the camera plane
+// Represents the camera plane.
 typedef Vector2 Plane;
 
 void CameraModuleImport(ecs_world_t *world);

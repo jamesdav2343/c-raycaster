@@ -76,7 +76,7 @@ void RaycasterUpdate(ecs_iter_t *it)
         // Clear the buffer
         memset(buffer, 0xFF000000, sizeof(buffer));
 
-        draw_rays_dda(renderer, window, it->world, player);
+        draw(renderer, window, it->world, player);
 
         SDL_RenderTexture(renderer, pixels, NULL, NULL);
 
@@ -95,152 +95,64 @@ void RaycasterDestroy(ecs_iter_t *it)
     printf("Game closed.\n");
 }
 
-void ver_line(SDL_Renderer *renderer, int x, int start_y, int end_y, SDL_Color color)
-{
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-    SDL_RenderLine(renderer, x, start_y, x, end_y);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-}
-
 /*
 Notes on this function:
 Lodev's implementation of raycaster DDA algorithm
 */
-void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_entity_t player)
+void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_entity_t player)
 {
-    const Position *player_position = ecs_get(world, player, Position);
-    const Direction *player_direction = ecs_get(world, player, Direction);
-    const Plane *camera_plane = ecs_get(world, player, Plane);
+    const Position *pos = ecs_get(world, player, Position);
+    const Direction *dir = ecs_get(world, player, Direction);
+    const Plane *plane = ecs_get(world, player, Plane);
 
-    int w;
-    int h;
-
-    SDL_GetWindowSize(window, &w, &h);
-
-    printf("w: %d, h: %d\n", w, h);
+    int screen_width = SCREEN_WIDTH;
+    int screen_height = SCREEN_HEIGHT;
 
     texture_pixels = NULL;
-    texture_pitch = w * sizeof(Uint32);
+    texture_pitch = screen_width * sizeof(Uint32);
 
     if (!SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
         return;
 
-    for (int x = 0; x < w; x++)
+    // This loop draws the whole frame
+    for (int x = 0; x < screen_width; x++)
     {
-        // ----- Main algorithm starts ----
-        double camera_x = 2 * x / (double)w - 1;
-        Vector2 ray_dir = {player_direction->x + camera_plane->x * camera_x, player_direction->y + camera_plane->y * camera_x};
+        struct DdaData dda_data = {0};
 
-        // Which box of the map we're in
-        int map_x = (int)floorf(player_position->x);
-        int map_y = (int)floorf(player_position->y);
+        dda(pos, dir, plane, x, screen_width, screen_height, &dda_data);
 
-        // Length of ray from current position to next x or y-side
-        Vector2 side_dist = {0, 0};
+        double perpendicular_wall_distance = dda_data.hit_side_orientation == HORIZONTAL
+                                                 ? dda_data.horizontal_side_dist - dda_data.horizontal_side_delta_dist
+                                                 : dda_data.vertical_side_dist - dda_data.vertical_side_delta_dist;
 
-        Vector2 delta_dist = {
-            (ray_dir.x == 0) ? 1e30 : fabs(1 / ray_dir.x),
-            (ray_dir.y == 0) ? 1e30 : fabs(1 / ray_dir.y)};
-
-        double perp_wall_dist;
-
-        int step_x;
-        int step_y;
-
-        int hit = 0;
-        int side;
-
-        if (ray_dir.x < 0)
-        {
-            step_x = -1;
-            side_dist.x = (player_position->x - map_x) * delta_dist.x;
-        }
-        else
-        {
-            step_x = 1;
-            side_dist.x = (map_x + 1.0 - player_position->x) * delta_dist.x;
-        }
-
-        if (ray_dir.y < 0)
-        {
-            step_y = -1;
-            side_dist.y = (player_position->y - map_y) * delta_dist.y;
-        }
-        else
-        {
-            step_y = 1;
-            side_dist.y = (map_y + 1.0 - player_position->y) * delta_dist.y;
-        }
-
-        // Perform DDA
-        while (hit == 0)
-        {
-            // jump to next map square, either in x-direction, or in y-direction
-            if (side_dist.x < side_dist.y)
-            {
-                side_dist.x += delta_dist.x;
-                map_x += step_x;
-                side = 0;
-            }
-            else
-            {
-                side_dist.y += delta_dist.y;
-                map_y += step_y;
-                side = 1;
-            }
-
-            // Check if ray has hit a wall
-            if (map[map_x][map_y] > 0)
-                hit = 1;
-        }
-
-        if (side == 0)
-        {
-            perp_wall_dist = side_dist.x - delta_dist.x;
-        }
-        else
-        {
-            perp_wall_dist = side_dist.y - delta_dist.y;
-        }
-
-        int line_height = (int)(h / perp_wall_dist);
-
-        int draw_start = -line_height / 2 + h / 2;
-
-        if (draw_start < 0)
-            draw_start = 0;
-
-        int draw_end = line_height / 2 + h / 2;
-
-        if (draw_end >= h)
-            draw_end = h - 1;
-
-        // ----- Main algorithm ends ----
+        int line_height = (int)(screen_height / perpendicular_wall_distance);
+        int draw_start = (int)fmax(-line_height / 2 + screen_height / 2, 0);
+        int draw_end = (int)fmin(line_height / 2 + screen_height / 2, screen_height - 1);
 
         // Drawing starts
-        int tex_num = map[map_x][map_y] - 1;
+        // int tex_num = world_map[map_x][map_y] - 1;
 
         // calculate value of wallX
         double wall_x; // where exactly the wall was hit
-        if (side == 0)
-            wall_x = player_position->y + perp_wall_dist * ray_dir.y;
+        if (dda_data.hit_side_orientation == HORIZONTAL)
+            wall_x = pos->y + perpendicular_wall_distance * dda_data.ray_direction.y;
         else
-            wall_x = player_position->x + perp_wall_dist * ray_dir.x;
+            wall_x = pos->x + perpendicular_wall_distance * dda_data.ray_direction.x;
         wall_x -= floor((wall_x));
 
         // x coordinate on the texture
         int tex_x = (int)(wall_x * (double)TEXTURE_WIDTH);
 
-        if (side == 0 && ray_dir.x > 0)
+        if (dda_data.hit_side_orientation == HORIZONTAL && dda_data.ray_direction.x > 0)
             tex_x = TEXTURE_WIDTH - tex_x - 1;
 
-        if (side == 1 && ray_dir.y < 0)
+        if (dda_data.hit_side_orientation == VERTICAL && dda_data.ray_direction.y < 0)
             tex_x = TEXTURE_WIDTH - tex_x - 1;
 
         double step = 1.0 * TEXTURE_HEIGHT / line_height;
 
         // Starting texture coordinate
-        double tex_pos = (draw_start - h / 2 + line_height / 2) * step;
+        double tex_pos = (draw_start - screen_height / 2 + line_height / 2) * step;
 
         for (int y = draw_start; y < draw_end; y++)
         {
@@ -252,8 +164,9 @@ void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *worl
             Uint32 color = 0xFFFF0000;
 
             // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-            // if (side == 1)
-            //     color = (color >> 1) & 8355711;
+            if (dda_data.hit_side_orientation == VERTICAL)
+                color = 0xFFFF00FF;
+            // color = (color >> 1) & 8355711;
 
             buffer[y][x] = color;
         }
@@ -262,4 +175,76 @@ void draw_rays_dda(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *worl
     memcpy(texture_pixels, buffer, sizeof(buffer));
 
     SDL_UnlockTexture(pixels);
+}
+
+void dda(const Position *position, const Direction *direction, const Plane *plane, int screen_x, int screen_width, int screen_height, struct DdaData *output_dda_data)
+{
+    double camera_x = 2 * screen_x / (double)screen_width - 1;
+    Vector2 ray_direction = {direction->x + plane->x * camera_x, direction->y + plane->y * camera_x};
+
+    int map_x_coord = (int)floorf(position->x);
+    int map_y_coord = (int)floorf(position->y);
+
+    float distance_to_horizontal_side = 0;
+    float distance_to_vertical_side = 0;
+
+    float distance_to_horizontal_side_delta = ray_direction.x == 0 ? 1e30 : fabs(1 / ray_direction.x);
+    float distance_to_vertical_side_delta = ray_direction.y == 0 ? 1e30 : fabs(1 / ray_direction.y);
+
+    int horizontal_step;
+    int vertical_step;
+
+    bool has_hit_side = false;
+    enum Orientation side_orientation;
+
+    if (ray_direction.x < 0)
+    {
+        horizontal_step = -1;
+        distance_to_horizontal_side = (position->x - map_x_coord) * distance_to_horizontal_side_delta;
+    }
+    else
+    {
+        horizontal_step = 1;
+        distance_to_horizontal_side = (map_x_coord + 1.0 - position->x) * distance_to_horizontal_side_delta;
+    }
+
+    if (ray_direction.y < 0)
+    {
+        vertical_step = -1;
+        distance_to_vertical_side = (position->y - map_y_coord) * distance_to_vertical_side_delta;
+    }
+    else
+    {
+        vertical_step = 1;
+        distance_to_vertical_side = (map_y_coord + 1.0 - position->y) * distance_to_vertical_side_delta;
+    }
+
+    // Perform DDA
+    while (!has_hit_side)
+    {
+        // Jump to next map square, either in x-direction, or in y-direction
+        if (distance_to_horizontal_side < distance_to_vertical_side)
+        {
+            distance_to_horizontal_side += distance_to_horizontal_side_delta;
+            map_x_coord += horizontal_step;
+            side_orientation = HORIZONTAL;
+        }
+        else
+        {
+            distance_to_vertical_side += distance_to_vertical_side_delta;
+            map_y_coord += vertical_step;
+            side_orientation = VERTICAL;
+        }
+
+        // Check if ray has hit side
+        if (world_map[map_x_coord][map_y_coord] > 0)
+            has_hit_side = true;
+    }
+
+    output_dda_data->hit_side_orientation = side_orientation;
+    output_dda_data->horizontal_side_dist = distance_to_horizontal_side;
+    output_dda_data->vertical_side_dist = distance_to_vertical_side;
+    output_dda_data->horizontal_side_delta_dist = distance_to_horizontal_side_delta;
+    output_dda_data->vertical_side_delta_dist = distance_to_vertical_side_delta;
+    output_dda_data->ray_direction = ray_direction;
 }

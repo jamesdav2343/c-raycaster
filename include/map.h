@@ -7,7 +7,7 @@
 
 #include <SDL3/SDL.h>
 
-extern Uint8 map[ROWS][COLS];
+extern Uint8 world_map[ROWS][COLS];
 
 typedef struct MapData
 {
