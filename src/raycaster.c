@@ -6,6 +6,9 @@ ECS_TAG_DECLARE(Raycaster);
 
 Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
+const int DRAW_START_MIN = 0;
+const int DRAW_END_MAX = SCREEN_HEIGHT;
+
 void RaycasterModuleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, RaycasterModule);
@@ -53,14 +56,17 @@ void RaycasterModuleImport(ecs_world_t *world)
             // int xcolor = x * 256 / TEXTURE_WIDTH;
             int ycolor = y * 256 / TEXTURE_HEIGHT;
             int xycolor = y * 128 / TEXTURE_HEIGHT + x * 128 / TEXTURE_WIDTH;
-            textures[0][TEXTURE_WIDTH * y + x] = 65536 * 254 * (x != y && x != TEXTURE_WIDTH - y); // flat red texture with black cross
-            textures[1][TEXTURE_WIDTH * y + x] = xycolor + 256 * xycolor + 65536 * xycolor;        // sloped greyscale
-            textures[2][TEXTURE_WIDTH * y + x] = 256 * xycolor + 65536 * xycolor;                  // sloped yellow gradient
-            textures[3][TEXTURE_WIDTH * y + x] = xorcolor + 256 * xorcolor + 65536 * xorcolor;     // xor greyscale
-            textures[4][TEXTURE_WIDTH * y + x] = 256 * xorcolor;                                   // xor green
-            textures[5][TEXTURE_WIDTH * y + x] = 65536 * 192 * (x % 16 && y % 16);                 // red bricks
-            textures[6][TEXTURE_WIDTH * y + x] = 65536 * ycolor;                                   // red gradient
-            textures[7][TEXTURE_WIDTH * y + x] = 128 + 256 * 128 + 65536 * 128;                    // flat grey texture
+            textures[0][x + (TEXTURE_WIDTH * y)] = 0xFFFF0000 * (x != y && x != TEXTURE_WIDTH - y); // flat red texture with black cross
+
+            // printf("pixel color: %X\n", textures[0][x + (TEXTURE_WIDTH * y)]);
+
+            // textures[1][TEXTURE_WIDTH * y + x] = xycolor + 256 * xycolor + 65536 * xycolor;        // sloped greyscale
+            // textures[2][TEXTURE_WIDTH * y + x] = 256 * xycolor + 65536 * xycolor;                  // sloped yellow gradient
+            // textures[3][TEXTURE_WIDTH * y + x] = xorcolor + 256 * xorcolor + 65536 * xorcolor;     // xor greyscale
+            // textures[4][TEXTURE_WIDTH * y + x] = 256 * xorcolor;                                   // xor green
+            // textures[5][TEXTURE_WIDTH * y + x] = 65536 * 192 * (x % 16 && y % 16);                 // red bricks
+            // textures[6][TEXTURE_WIDTH * y + x] = 65536 * ycolor;                                   // red gradient
+            // textures[7][TEXTURE_WIDTH * y + x] = 128 + 256 * 128 + 65536 * 128;                    // flat grey texture
         }
     }
 }
@@ -126,19 +132,18 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
                                                  : dda_data.vertical_side_dist - dda_data.vertical_side_delta_dist;
 
         int line_height = (int)(screen_height / perpendicular_wall_distance);
-        int draw_start = (int)fmax(-line_height / 2 + screen_height / 2, 0);
-        int draw_end = (int)fmin(line_height / 2 + screen_height / 2, screen_height - 1);
+        int draw_start = (int)fmax(-line_height / 2 + screen_height / 2, DRAW_START_MIN);
+        int draw_end = (int)fmin(line_height / 2 + screen_height / 2, DRAW_END_MAX);
 
         // Drawing starts
         // int tex_num = world_map[map_x][map_y] - 1;
 
         // calculate value of wallX
-        double wall_x; // where exactly the wall was hit
-        if (dda_data.hit_side_orientation == HORIZONTAL)
-            wall_x = pos->y + perpendicular_wall_distance * dda_data.ray_direction.y;
-        else
-            wall_x = pos->x + perpendicular_wall_distance * dda_data.ray_direction.x;
-        wall_x -= floor((wall_x));
+        double wall_x = dda_data.hit_side_orientation == HORIZONTAL
+                            ? pos->y + perpendicular_wall_distance * dda_data.ray_direction.y
+                            : pos->x + perpendicular_wall_distance * dda_data.ray_direction.x;
+
+        wall_x -= floor(wall_x);
 
         // x coordinate on the texture
         int tex_x = (int)(wall_x * (double)TEXTURE_WIDTH);
@@ -159,9 +164,10 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
             // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
             int tex_y = (int)tex_pos & (TEXTURE_HEIGHT - 1);
             tex_pos += step;
-            // Uint32 color = textures[tex_num][TEXTURE_HEIGHT * tex_y + tex_x];
 
-            Uint32 color = 0xFFFF0000;
+            Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
+
+            // Uint32 color = 0xFFFF0000;
 
             // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
             if (dda_data.hit_side_orientation == VERTICAL)

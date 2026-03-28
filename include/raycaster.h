@@ -34,6 +34,9 @@ void RaycasterModuleImport(ecs_world_t *world);
 #define TEXTURE_WIDTH 64
 #define TEXTURE_HEIGHT 64
 
+extern const int DRAW_START_MIN;
+extern const int DRAW_END_MAX;
+
 SDL_Texture *pixels;
 void *texture_pixels;
 int texture_pitch;
