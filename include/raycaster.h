@@ -63,7 +63,7 @@ extern Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
 /*
 Digital differential analyser algorithm
-Great explanation of algorithm here:
+Great explanation of the algorithm here:
 https://aaaa.sh/creatures/dda-algorithm-interactive/
 */
 void dda(const Position *position, const Direction *direction, const Plane *plane, int screen_x, int screen_width, int screen_height, struct DdaData *output_dda_data);

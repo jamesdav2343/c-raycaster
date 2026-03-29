@@ -52,21 +52,7 @@ void RaycasterModuleImport(ecs_world_t *world)
     {
         for (int y = 0; y < TEXTURE_HEIGHT; y++)
         {
-            int xorcolor = (x * 256 / TEXTURE_WIDTH) ^ (y * 256 / TEXTURE_HEIGHT);
-            // int xcolor = x * 256 / TEXTURE_WIDTH;
-            int ycolor = y * 256 / TEXTURE_HEIGHT;
-            int xycolor = y * 128 / TEXTURE_HEIGHT + x * 128 / TEXTURE_WIDTH;
             textures[0][x + (TEXTURE_WIDTH * y)] = 0xFFFF0000 * (x != y && x != TEXTURE_WIDTH - y); // flat red texture with black cross
-
-            // printf("pixel color: %X\n", textures[0][x + (TEXTURE_WIDTH * y)]);
-
-            // textures[1][TEXTURE_WIDTH * y + x] = xycolor + 256 * xycolor + 65536 * xycolor;        // sloped greyscale
-            // textures[2][TEXTURE_WIDTH * y + x] = 256 * xycolor + 65536 * xycolor;                  // sloped yellow gradient
-            // textures[3][TEXTURE_WIDTH * y + x] = xorcolor + 256 * xorcolor + 65536 * xorcolor;     // xor greyscale
-            // textures[4][TEXTURE_WIDTH * y + x] = 256 * xorcolor;                                   // xor green
-            // textures[5][TEXTURE_WIDTH * y + x] = 65536 * 192 * (x % 16 && y % 16);                 // red bricks
-            // textures[6][TEXTURE_WIDTH * y + x] = 65536 * ycolor;                                   // red gradient
-            // textures[7][TEXTURE_WIDTH * y + x] = 128 + 256 * 128 + 65536 * 128;                    // flat grey texture
         }
     }
 }
@@ -80,7 +66,7 @@ void RaycasterUpdate(ecs_iter_t *it)
         SDL_Window *window = ecs_get(it->world, ecs_id(Window), Window)->ptr;
 
         // Clear the buffer
-        memset(buffer, 0xFF000000, sizeof(buffer));
+        memset(buffer, 0, sizeof(buffer));
 
         draw(renderer, window, it->world, player);
 
@@ -131,7 +117,7 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
         int draw_start = (int)fmax(-line_height / 2 + screen_height / 2, DRAW_START_MIN);
         int draw_end = (int)fmin(line_height / 2 + screen_height / 2, DRAW_END_MAX);
 
-        // Drawing starts
+        // --------- Drawing starts ---------
         // int tex_num = world_map[map_x][map_y] - 1;
 
         // calculate value of wallX
@@ -163,12 +149,9 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
 
             Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
 
-            // Uint32 color = 0xFFFF0000;
-
-            // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+            // make color darker for y-sides
             if (dda_data.side_orientation == VERTICAL)
-                color = 0xFFFF00FF;
-            // color = (color >> 1) & 8355711;
+                color = (color >> 1) & 0xFF7F7F7F;
 
             buffer[y][x] = color;
         }
