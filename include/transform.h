@@ -27,6 +27,12 @@ typedef struct Vector2
     float y;
 } Vector2;
 
+typedef struct Vector2I
+{
+    int x;
+    int y;
+} Vector2I;
+
 // Represents a position in a 2D plane. Holds an x and y coordinate.
 typedef Vector2 Position;
 

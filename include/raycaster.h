@@ -51,18 +51,21 @@ enum Orientation
 // Holds data outputted from the DDA algorithm.
 struct DdaData
 {
-    enum Orientation hit_side_orientation;
-    float horizontal_side_dist;
-    float vertical_side_dist;
-    float horizontal_side_delta_dist;
-    float vertical_side_delta_dist;
+    enum Orientation side_orientation;
     Vector2 ray_direction;
+    float dist_to_x;
+    float dist_to_y;
+    float perp_wall_dist;
 };
 
 // The pixel buffer that will be rendered.
 extern Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
-// Digital differential analyser algorithm
+/*
+Digital differential analyser algorithm
+Great explanation of algorithm here:
+https://aaaa.sh/creatures/dda-algorithm-interactive/
+*/
 void dda(const Position *position, const Direction *direction, const Plane *plane, int screen_x, int screen_width, int screen_height, struct DdaData *output_dda_data);
 
 void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_entity_t player);

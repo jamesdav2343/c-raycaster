@@ -127,11 +127,7 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
 
         dda(pos, dir, plane, x, screen_width, screen_height, &dda_data);
 
-        double perpendicular_wall_distance = dda_data.hit_side_orientation == HORIZONTAL
-                                                 ? dda_data.horizontal_side_dist - dda_data.horizontal_side_delta_dist
-                                                 : dda_data.vertical_side_dist - dda_data.vertical_side_delta_dist;
-
-        int line_height = (int)(screen_height / perpendicular_wall_distance);
+        int line_height = (int)(screen_height / dda_data.perp_wall_dist);
         int draw_start = (int)fmax(-line_height / 2 + screen_height / 2, DRAW_START_MIN);
         int draw_end = (int)fmin(line_height / 2 + screen_height / 2, DRAW_END_MAX);
 
@@ -139,19 +135,19 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
         // int tex_num = world_map[map_x][map_y] - 1;
 
         // calculate value of wallX
-        double wall_x = dda_data.hit_side_orientation == HORIZONTAL
-                            ? pos->y + perpendicular_wall_distance * dda_data.ray_direction.y
-                            : pos->x + perpendicular_wall_distance * dda_data.ray_direction.x;
+        double wall_x = dda_data.side_orientation == HORIZONTAL
+                            ? pos->y + dda_data.perp_wall_dist * dda_data.ray_direction.y
+                            : pos->x + dda_data.perp_wall_dist * dda_data.ray_direction.x;
 
         wall_x -= floor(wall_x);
 
         // x coordinate on the texture
         int tex_x = (int)(wall_x * (double)TEXTURE_WIDTH);
 
-        if (dda_data.hit_side_orientation == HORIZONTAL && dda_data.ray_direction.x > 0)
+        if (dda_data.side_orientation == HORIZONTAL && dda_data.ray_direction.x > 0)
             tex_x = TEXTURE_WIDTH - tex_x - 1;
 
-        if (dda_data.hit_side_orientation == VERTICAL && dda_data.ray_direction.y < 0)
+        if (dda_data.side_orientation == VERTICAL && dda_data.ray_direction.y < 0)
             tex_x = TEXTURE_WIDTH - tex_x - 1;
 
         double step = 1.0 * TEXTURE_HEIGHT / line_height;
@@ -170,7 +166,7 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
             // Uint32 color = 0xFFFF0000;
 
             // make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
-            if (dda_data.hit_side_orientation == VERTICAL)
+            if (dda_data.side_orientation == VERTICAL)
                 color = 0xFFFF00FF;
             // color = (color >> 1) & 8355711;
 
@@ -186,71 +182,68 @@ void draw(SDL_Renderer *renderer, SDL_Window *window, ecs_world_t *world, ecs_en
 void dda(const Position *position, const Direction *direction, const Plane *plane, int screen_x, int screen_width, int screen_height, struct DdaData *output_dda_data)
 {
     double camera_x = 2 * screen_x / (double)screen_width - 1;
+
     Vector2 ray_direction = {direction->x + plane->x * camera_x, direction->y + plane->y * camera_x};
+    Vector2I ray_origin = {(int)floorf(position->x), (int)floorf(position->y)};
 
-    int map_x_coord = (int)floorf(position->x);
-    int map_y_coord = (int)floorf(position->y);
+    float dist_to_x;
+    float dist_to_y;
 
-    float distance_to_horizontal_side = 0;
-    float distance_to_vertical_side = 0;
+    double dist_between_cols = (ray_direction.x == 0) ? 1e30 : fabs(1 / ray_direction.x);
+    double dist_between_rows = (ray_direction.y == 0) ? 1e30 : fabs(1 / ray_direction.y);
 
-    float distance_to_horizontal_side_delta = ray_direction.x == 0 ? 1e30 : fabs(1 / ray_direction.x);
-    float distance_to_vertical_side_delta = ray_direction.y == 0 ? 1e30 : fabs(1 / ray_direction.y);
-
-    int horizontal_step;
-    int vertical_step;
+    int step_x;
+    int step_y;
 
     bool has_hit_side = false;
     enum Orientation side_orientation;
 
     if (ray_direction.x < 0)
     {
-        horizontal_step = -1;
-        distance_to_horizontal_side = (position->x - map_x_coord) * distance_to_horizontal_side_delta;
+        step_x = -1;
+        dist_to_x = (position->x - ray_origin.x) * dist_between_cols;
     }
     else
     {
-        horizontal_step = 1;
-        distance_to_horizontal_side = (map_x_coord + 1.0 - position->x) * distance_to_horizontal_side_delta;
+        step_x = 1;
+        dist_to_x = (ray_origin.x + 1 - position->x) * dist_between_cols;
     }
 
     if (ray_direction.y < 0)
     {
-        vertical_step = -1;
-        distance_to_vertical_side = (position->y - map_y_coord) * distance_to_vertical_side_delta;
+        step_y = -1;
+        dist_to_y = (position->y - ray_origin.y) * dist_between_rows;
     }
     else
     {
-        vertical_step = 1;
-        distance_to_vertical_side = (map_y_coord + 1.0 - position->y) * distance_to_vertical_side_delta;
+        step_y = 1;
+        dist_to_y = (ray_origin.y + 1 - position->y) * dist_between_rows;
     }
 
-    // Perform DDA
     while (!has_hit_side)
     {
-        // Jump to next map square, either in x-direction, or in y-direction
-        if (distance_to_horizontal_side < distance_to_vertical_side)
+        if (dist_to_x < dist_to_y)
         {
-            distance_to_horizontal_side += distance_to_horizontal_side_delta;
-            map_x_coord += horizontal_step;
+            dist_to_x += dist_between_cols;
+            ray_origin.x += step_x;
             side_orientation = HORIZONTAL;
         }
         else
         {
-            distance_to_vertical_side += distance_to_vertical_side_delta;
-            map_y_coord += vertical_step;
+            dist_to_y += dist_between_rows;
+            ray_origin.y += step_y;
             side_orientation = VERTICAL;
         }
 
-        // Check if ray has hit side
-        if (world_map[map_x_coord][map_y_coord] > 0)
+        if (world_map[ray_origin.x][ray_origin.y] > 0)
             has_hit_side = true;
     }
 
-    output_dda_data->hit_side_orientation = side_orientation;
-    output_dda_data->horizontal_side_dist = distance_to_horizontal_side;
-    output_dda_data->vertical_side_dist = distance_to_vertical_side;
-    output_dda_data->horizontal_side_delta_dist = distance_to_horizontal_side_delta;
-    output_dda_data->vertical_side_delta_dist = distance_to_vertical_side_delta;
+    output_dda_data->side_orientation = side_orientation;
     output_dda_data->ray_direction = ray_direction;
+    output_dda_data->dist_to_x = dist_to_x;
+    output_dda_data->dist_to_y = dist_to_y;
+    output_dda_data->perp_wall_dist = side_orientation == HORIZONTAL
+                                          ? dist_to_x - dist_between_cols
+                                          : dist_to_y - dist_between_rows;
 }
