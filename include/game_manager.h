@@ -16,12 +16,12 @@ extern ECS_COMPONENT_DECLARE(Window);
 
 typedef struct Renderer
 {
-    SDL_Renderer *ptr;
+    SDL_Renderer *value;
 } Renderer;
 
 typedef struct Window
 {
-    SDL_Window *ptr;
+    SDL_Window *value;
 } Window;
 
 void GameManagerModuleImport(ecs_world_t *world);
