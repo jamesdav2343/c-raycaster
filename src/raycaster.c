@@ -82,7 +82,7 @@ void RaycasterUpdate(ecs_iter_t *it)
 
     clear_buffer(buffer_data);
     write_to_buffer(position, direction, plane, buffer_data);
-    update_texture_from_buffer(pixels_texture, buffer_data);
+    blit_buffer_to_texture(pixels_texture, buffer_data);
 }
 
 void RaycasterDraw(ecs_iter_t *it)
@@ -99,64 +99,24 @@ void clear_buffer(BufferData *buffer_data)
     memset(buffer_data->buffer, 0, buffer_data->size);
 }
 
-void write_to_buffer(const Position *position, const Direction *direction, const Plane *plane, BufferData *buffer_data)
+void write_to_buffer(const Position *position, const Direction *direction, const Plane *plane, BufferData *dest_buffer_data)
 {
-    int screen_width = buffer_data->width;
-    int screen_height = buffer_data->height;
+    int screen_width = dest_buffer_data->width;
+    int screen_height = dest_buffer_data->height;
 
-    // This loop draws the whole frame
+    // Floor casting
+
+    // Wall casting for the frame
     for (int x = 0; x < screen_width; x++)
     {
         struct DdaData dda_data = {0};
 
         dda(position, direction, plane, x, screen_width, screen_height, &dda_data);
-
-        int line_height = (int)(screen_height / dda_data.perp_wall_dist);
-        int draw_start = (int)fmax(-line_height / 2 + screen_height / 2, DRAW_START_MIN);
-        int draw_end = (int)fmin(line_height / 2 + screen_height / 2, DRAW_END_MAX);
-
-        // --------- Drawing starts ---------
-        // int tex_num = world_map[map_x][map_y] - 1;
-
-        // calculate value of wallX
-        double wall_x = dda_data.side_orientation == HORIZONTAL
-                            ? position->y + dda_data.perp_wall_dist * dda_data.ray_direction.y
-                            : position->x + dda_data.perp_wall_dist * dda_data.ray_direction.x;
-
-        wall_x -= floor(wall_x);
-
-        // x coordinate on the texture
-        int tex_x = (int)(wall_x * (double)TEXTURE_WIDTH);
-
-        if (dda_data.side_orientation == HORIZONTAL && dda_data.ray_direction.x > 0)
-            tex_x = TEXTURE_WIDTH - tex_x - 1;
-
-        if (dda_data.side_orientation == VERTICAL && dda_data.ray_direction.y < 0)
-            tex_x = TEXTURE_WIDTH - tex_x - 1;
-
-        double step = 1.0 * TEXTURE_HEIGHT / line_height;
-
-        // Starting texture coordinate
-        double tex_pos = (draw_start - screen_height / 2 + line_height / 2) * step;
-
-        for (int y = draw_start; y < draw_end; y++)
-        {
-            // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
-            int tex_y = (int)tex_pos & (TEXTURE_HEIGHT - 1);
-            tex_pos += step;
-
-            Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
-
-            // make color darker for y-sides
-            if (dda_data.side_orientation == VERTICAL)
-                color = (color >> 1) & 0xFF7F7F7F;
-
-            buffer_data->buffer[x + (y * screen_width)] = color;
-        }
+        write_vertical_wall_strip(&dda_data, position, x, dest_buffer_data);
     }
 }
 
-void update_texture_from_buffer(SDL_Texture *dest_pixels_texture, BufferData *src_buffer_data)
+void blit_buffer_to_texture(SDL_Texture *dest_pixels_texture, BufferData *src_buffer_data)
 {
     void *pixels_buffer = NULL;
     int texture_pitch = src_buffer_data->width * sizeof(Uint32);
@@ -170,6 +130,56 @@ void update_texture_from_buffer(SDL_Texture *dest_pixels_texture, BufferData *sr
     memcpy(pixels_buffer, src_buffer_data->buffer, src_buffer_data->size);
 
     SDL_UnlockTexture(pixels_texture);
+}
+
+void write_vertical_wall_strip(struct DdaData *dda_data, const Position *position, int current_x, BufferData *dest_buffer_data)
+{
+    int buffer_height = dest_buffer_data->height;
+    int buffer_width = dest_buffer_data->width;
+
+    int line_height = (int)(buffer_height / dda_data->perp_wall_dist);
+    int draw_start = (int)fmax(-line_height / 2 + buffer_height / 2, DRAW_START_MIN);
+    int draw_end = (int)fmin(line_height / 2 + buffer_height / 2, DRAW_END_MAX);
+
+    // calculate value of wallX
+    double wall_x = dda_data->side_orientation == HORIZONTAL
+                        ? position->y + dda_data->perp_wall_dist * dda_data->ray_direction.y
+                        : position->x + dda_data->perp_wall_dist * dda_data->ray_direction.x;
+
+    wall_x -= floor(wall_x);
+
+    // x coordinate on the texture
+    int tex_x = (int)(wall_x * (double)TEXTURE_WIDTH);
+
+    if (dda_data->side_orientation == HORIZONTAL && dda_data->ray_direction.x > 0)
+        tex_x = TEXTURE_WIDTH - tex_x - 1;
+
+    if (dda_data->side_orientation == VERTICAL && dda_data->ray_direction.y < 0)
+        tex_x = TEXTURE_WIDTH - tex_x - 1;
+
+    double step = 1.0 * TEXTURE_HEIGHT / line_height;
+
+    printf("step: %f\n", step);
+
+    // Starting texture coordinate
+    double texture_coord = (draw_start - buffer_height / 2 + line_height / 2) * step;
+
+    printf("tex pos: %f\n", texture_coord);
+
+    for (int y = draw_start; y < draw_end; y++)
+    {
+        // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
+        int tex_y = (int)texture_coord & (TEXTURE_HEIGHT - 1);
+        texture_coord += step;
+
+        Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
+
+        // make color darker for y-sides
+        if (dda_data->side_orientation == VERTICAL)
+            color = (color >> 1) & 0xFF7F7F7F;
+
+        dest_buffer_data->buffer[current_x + (y * buffer_width)] = color;
+    }
 }
 
 void dda(const Position *position, const Direction *direction, const Plane *plane, int screen_x, int screen_width, int screen_height, struct DdaData *output_dda_data)

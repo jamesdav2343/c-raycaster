@@ -66,7 +66,8 @@ typedef struct BufferData
 // extern Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
 /*
-Digital differential analyser algorithm
+Casts a ray.
+Uses the digital differential analyser algorithm.
 Great explanation of the algorithm here:
 https://aaaa.sh/creatures/dda-algorithm-interactive/
 */
@@ -76,7 +77,12 @@ void clear_buffer(BufferData *buffer_data);
 
 void write_to_buffer(const Position *position, const Direction *direction, const Plane *plane, BufferData *buffer_data);
 
-void update_texture_from_buffer(SDL_Texture *dest_pixels_texture, BufferData *src_buffer_data);
+void blit_buffer_to_texture(SDL_Texture *dest_pixels_texture, BufferData *src_buffer_data);
+
+/*
+Writes a vertical wall strip to the pixel buffer.
+*/
+void write_vertical_wall_strip(struct DdaData *dda_data, const Position *position, int current_x, BufferData *dest_buffer_data);
 
 void RaycasterUpdate(ecs_iter_t *it);
 
