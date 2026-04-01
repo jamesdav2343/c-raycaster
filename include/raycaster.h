@@ -10,7 +10,6 @@
 
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
 extern ECS_SYSTEM_DECLARE(RaycasterDraw);
-extern ECS_SYSTEM_DECLARE(RaycasterDestroy);
 extern ECS_TAG_DECLARE(Raycaster);
 extern ECS_COMPONENT_DECLARE(BufferData);
 
@@ -38,11 +37,6 @@ void RaycasterModuleImport(ecs_world_t *world);
 
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;
-
-SDL_Texture *pixels;
-Uint32 *textures[8];
-void *texture_pixels;
-int texture_pitch;
 
 enum Orientation
 {
@@ -78,11 +72,13 @@ https://aaaa.sh/creatures/dda-algorithm-interactive/
 */
 void dda(const Position *position, const Direction *direction, const Plane *plane, int screen_x, int screen_width, int screen_height, struct DdaData *output_dda_data);
 
+void clear_buffer(BufferData *buffer_data);
+
 void write_to_buffer(const Position *position, const Direction *direction, const Plane *plane, BufferData *buffer_data);
 
-void RaycasterUpdate(ecs_iter_t *it);
+void update_texture_from_buffer(SDL_Texture *dest_pixels_texture, BufferData *src_buffer_data);
 
-void RaycasterDestroy(ecs_iter_t *it);
+void RaycasterUpdate(ecs_iter_t *it);
 
 void RaycasterDraw(ecs_iter_t *it);
 

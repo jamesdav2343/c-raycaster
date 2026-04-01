@@ -30,6 +30,8 @@ void GameManagerModuleImport(ecs_world_t *world)
 
     ecs_add_id(world, ecs_id(Renderer), EcsSingleton);
     ecs_singleton_set(world, Renderer, {renderer});
+
+    ecs_atfini(world, game_manager_cleanup, NULL);
 }
 
 void handle_events(SDL_Event *event, GameStatus *game_status)
@@ -42,4 +44,16 @@ void handle_events(SDL_Event *event, GameStatus *game_status)
     }
 
     Vector2 inputDirection = get_input_direction();
+}
+
+void game_manager_cleanup(ecs_world_t *world, void *ctx)
+{
+    SDL_Renderer *renderer = ecs_singleton_get(world, Renderer)->value;
+    SDL_Window *window = ecs_singleton_get(world, Window)->value;
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
+    printf("Game closed.\n");
 }

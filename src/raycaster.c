@@ -6,6 +6,9 @@ ECS_SYSTEM_DECLARE(RaycasterDraw);
 ECS_TAG_DECLARE(Raycaster);
 ECS_COMPONENT_DECLARE(BufferData);
 
+static SDL_Texture *pixels_texture;
+static Uint32 *textures[8];
+
 const int DRAW_START_MIN = 0;
 const int DRAW_END_MAX = SCREEN_HEIGHT;
 
@@ -13,7 +16,6 @@ void RaycasterModuleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, RaycasterModule);
 
-    ECS_IMPORT(world, GameManagerModule);
     ECS_IMPORT(world, TransformModule);
     ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
@@ -21,19 +23,18 @@ void RaycasterModuleImport(ecs_world_t *world)
     ECS_TAG_DEFINE(world, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterDraw, EcsOnStore, Raycaster);
-    ECS_SYSTEM_DEFINE(world, RaycasterDestroy, EcsOnDelete, Raycaster);
     ECS_COMPONENT_DEFINE(world, BufferData);
 
     SDL_Renderer *renderer = ecs_singleton_get(world, Renderer)->value;
 
-    pixels = SDL_CreateTexture(
+    pixels_texture = SDL_CreateTexture(
         renderer,
         SDL_PIXELFORMAT_ARGB8888,
         SDL_TEXTUREACCESS_STREAMING,
         SCREEN_WIDTH,
         SCREEN_HEIGHT);
 
-    if (pixels == NULL)
+    if (pixels_texture == NULL)
     {
         SDL_Log("Unabled to create pixels texture: %s\n", SDL_GetError());
         return;
@@ -73,50 +74,35 @@ void RaycasterModuleImport(ecs_world_t *world)
 void RaycasterUpdate(ecs_iter_t *it)
 {
     ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
-    BufferData *buffer_data = ecs_singleton_get_mut(it->world, BufferData);
-
     const Position *position = ecs_get(it->world, player, Position);
     const Direction *direction = ecs_get(it->world, player, Direction);
     const Plane *plane = ecs_get(it->world, player, Plane);
 
-    // clear buffer -> write to buffer -> write buffer to texture
-    memset(buffer_data->buffer, 0, buffer_data->size);
+    BufferData *buffer_data = ecs_singleton_get_mut(it->world, BufferData);
+
+    clear_buffer(buffer_data);
     write_to_buffer(position, direction, plane, buffer_data);
+    update_texture_from_buffer(pixels_texture, buffer_data);
 }
 
 void RaycasterDraw(ecs_iter_t *it)
 {
     SDL_Renderer *renderer = ecs_singleton_get(it->world, Renderer)->value;
 
-    SDL_RenderTexture(renderer, pixels, NULL, NULL);
+    SDL_RenderTexture(renderer, pixels_texture, NULL, NULL);
     SDL_RenderPresent(renderer);
     SDL_RenderClear(renderer);
 }
 
-void RaycasterDestroy(ecs_iter_t *it)
+void clear_buffer(BufferData *buffer_data)
 {
-    SDL_Renderer *renderer = ecs_get(it->world, ecs_id(Renderer), Renderer)->value;
-
-    SDL_DestroyRenderer(renderer);
-    SDL_Quit();
-
-    printf("Game closed.\n");
+    memset(buffer_data->buffer, 0, buffer_data->size);
 }
 
-/*
-Notes on this function:
-Lodev's implementation of raycaster DDA algorithm
-*/
 void write_to_buffer(const Position *position, const Direction *direction, const Plane *plane, BufferData *buffer_data)
 {
     int screen_width = buffer_data->width;
     int screen_height = buffer_data->height;
-
-    texture_pixels = NULL;
-    texture_pitch = screen_width * sizeof(Uint32);
-
-    if (!SDL_LockTexture(pixels, NULL, &texture_pixels, &texture_pitch))
-        return;
 
     // This loop draws the whole frame
     for (int x = 0; x < screen_width; x++)
@@ -168,10 +154,22 @@ void write_to_buffer(const Position *position, const Direction *direction, const
             buffer_data->buffer[x + (y * screen_width)] = color;
         }
     }
+}
 
-    memcpy(texture_pixels, buffer_data->buffer, buffer_data->size);
+void update_texture_from_buffer(SDL_Texture *dest_pixels_texture, BufferData *src_buffer_data)
+{
+    void *pixels_buffer = NULL;
+    int texture_pitch = src_buffer_data->width * sizeof(Uint32);
 
-    SDL_UnlockTexture(pixels);
+    if (!SDL_LockTexture(dest_pixels_texture, NULL, &pixels_buffer, &texture_pitch))
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error locking pixels texture.");
+        return;
+    }
+
+    memcpy(pixels_buffer, src_buffer_data->buffer, src_buffer_data->size);
+
+    SDL_UnlockTexture(pixels_texture);
 }
 
 void dda(const Position *position, const Direction *direction, const Plane *plane, int screen_x, int screen_width, int screen_height, struct DdaData *output_dda_data)

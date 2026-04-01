@@ -33,4 +33,6 @@ typedef struct GameStatus
 
 void handle_events(SDL_Event *event, GameStatus *game_status);
 
+void game_manager_cleanup(ecs_world_t *world, void *ctx);
+
 #endif
