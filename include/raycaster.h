@@ -33,8 +33,8 @@ void RaycasterModuleImport(ecs_world_t *world);
 #define MAP_COORD_MAX ROWS
 #define LINE_WIDTH 1
 
-#define TEXTURE_WIDTH 64
-#define TEXTURE_HEIGHT 64
+#define TEXTURE_WIDTH 256
+#define TEXTURE_HEIGHT 256
 
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;
