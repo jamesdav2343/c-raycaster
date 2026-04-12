@@ -13,7 +13,7 @@
 #define ANGLE_MULTIPLIER 3
 #define LINE_LENGTH_MULTIPLIER 20
 
-#define MOVEMENT_SPEED 5.0f
+#define MOVEMENT_SPEED 2.5f
 #define ROTATION_SPEED 1.5f
 
 #define PLAYER_ENTITY_NAME "_player_"
