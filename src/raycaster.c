@@ -61,20 +61,21 @@ void RaycasterModuleImport(ecs_world_t *world)
         }
     }
 
-    SDL_Surface *wall_raw = IMG_Load("assets/wall.png");
-    SDL_Surface *wall = SDL_ConvertSurface(wall_raw, SDL_PIXELFORMAT_ARGB8888);
-    SDL_DestroySurface(wall_raw);
+    SDL_Surface *wall = IMG_Load("assets/Wall_1.png");
+    SDL_Surface *wall_1 = SDL_ConvertSurface(wall, SDL_PIXELFORMAT_ARGB8888);
+    SDL_DestroySurface(wall);
 
-    for (int x = 0; x < TEXTURE_WIDTH; x++)
-    {
-        for (int y = 0; y < TEXTURE_HEIGHT; y++)
-        {
-            // flat red texture with black cross
-            textures[0][x + (TEXTURE_WIDTH * y)] = 0xFFFF0000 * (x != y && x != TEXTURE_WIDTH - y);
-        }
-    }
+    SDL_Surface *floor = IMG_Load("assets/Floor_1.png");
+    SDL_Surface *floor_1 = SDL_ConvertSurface(floor, SDL_PIXELFORMAT_ARGB8888);
+    SDL_DestroySurface(floor);
 
-    textures[1] = (Uint32 *)wall->pixels;
+    SDL_Surface *ceiling = IMG_Load("assets/Ceiling_1.png");
+    SDL_Surface *ceiling_1 = SDL_ConvertSurface(ceiling, SDL_PIXELFORMAT_ARGB8888);
+    SDL_DestroySurface(ceiling);
+
+    textures[0] = (Uint32 *)wall_1->pixels;
+    textures[1] = (Uint32 *)floor_1->pixels;
+    textures[2] = (Uint32 *)ceiling_1->pixels;
 }
 
 void RaycasterUpdate(ecs_iter_t *it)
@@ -179,12 +180,12 @@ void write_to_buffer(const Position *position, const Direction *direction, const
             Uint32 color;
 
             // floor
-            color = textures[0][TEXTURE_WIDTH * ty + tx];
+            color = textures[1][TEXTURE_WIDTH * ty + tx];
             color = (color >> 1) & 0xFF7F7F7F; // Makes floor slightly darker
             dest_buffer_data->buffer[x + (y * screen_width)] = color;
 
             // // ceiling (symmetrical, at screenHeight - y - 1 instead of y)
-            color = textures[0][TEXTURE_WIDTH * ty + tx];
+            color = textures[2][TEXTURE_WIDTH * ty + tx];
             color = (color >> 1) & 0xFF7F7F7F; // Makes floor slightly darker
             dest_buffer_data->buffer[x + ((screen_height - y - 1) * screen_width)] = color;
         }
@@ -256,7 +257,7 @@ void write_vertical_wall_strip(struct DdaData *dda_data, const Position *positio
         int tex_y = (int)texture_coord & (TEXTURE_HEIGHT - 1);
         texture_coord += step;
 
-        Uint32 color = textures[1][TEXTURE_HEIGHT * tex_y + tex_x];
+        Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
 
         // make color darker for y-sides
         if (dda_data->side_orientation == VERTICAL)
