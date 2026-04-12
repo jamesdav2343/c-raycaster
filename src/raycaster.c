@@ -61,6 +61,10 @@ void RaycasterModuleImport(ecs_world_t *world)
         }
     }
 
+    SDL_Surface *wall_raw = IMG_Load("assets/wall.png");
+    SDL_Surface *wall = SDL_ConvertSurface(wall_raw, SDL_PIXELFORMAT_ARGB8888);
+    SDL_DestroySurface(wall_raw);
+
     for (int x = 0; x < TEXTURE_WIDTH; x++)
     {
         for (int y = 0; y < TEXTURE_HEIGHT; y++)
@@ -69,6 +73,8 @@ void RaycasterModuleImport(ecs_world_t *world)
             textures[0][x + (TEXTURE_WIDTH * y)] = 0xFFFF0000 * (x != y && x != TEXTURE_WIDTH - y);
         }
     }
+
+    textures[1] = (Uint32 *)wall->pixels;
 }
 
 void RaycasterUpdate(ecs_iter_t *it)
@@ -104,24 +110,25 @@ void write_to_buffer(const Position *position, const Direction *direction, const
     int screen_width = dest_buffer_data->width;
     int screen_height = dest_buffer_data->height;
 
+    // rayDir for leftmost ray (x = 0) and rightmost ray (x = w)
+    float rayDirX0 = direction->x - plane->x;
+    float rayDirY0 = direction->y - plane->y;
+    float rayDirX1 = direction->x + plane->x;
+    float rayDirY1 = direction->y + plane->y;
+
+    // Vertical position of the camera.
+    // NOTE: with 0.5, it's exactly in the center between floor and ceiling,
+    // matching also how the walls are being raycasted. For different values
+    // than 0.5, a separate loop must be done for ceiling and floor since
+    // they're no longer symmetrical.
+    float posZ = 0.5 * screen_height;
+
     // Floor casting
     for (int y = screen_height / 2 + 1; y < screen_height; ++y)
     {
-        // rayDir for leftmost ray (x = 0) and rightmost ray (x = w)
-        float rayDirX0 = direction->x - plane->x;
-        float rayDirY0 = direction->y - plane->y;
-        float rayDirX1 = direction->x + plane->x;
-        float rayDirY1 = direction->y + plane->y;
 
         // Current y position compared to the center of the screen (the horizon)
         int p = y - screen_height / 2;
-
-        // Vertical position of the camera.
-        // NOTE: with 0.5, it's exactly in the center between floor and ceiling,
-        // matching also how the walls are being raycasted. For different values
-        // than 0.5, a separate loop must be done for ceiling and floor since
-        // they're no longer symmetrical.
-        float posZ = 0.5 * screen_height;
 
         // Horizontal distance from the camera to the floor for the current row.
         // 0.5 is the z position exactly in the middle between floor and ceiling.
@@ -137,16 +144,16 @@ void write_to_buffer(const Position *position, const Direction *direction, const
         // posZ units. It will travel the same ratio horizontally. The ratio was
         // 1 / p for going through the camera plane, so to go posZ times farther
         // to reach the floor, we get that the total horizontal distance is posZ / p.
-        float rowDistance = posZ / p;
+        float row_distance = posZ / p;
 
         // calculate the real world step vector we have to add for each x (parallel to camera plane)
         // adding step by step avoids multiplications with a weight in the inner loop
-        float floorStepX = rowDistance * (rayDirX1 - rayDirX0) / screen_width;
-        float floorStepY = rowDistance * (rayDirY1 - rayDirY0) / screen_width;
+        float floor_step_x = row_distance * (rayDirX1 - rayDirX0) / screen_width;
+        float floor_step_y = row_distance * (rayDirY1 - rayDirY0) / screen_width;
 
         // real world coordinates of the leftmost column. This will be updated as we step to the right.
-        float floorX = position->x + rowDistance * rayDirX0;
-        float floorY = position->y + rowDistance * rayDirY0;
+        float floorX = position->x + row_distance * rayDirX0;
+        float floorY = position->y + row_distance * rayDirY0;
 
         for (int x = 0; x < screen_width; ++x)
         {
@@ -158,8 +165,8 @@ void write_to_buffer(const Position *position, const Direction *direction, const
             int tx = (int)(TEXTURE_WIDTH * (floorX - cellX)) & (TEXTURE_WIDTH - 1);
             int ty = (int)(TEXTURE_HEIGHT * (floorY - cellY)) & (TEXTURE_HEIGHT - 1);
 
-            floorX += floorStepX;
-            floorY += floorStepY;
+            floorX += floor_step_x;
+            floorY += floor_step_y;
 
             // choose texture and draw the pixel
             // int checkerBoardPattern = (int(cellX + cellY)) & 1;
@@ -249,7 +256,7 @@ void write_vertical_wall_strip(struct DdaData *dda_data, const Position *positio
         int tex_y = (int)texture_coord & (TEXTURE_HEIGHT - 1);
         texture_coord += step;
 
-        Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
+        Uint32 color = textures[1][TEXTURE_HEIGHT * tex_y + tex_x];
 
         // make color darker for y-sides
         if (dda_data->side_orientation == VERTICAL)
