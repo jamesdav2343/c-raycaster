@@ -105,6 +105,83 @@ void write_to_buffer(const Position *position, const Direction *direction, const
     int screen_height = dest_buffer_data->height;
 
     // Floor casting
+    for (int y = screen_height / 2 + 1; y < screen_height; ++y)
+    {
+        // rayDir for leftmost ray (x = 0) and rightmost ray (x = w)
+        float rayDirX0 = direction->x - plane->x;
+        float rayDirY0 = direction->y - plane->y;
+        float rayDirX1 = direction->x + plane->x;
+        float rayDirY1 = direction->y + plane->y;
+
+        // Current y position compared to the center of the screen (the horizon)
+        int p = y - screen_height / 2;
+
+        // Vertical position of the camera.
+        // NOTE: with 0.5, it's exactly in the center between floor and ceiling,
+        // matching also how the walls are being raycasted. For different values
+        // than 0.5, a separate loop must be done for ceiling and floor since
+        // they're no longer symmetrical.
+        float posZ = 0.5 * screen_height;
+
+        // Horizontal distance from the camera to the floor for the current row.
+        // 0.5 is the z position exactly in the middle between floor and ceiling.
+        // NOTE: this is affine texture mapping, which is not perspective correct
+        // except for perfectly horizontal and vertical surfaces like the floor.
+        // NOTE: this formula is explained as follows: The camera ray goes through
+        // the following two points: the camera itself, which is at a certain
+        // height (posZ), and a point in front of the camera (through an imagined
+        // vertical plane containing the screen pixels) with horizontal distance
+        // 1 from the camera, and vertical position p lower than posZ (posZ - p). When going
+        // through that point, the line has vertically traveled by p units and
+        // horizontally by 1 unit. To hit the floor, it instead needs to travel by
+        // posZ units. It will travel the same ratio horizontally. The ratio was
+        // 1 / p for going through the camera plane, so to go posZ times farther
+        // to reach the floor, we get that the total horizontal distance is posZ / p.
+        float rowDistance = posZ / p;
+
+        // calculate the real world step vector we have to add for each x (parallel to camera plane)
+        // adding step by step avoids multiplications with a weight in the inner loop
+        float floorStepX = rowDistance * (rayDirX1 - rayDirX0) / screen_width;
+        float floorStepY = rowDistance * (rayDirY1 - rayDirY0) / screen_width;
+
+        // real world coordinates of the leftmost column. This will be updated as we step to the right.
+        float floorX = position->x + rowDistance * rayDirX0;
+        float floorY = position->y + rowDistance * rayDirY0;
+
+        for (int x = 0; x < screen_width; ++x)
+        {
+            // the cell coord is simply got from the integer parts of floorX and floorY
+            int cellX = (int)(floorX);
+            int cellY = (int)(floorY);
+
+            // get the texture coordinate from the fractional part
+            int tx = (int)(TEXTURE_WIDTH * (floorX - cellX)) & (TEXTURE_WIDTH - 1);
+            int ty = (int)(TEXTURE_HEIGHT * (floorY - cellY)) & (TEXTURE_HEIGHT - 1);
+
+            floorX += floorStepX;
+            floorY += floorStepY;
+
+            // choose texture and draw the pixel
+            // int checkerBoardPattern = (int(cellX + cellY)) & 1;
+            // int floorTexture;
+            // if (checkerBoardPattern == 0)
+            //     floorTexture = 3;
+            // else
+            //     floorTexture = 4;
+            // int ceilingTexture = 6;
+            Uint32 color;
+
+            // floor
+            color = textures[0][TEXTURE_WIDTH * ty + tx];
+            color = (color >> 1) & 0xFF7F7F7F; // Makes floor slightly darker
+            dest_buffer_data->buffer[x + (y * screen_width)] = color;
+
+            // // ceiling (symmetrical, at screenHeight - y - 1 instead of y)
+            color = textures[0][TEXTURE_WIDTH * ty + tx];
+            color = (color >> 1) & 0xFF7F7F7F; // Makes floor slightly darker
+            dest_buffer_data->buffer[x + ((screen_height - y - 1) * screen_width)] = color;
+        }
+    }
 
     // Wall casting for the frame
     for (int x = 0; x < screen_width; x++)
