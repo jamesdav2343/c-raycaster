@@ -15,6 +15,7 @@ set(SRC_FILES
     sprite.c
     camera.c
     math_utils.c
+    general_utils.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
@@ -23,6 +24,7 @@ find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 find_package(SDL3_ttf CONFIG REQUIRED)
 find_package(flecs CONFIG REQUIRED)
+find_package(inih REQUIRED)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
@@ -32,3 +34,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_image::SDL3_image-static)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_ttf::SDL3_ttf-static)
 target_link_libraries(${PROJECT_NAME} PRIVATE flecs::flecs_static)
+target_link_libraries(${PROJECT_NAME} PRIVATE inih::inih)

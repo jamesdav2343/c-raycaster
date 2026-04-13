@@ -8,6 +8,7 @@
 #include "map.h"
 #include "window.h"
 #include "game_manager.h"
+#include "general_utils.h"
 
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
 extern ECS_SYSTEM_DECLARE(RaycasterDraw);
@@ -16,25 +17,14 @@ extern ECS_COMPONENT_DECLARE(BufferData);
 
 void RaycasterModuleImport(ecs_world_t *world);
 
-// Small amount for accuracy with floating point values.
-#define EPSILON 0.0001
-#define DOF_MAX 8
-#define MAP_COORD_MIN 0
-
-// Custom raycasting-engine (RCE) math helper (not a part of math.h)
-// 3pi/2
-#define RCE_3PI_2 3 * M_PI / 2
-
-// One degree in radians
-#define RCE_1D 0.0174532925
-#define RAY_COUNT 60
-
-// This macro assumes the map has an equal number of rows and columns.
-#define MAP_COORD_MAX ROWS
-#define LINE_WIDTH 1
-
 #define TEXTURE_WIDTH 128
 #define TEXTURE_HEIGHT 128
+
+#define BLACK 0x00000000
+#define MAX_SHADOW 0.9f
+#define MIN_SHADOW 0.0f
+
+#define ALPHA_OPAQUE_HEX 0xFF000000
 
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;
@@ -84,6 +74,11 @@ void blit_buffer_to_texture(SDL_Texture *dest_pixels_texture, BufferData *src_bu
 Writes a vertical wall strip to the pixel buffer.
 */
 void write_vertical_wall_strip(struct DdaData *dda_data, const Position *position, int current_x, BufferData *dest_buffer_data);
+
+/*
+Writes the horizontal wall and ceiling strips to the pixel buffer.
+*/
+void write_floor_and_celing(const Position *position, const Direction *direction, const Plane *plane, BufferData *dest_buffer_data, int screen_width, int screen_height);
 
 void RaycasterUpdate(ecs_iter_t *it);
 

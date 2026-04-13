@@ -42,8 +42,6 @@ void handle_events(SDL_Event *event, GameStatus *game_status)
     {
         game_status->is_running = false;
     }
-
-    Vector2 inputDirection = get_input_direction();
 }
 
 void game_manager_cleanup(ecs_world_t *world, void *ctx)
@@ -56,4 +54,8 @@ void game_manager_cleanup(ecs_world_t *world, void *ctx)
     SDL_Quit();
 
     printf("Game closed.\n");
+}
+
+void load_config(const char *path)
+{
 }
