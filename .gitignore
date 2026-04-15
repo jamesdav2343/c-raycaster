@@ -2,6 +2,7 @@ out/
 venv/
 **.DS_Store
 .vscode
+test/
 
 build/
 CMakeLists.txt.user
