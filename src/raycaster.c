@@ -12,6 +12,92 @@ static Uint32 *textures[8];
 const int DRAW_START_MIN = 0;
 const int DRAW_END_MAX = SCREEN_HEIGHT;
 
+// SPRITE STUFF
+#define numSprites 19
+
+Sprite sprite[numSprites] =
+    {
+        {14, 160, 3}, // green light in front of playerstart
+                      // green lights in every room
+                      // {18.5, 4.5, 10},
+                      // {10.0, 4.5, 10},
+                      // {10.0, 12.5, 10},
+                      // {3.5, 6.5, 10},
+                      // {3.5, 20.5, 10},
+                      // {3.5, 14.5, 10},
+                      // {14.5, 20.5, 10},
+
+        // // row of pillars in front of wall: fisheye test
+        // {18.5, 10.5, 9},
+        // {18.5, 11.5, 9},
+        // {18.5, 12.5, 9},
+
+        // // some barrels around the map
+        // {21.5, 1.5, 8},
+        // {15.5, 1.5, 8},
+        // {16.0, 1.8, 8},
+        // {16.2, 1.2, 8},
+        // {3.5, 2.5, 8},
+        // {9.5, 15.5, 8},
+        // {10.0, 15.1, 8},
+        // {10.5, 15.8, 8},
+};
+
+double ZBuffer[SCREEN_WIDTH];
+
+// arrays used to sort the sprites
+int spriteOrder[numSprites];
+double spriteDistance[numSprites];
+
+// function used to sort the sprites
+typedef struct
+{
+    double dist;
+    int order;
+} SpriteSortPair;
+
+// Comparison function for qsort (ascending order)
+static int compareSprites(const void *a, const void *b)
+{
+    const SpriteSortPair *p1 = (const SpriteSortPair *)a;
+    const SpriteSortPair *p2 = (const SpriteSortPair *)b;
+
+    if (p1->dist < p2->dist)
+        return -1;
+    if (p1->dist > p2->dist)
+        return 1;
+    return 0;
+}
+
+static void sortSprites(int *order, double *dist, int amount)
+{
+    if (amount <= 0)
+        return;
+
+    // Allocate temporary array for sorting
+    SpriteSortPair *sprites = malloc(sizeof(SpriteSortPair) * amount);
+    if (!sprites)
+        return; // Handle allocation failure
+
+    for (int i = 0; i < amount; i++)
+    {
+        sprites[i].dist = dist[i];
+        sprites[i].order = order[i];
+    }
+
+    // Sort the array in ascending order
+    qsort(sprites, amount, sizeof(SpriteSortPair), compareSprites);
+
+    // Restore in reverse order (farthest to nearest)
+    for (int i = 0; i < amount; i++)
+    {
+        dist[i] = sprites[amount - i - 1].dist;
+        order[i] = sprites[amount - i - 1].order;
+    }
+
+    free(sprites);
+}
+
 void RaycasterModuleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, RaycasterModule);
@@ -73,9 +159,15 @@ void RaycasterModuleImport(ecs_world_t *world)
     SDL_Surface *ceiling_1 = SDL_ConvertSurface(ceiling, SDL_PIXELFORMAT_ARGB8888);
     SDL_DestroySurface(ceiling);
 
+    SDL_Surface *pillar = IMG_Load("test/pillar.png");
+    SDL_Surface *pillar_1 = SDL_ConvertSurface(pillar, SDL_PIXELFORMAT_ARGB8888);
+    SDL_DestroySurface(pillar);
+
     textures[0] = (Uint32 *)wall_1->pixels;
     textures[1] = (Uint32 *)floor_1->pixels;
     textures[2] = (Uint32 *)ceiling_1->pixels;
+
+    textures[3] = (Uint32 *)pillar_1->pixels;
 }
 
 void RaycasterUpdate(ecs_iter_t *it)
@@ -120,6 +212,85 @@ void write_to_buffer(const Position *position, const Direction *direction, const
 
         dda(position, direction, plane, x, screen_width, screen_height, &dda_data);
         write_vertical_wall_strip(&dda_data, position, x, dest_buffer_data);
+
+        ZBuffer[x] = dda_data.perp_wall_dist;
+    }
+
+    // SPRITE CASTING
+    /**
+     * foreach sprite
+     * draw the sprite similar to how walls and floors are drawn
+     */
+
+    for (int i = 0; i < numSprites; i++)
+    {
+        spriteOrder[i] = i;
+        spriteDistance[i] = ((position->x - sprite[i].x) * (position->x - sprite[i].x) + (position->y - sprite[i].y) * (position->y - sprite[i].y)); // sqrt not taken, unneeded
+    }
+
+    sortSprites(spriteOrder, spriteDistance, numSprites);
+
+    // after sorting the sprites, do the projection and draw them
+    for (int i = 0; i < numSprites; i++)
+    {
+        // translate sprite position to relative to camera
+        double spriteX = sprite[spriteOrder[i]].x - position->x;
+        double spriteY = sprite[spriteOrder[i]].y - position->y;
+
+        // transform sprite with the inverse camera matrix
+        //  [ planeX   dirX ] -1                                       [ dirY      -dirX ]
+        //  [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
+        //  [ planeY   dirY ]                                          [ -planeY  planeX ]
+
+        double invDet = 1.0 / (plane->x * direction->y - direction->x * plane->y); // required for correct matrix multiplication
+
+        double transformX = invDet * (direction->y * spriteX - direction->x * spriteY);
+        double transformY = invDet * (-plane->y * spriteX + plane->x * spriteY); // this is actually the depth inside the screen, that what Z is in 3D
+
+        int spriteScreenX = (int)((screen_width / 2) * (1 + transformX / transformY));
+
+        // calculate height of the sprite on screen
+        int spriteHeight = abs((int)(screen_height / (transformY))); // using 'transformY' instead of the real distance prevents fisheye
+        // calculate lowest and highest pixel to fill in current stripe
+        int drawStartY = -spriteHeight / 2 + screen_height / 2;
+        if (drawStartY < 0)
+            drawStartY = 0;
+        int drawEndY = spriteHeight / 2 + screen_height / 2;
+        if (drawEndY >= screen_height)
+            drawEndY = screen_height - 1;
+
+        // calculate width of the sprite
+        int spriteWidth = abs((int)(screen_height / (transformY)));
+        int drawStartX = -spriteWidth / 2 + spriteScreenX;
+        if (drawStartX < 0)
+            drawStartX = 0;
+        int drawEndX = spriteWidth / 2 + spriteScreenX;
+        if (drawEndX >= screen_width)
+            drawEndX = screen_width - 1;
+
+        // loop through every vertical stripe of the sprite on screen
+        for (int stripe = drawStartX; stripe < drawEndX; stripe++)
+        {
+            int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * SPRITE_TEXTURE_WIDTH / spriteWidth) / 256;
+            // the conditions in the if are:
+            // 1) it's in front of camera plane so you don't see things behind you
+            // 2) it's on the screen (left)
+            // 3) it's on the screen (right)
+            // 4) ZBuffer, with perpendicular distance
+            if (transformY > 0 && stripe > 0 && stripe < screen_width && transformY < ZBuffer[stripe])
+            {
+                for (int y = drawStartY; y < drawEndY; y++) // for every pixel of the current stripe
+                {
+                    int d = (y) * 256 - screen_height * 128 + spriteHeight * 128; // 256 and 128 factors to avoid floats
+                    int texY = ((d * SPRITE_TEXTURE_HEIGHT) / spriteHeight) / 256;
+                    Uint32 color = textures[sprite[spriteOrder[i]].texture][SPRITE_TEXTURE_WIDTH * texY + texX]; // get current color from the texture
+                    if ((color & 0x00FFFFFF) != 0)
+                    {
+                        dest_buffer_data->buffer[stripe + (y * dest_buffer_data->width)] = color; // paint pixel if it isn't black, black is the invisible color
+                    }
+                }
+            }
+        }
     }
 }
 

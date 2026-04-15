@@ -20,6 +20,9 @@ void RaycasterModuleImport(ecs_world_t *world);
 #define TEXTURE_WIDTH 128
 #define TEXTURE_HEIGHT 128
 
+#define SPRITE_TEXTURE_WIDTH 64
+#define SPRITE_TEXTURE_HEIGHT 64
+
 #define BLACK 0x00000000
 #define MAX_SHADOW 0.9f
 #define MIN_SHADOW 0.0f

@@ -24,7 +24,7 @@ void PlayerModuleImport(ecs_world_t *world)
     ecs_set(world, Player, Direction, {-1, 0});
     ecs_set(world, Player, Plane, {0, 0.66});
 
-    ecs_set(world, Player, Sprite, {0, 0, 20, 20});
+    // ecs_set(world, Player, Sprite, {0, 0, 20, 20});
     ecs_set(world, Player, Controller, {0, 0});
 }
 

@@ -8,7 +8,9 @@ extern ECS_COMPONENT_DECLARE(Sprite);
 
 typedef struct Sprite
 {
-    SDL_FRect rect;
+    double x;
+    double y;
+    int texture;
 } Sprite;
 
 void SpriteModuleImport(ecs_world_t *world);
