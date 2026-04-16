@@ -17,7 +17,7 @@ const int DRAW_END_MAX = SCREEN_HEIGHT;
 
 Sprite sprite[numSprites] =
     {
-        {10, 160, 3}, // pillar
+        {10, 160, 3},  // pillar
         {12, 160, 4}}; // light
 
 double ZBuffer[SCREEN_WIDTH];
@@ -324,7 +324,7 @@ void write_vertical_wall_strip(struct DdaData *dda_data, const Position *positio
     // Starting texture coordinate
     double texture_coord = (draw_start - buffer_height / 2 + line_height / 2) * step;
 
-    float darkness_level = fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, dda_data->perp_wall_dist / 5));
+    float darkness_level = fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, dda_data->perp_wall_dist / SHADOW_LEVEL));
 
     for (int y = draw_start; y < draw_end; y++)
     {
@@ -433,7 +433,12 @@ void write_floor_and_celing(const Position *position, const Direction *direction
         float floor_x = position->x + row_distance * ray_dir_x_0;
         float floor_y = position->y + row_distance * ray_dir_y_0;
 
-        float darkness_level = 1.0f - fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, (float)y / SCREEN_HEIGHT)) + 0.5f;
+        float darkness_level = 1.0f - fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, ((float)y / screen_height) / SHADOW_LEVEL));
+
+        if (y == 800)
+        {
+            printf("darkness level: %f\n", darkness_level);
+        }
 
         for (int x = 0; x < screen_width; ++x)
         {
