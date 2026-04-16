@@ -17,31 +17,8 @@ const int DRAW_END_MAX = SCREEN_HEIGHT;
 
 Sprite sprite[numSprites] =
     {
-        {14, 160, 3}, // green light in front of playerstart
-                      // green lights in every room
-                      // {18.5, 4.5, 10},
-                      // {10.0, 4.5, 10},
-                      // {10.0, 12.5, 10},
-                      // {3.5, 6.5, 10},
-                      // {3.5, 20.5, 10},
-                      // {3.5, 14.5, 10},
-                      // {14.5, 20.5, 10},
-
-        // // row of pillars in front of wall: fisheye test
-        // {18.5, 10.5, 9},
-        // {18.5, 11.5, 9},
-        // {18.5, 12.5, 9},
-
-        // // some barrels around the map
-        // {21.5, 1.5, 8},
-        // {15.5, 1.5, 8},
-        // {16.0, 1.8, 8},
-        // {16.2, 1.2, 8},
-        // {3.5, 2.5, 8},
-        // {9.5, 15.5, 8},
-        // {10.0, 15.1, 8},
-        // {10.5, 15.8, 8},
-};
+        {10, 160, 3}, // pillar
+        {12, 160, 4}}; // light
 
 double ZBuffer[SCREEN_WIDTH];
 
@@ -163,11 +140,16 @@ void RaycasterModuleImport(ecs_world_t *world)
     SDL_Surface *pillar_1 = SDL_ConvertSurface(pillar, SDL_PIXELFORMAT_ARGB8888);
     SDL_DestroySurface(pillar);
 
+    SDL_Surface *light = IMG_Load("test/greenlight.png");
+    SDL_Surface *light_1 = SDL_ConvertSurface(light, SDL_PIXELFORMAT_ABGR8888);
+    SDL_DestroySurface(light);
+
     textures[0] = (Uint32 *)wall_1->pixels;
     textures[1] = (Uint32 *)floor_1->pixels;
     textures[2] = (Uint32 *)ceiling_1->pixels;
 
     textures[3] = (Uint32 *)pillar_1->pixels;
+    textures[4] = (Uint32 *)light_1->pixels;
 }
 
 void RaycasterUpdate(ecs_iter_t *it)
