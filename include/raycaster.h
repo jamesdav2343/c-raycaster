@@ -9,6 +9,7 @@
 #include "window.h"
 #include "game_manager.h"
 #include "general_utils.h"
+#include "lighting.h"
 
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
 extern ECS_SYSTEM_DECLARE(RaycasterDraw);

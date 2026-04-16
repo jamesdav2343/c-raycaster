@@ -16,6 +16,7 @@ set(SRC_FILES
     camera.c
     math_utils.c
     general_utils.c
+    lighting.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)

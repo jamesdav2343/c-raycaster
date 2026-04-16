@@ -17,8 +17,8 @@ const int DRAW_END_MAX = SCREEN_HEIGHT;
 
 Sprite sprite[numSprites] =
     {
-        {10, 160, 3},  // pillar
-        {12, 160, 4}}; // light
+        {12, 14, 3},  // pillar
+        {12, 15, 4}}; // light
 
 double ZBuffer[SCREEN_WIDTH];
 
@@ -435,15 +435,16 @@ void write_floor_and_celing(const Position *position, const Direction *direction
 
         float darkness_level = 1.0f - fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, ((float)y / screen_height) / SHADOW_LEVEL));
 
-        // if (y == 800)
-        // {
-        //     printf("darkness level: %f\n", darkness_level);
-        // }
-
         for (int x = 0; x < screen_width; ++x)
         {
-            int cell_x = (int)(floor_x);
-            int cell_y = (int)(floor_y);
+            int cell_x = (int)floor_x;
+            int cell_y = (int)floor_y;
+
+            if (light_map[cell_x][cell_y])
+            {
+                // printf("lm: %f\n", light_map[cell_x][cell_y]);
+                darkness_level = light_map[cell_x][cell_y];
+            }
 
             int texture_x = (int)(TEXTURE_WIDTH * (floor_x - cell_x)) & (TEXTURE_WIDTH - 1);
             int texture_y = (int)(TEXTURE_HEIGHT * (floor_y - cell_y)) & (TEXTURE_HEIGHT - 1);

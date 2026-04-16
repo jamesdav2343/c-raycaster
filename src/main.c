@@ -5,11 +5,14 @@
 #include "window.h"
 #include "game_manager.h"
 #include "player.h"
+#include "lighting.h"
 
 #define FPS 60
 
 int main(int argc, char *argv[])
 {
+    bake_light_map();
+
     SDL_Event event;
     GameStatus game_status;
 
@@ -22,7 +25,7 @@ int main(int argc, char *argv[])
 
     // Instantiates a player from a prefab
     ecs_entity_t player = ecs_new_w_pair(world, EcsIsA, Player);
-    ecs_set(world, player, Position, {14, 160});
+    ecs_set(world, player, Position, {12, 15});
     ecs_set_name(world, player, PLAYER_ENTITY_NAME);
 
     // Instantiates the raycaster entity
