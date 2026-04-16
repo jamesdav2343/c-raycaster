@@ -187,9 +187,11 @@ void RaycasterUpdate(ecs_iter_t *it)
 void RaycasterDraw(ecs_iter_t *it)
 {
     SDL_Renderer *renderer = ecs_singleton_get(it->world, Renderer)->value;
+    SDL_Window *window = ecs_singleton_get(it->world, Window)->value;
 
     SDL_RenderTexture(renderer, pixels_texture, NULL, NULL);
     SDL_RenderPresent(renderer);
+    SDL_UpdateWindowSurface(window);
     SDL_RenderClear(renderer);
 }
 

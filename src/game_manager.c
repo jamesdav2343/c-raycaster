@@ -19,9 +19,20 @@ void GameManagerModuleImport(ecs_world_t *world)
         return;
     }
 
-    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer))
+    window = SDL_CreateWindow(GAME_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
+
+    if (!window)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_Surface *window_surface = SDL_GetWindowSurface(window);
+    renderer = SDL_CreateSoftwareRenderer(window_surface);
+
+    if (!renderer)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create software renderer: %s", SDL_GetError());
         return;
     }
 
