@@ -433,12 +433,12 @@ void write_floor_and_celing(const Position *position, const Direction *direction
         float floor_x = position->x + row_distance * ray_dir_x_0;
         float floor_y = position->y + row_distance * ray_dir_y_0;
 
-        float darkness_level = 1.0f - fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, ((float)y / screen_height) / SHADOW_LEVEL));
-
         for (int x = 0; x < screen_width; ++x)
         {
             int cell_x = (int)floor_x;
             int cell_y = (int)floor_y;
+
+            float darkness_level = 1.0f - fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, ((float)y / screen_height) / SHADOW_LEVEL));
 
             if (light_map[cell_x][cell_y])
             {
