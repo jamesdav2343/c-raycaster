@@ -435,10 +435,10 @@ void write_floor_and_celing(const Position *position, const Direction *direction
 
         float darkness_level = 1.0f - fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, ((float)y / screen_height) / SHADOW_LEVEL));
 
-        if (y == 800)
-        {
-            printf("darkness level: %f\n", darkness_level);
-        }
+        // if (y == 800)
+        // {
+        //     printf("darkness level: %f\n", darkness_level);
+        // }
 
         for (int x = 0; x < screen_width; ++x)
         {
