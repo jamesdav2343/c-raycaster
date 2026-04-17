@@ -1,32 +1,15 @@
 #include "general_utils.h"
 
-Uint32 color_lerp(Uint32 color1, Uint32 color2, double t)
+Uint32 interpolate(int color1, int color2, float fraction)
 {
-    if (t < 0)
-        return color1;
-    if (t >= 1)
-        return color2;
+    unsigned char r1 = (color1 >> 16) & 0xff;
+    unsigned char r2 = (color2 >> 16) & 0xff;
+    unsigned char g1 = (color1 >> 8) & 0xff;
+    unsigned char g2 = (color2 >> 8) & 0xff;
+    unsigned char b1 = color1 & 0xff;
+    unsigned char b2 = color2 & 0xff;
 
-    Uint32 r1 = (color1 >> 16) & 0xFF;
-    Uint32 r2 = (color2 >> 16) & 0xFF;
-
-    Uint32 g1 = (color1 >> 8) & 0xFF;
-    Uint32 g2 = (color2 >> 8) & 0xFF;
-
-    Uint32 b1 = (color1) & 0xFF;
-    Uint32 b2 = (color2) & 0xFF;
-
-    r1 = (1 - t) * r1 + t * r2;
-    if (r1 > 0xFF)
-        r1 = 0xFF;
-
-    g1 = (1 - t) * g1 + t * g2;
-    if (g1 > 0xFF)
-        g1 = 0xFF;
-
-    b1 = (1 - t) * b1 + t * b2;
-    if (b1 > 0xFF)
-        b1 = 0xFF;
-
-    return (r1 << 16) + (g1 << 8) + (b1);
+    return (int)((r2 - r1) * fraction + r1) << 16 |
+           (int)((g2 - g1) * fraction + g1) << 8 |
+           (int)((b2 - b1) * fraction + b1);
 }

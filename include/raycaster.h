@@ -30,7 +30,6 @@ void RaycasterModuleImport(ecs_world_t *world);
 
 #define SHADOW_LEVEL 1 // 1 (minumum) to whatever
 
-#define ALPHA_OPAQUE_HEX 0xFF000000
 
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;

@@ -2,6 +2,7 @@
 #define LIGHTING_H
 
 #include "map.h"
+#include "transform.h"
 
 extern float light_map[ROWS][COLS];
 

@@ -324,7 +324,7 @@ void write_vertical_wall_strip(struct DdaData *dda_data, const Position *positio
     // Starting texture coordinate
     double texture_coord = (draw_start - buffer_height / 2 + line_height / 2) * step;
 
-    float darkness_level = fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, dda_data->perp_wall_dist / SHADOW_LEVEL));
+    // float darkness_level = fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, dda_data->perp_wall_dist / SHADOW_LEVEL));
 
     for (int y = draw_start; y < draw_end; y++)
     {
@@ -334,7 +334,7 @@ void write_vertical_wall_strip(struct DdaData *dda_data, const Position *positio
 
         Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
 
-        color = color_lerp(color, BLACK, darkness_level) | 0xFF000000;
+        // color = color_lerp(color, BLACK, darkness_level) | 0xFF000000;
 
         dest_buffer_data->buffer[current_x + (y * buffer_width)] = color;
     }
@@ -438,12 +438,13 @@ void write_floor_and_celing(const Position *position, const Direction *direction
             int cell_x = (int)floor_x;
             int cell_y = (int)floor_y;
 
-            float darkness_level = 1.0f - fminf(MAX_SHADOW, fmaxf(MIN_SHADOW, ((float)y / screen_height) / SHADOW_LEVEL));
+            // Base lighting should be slightly darknenned floors and ceilings
+            float base_lighting_level = 0.5f;
 
             if (light_map[cell_x][cell_y])
             {
                 // printf("lm: %f\n", light_map[cell_x][cell_y]);
-                darkness_level = light_map[cell_x][cell_y];
+                base_lighting_level = 1.0f - light_map[cell_x][cell_y];
             }
 
             int texture_x = (int)(TEXTURE_WIDTH * (floor_x - cell_x)) & (TEXTURE_WIDTH - 1);
@@ -456,13 +457,13 @@ void write_floor_and_celing(const Position *position, const Direction *direction
 
             // Floor colour
             colour = textures[1][TEXTURE_WIDTH * texture_y + texture_x];
-            colour = color_lerp(colour, BLACK, darkness_level) | ALPHA_OPAQUE_HEX;
+            colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
             dest_buffer_data->buffer[x + (y * screen_width)] = colour;
 
             // Ceiling colour
             colour = textures[2][TEXTURE_WIDTH * texture_y + texture_x];
-            colour = color_lerp(colour, BLACK, darkness_level) | ALPHA_OPAQUE_HEX;
+            colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             dest_buffer_data->buffer[x + ((screen_height - y - 1) * screen_width)] = colour;
         }
     }

@@ -1,5 +1,8 @@
 #include "lighting.h"
 
+#define DECAY 0.3f
+#define NUM_DIRECTIONS 4
+
 float light_map[ROWS][COLS] =
     {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -47,28 +50,30 @@ void bake_light_map()
     {
         for (int x = 0; x < COLS; x++)
         {
-            if (light_map[x][y] > 0)
+            if (light_map[x][y] <= 0)
+                continue;
+
+            int base_x = x;
+            int base_y = y;
+
+            printf("found light at x: %d, y: %d\n", base_x, base_y);
+
+            float decayed_value = light_map[base_x][base_y] - DECAY;
+
+            // while (decayed_value > 0)
+            // {
+            Vector2I directions[NUM_DIRECTIONS] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+            for (int i = 0; i < NUM_DIRECTIONS; i++)
             {
-                printf("found light at %d, %d\n", y, x);
+                int map_x = base_x + directions[i].x;
+                int map_y = base_y + directions[i].y;
 
-                // iterate over the neighboring cells
-                // assing lower values for them
-                // render these
-
-                // north
-                light_map[x][y - 1] = 0.5f;
-
-                // south
-                light_map[x][y + 1] = 0.5f;
-
-                // east
-                light_map[x - 1][y] = 0.5f;
-
-                // west
-                light_map[x + 1][y] = 0.5f;
-
-                goto yeppers;
+                light_map[map_x][map_y] = decayed_value;
             }
+            // }
+
+            goto yeppers;
         }
     }
 
