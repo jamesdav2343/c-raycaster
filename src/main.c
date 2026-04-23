@@ -1,22 +1,23 @@
-#include <SDL3/SDL.h>
-#include <stdio.h>
-#include <flecs.h>
-#include "map.h"
-#include "window.h"
 #include "game_manager.h"
-#include "player.h"
+#include "ht.h"
 #include "lighting.h"
+#include "map.h"
+#include "player.h"
+#include "window.h"
+#include <SDL3/SDL.h>
+#include <flecs.h>
+#include <stdio.h>
 
 #define FPS 60
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     bake_light_map();
 
     SDL_Event event;
     GameStatus game_status;
 
-    ecs_world_t *world = ecs_init();
+    ecs_world_t* world = ecs_init();
     game_status.is_running = true;
 
     ECS_IMPORT(world, GameManagerModule);
@@ -25,7 +26,7 @@ int main(int argc, char *argv[])
 
     // Instantiates a player from a prefab
     ecs_entity_t player = ecs_new_w_pair(world, EcsIsA, Player);
-    ecs_set(world, player, Position, {12, 15});
+    ecs_set(world, player, Position, { 12, 15 });
     ecs_set_name(world, player, PLAYER_ENTITY_NAME);
 
     // Instantiates the raycaster entity
@@ -34,8 +35,9 @@ int main(int argc, char *argv[])
 
     ecs_set_target_fps(world, FPS);
 
-    while (game_status.is_running)
-    {
+    printf("Creating a hash table here\n");
+
+    while (game_status.is_running) {
         handle_events(&event, &game_status);
 
         ecs_progress(world, 0);
