@@ -17,6 +17,7 @@ set(SRC_FILES
     math_utils.c
     general_utils.c
     lighting.c
+    ht.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
