@@ -27,6 +27,7 @@ find_package(SDL3_image CONFIG REQUIRED)
 find_package(SDL3_ttf CONFIG REQUIRED)
 find_package(flecs CONFIG REQUIRED)
 find_package(inih REQUIRED)
+find_package(glib REQUIRED)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
@@ -37,3 +38,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_image::SDL3_image-static)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_ttf::SDL3_ttf-static)
 target_link_libraries(${PROJECT_NAME} PRIVATE flecs::flecs_static)
 target_link_libraries(${PROJECT_NAME} PRIVATE inih::inih)
+target_link_libraries(${PROJECT_NAME} PRIVATE glib::glib)

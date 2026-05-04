@@ -4,6 +4,7 @@ sdl_image/3.2.4
 sdl_ttf/3.2.2
 flecs/4.1.1
 inih/62
+glib/2.85.3
 
 [generators]
 CMakeDeps

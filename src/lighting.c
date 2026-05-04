@@ -1,4 +1,5 @@
 #include "lighting.h"
+#include <glib.h>
 
 #define DECAY 0.3f
 #define NUM_DIRECTIONS 4
@@ -32,6 +33,8 @@ float light_map[ROWS][COLS] =
 
 void bake_light_map()
 {
+    GQueue *deque = g_queue_new();
+
     /**
      * foreach torch in light_map
      * do
