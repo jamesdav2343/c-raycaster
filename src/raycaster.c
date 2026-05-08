@@ -396,7 +396,7 @@ void dda(const Position *position, const Direction *direction, const Plane *plan
             side_orientation = VERTICAL;
         }
 
-        if (world_map[ray_origin.x][ray_origin.y] > 0)
+        if (world_map[ray_origin.x + (ray_origin.y * COLS)] > 0)
             has_hit_side = true;
     }
 
@@ -441,11 +441,11 @@ void write_floor_and_celing(const Position *position, const Direction *direction
             // Base lighting should be slightly darknenned floors and ceilings
             float base_lighting_level = 0.5f;
 
-            if (light_map[cell_x][cell_y])
-            {
-                // printf("lm: %f\n", light_map[cell_x][cell_y]);
-                base_lighting_level = 1.0f - light_map[cell_x][cell_y];
-            }
+            // if (light_map[cell_x][cell_y])
+            // {
+            //     // printf("lm: %f\n", light_map[cell_x][cell_y]);
+            //     base_lighting_level = 1.0f - light_map[cell_x][cell_y];
+            // }
 
             int texture_x = (int)(TEXTURE_WIDTH * (floor_x - cell_x)) & (TEXTURE_WIDTH - 1);
             int texture_y = (int)(TEXTURE_HEIGHT * (floor_y - cell_y)) & (TEXTURE_HEIGHT - 1);

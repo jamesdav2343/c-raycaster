@@ -7,14 +7,14 @@
 
 #include <SDL3/SDL.h>
 
-extern Uint8 world_map[ROWS][COLS];
+extern Uint8 world_map[ROWS * COLS];
 
 typedef struct MapData
 {
     int x_tiles_count;
     int y_tiles_count;
     SDL_FRect *tile;
-    Uint8 grid[ROWS][COLS];
+    Uint8 grid[ROWS * COLS];
 } MapData;
 
 enum rect_colour

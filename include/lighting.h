@@ -4,7 +4,7 @@
 #include "map.h"
 #include "transform.h"
 
-extern float light_map[ROWS][COLS];
+extern Uint8 light_map[ROWS * COLS];
 
 void bake_light_map();
 
