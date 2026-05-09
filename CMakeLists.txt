@@ -18,6 +18,7 @@ set(SRC_FILES
     general_utils.c
     lighting.c
     ht.c
+    debug.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
