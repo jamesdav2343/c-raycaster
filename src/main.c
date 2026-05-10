@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 
     // Instantiates a player from a prefab
     ecs_entity_t player = ecs_new_w_pair(world, EcsIsA, Player);
-    ecs_set(world, player, Position, { 12, 15 });
+    ecs_set(world, player, Position, { 5, 5 });
     ecs_set_name(world, player, PLAYER_ENTITY_NAME);
 
     // Instantiates the raycaster entity

@@ -6,6 +6,7 @@
 #include "lighting.h"
 #include "map.h"
 #include "player.h"
+#include "types.h"
 #include "window.h"
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
@@ -32,8 +33,6 @@ void RaycasterModuleImport(ecs_world_t* world);
 
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;
-
-enum Orientation { HORIZONTAL = 0, VERTICAL = 1 };
 
 // Holds data outputted from the DDA algorithm.
 struct DdaData {

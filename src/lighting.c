@@ -17,7 +17,8 @@ void bake_light_map()
 {
     size_t* light_sources = calloc(NUM_LIGHTS, sizeof(size_t));
 
-    light_sources[0] = 27;
+    light_sources[0] = 3 + (2 * COLS); // x: 3, y: 2
+    // light_sources[1] = 6 + (2 * COLS); // x: 6, y: 2
     light_sources[1] = 46;
     light_sources[2] = 406;
 
@@ -98,4 +99,23 @@ void bake_light_map()
     }
 
     free(light_sources);
+}
+
+float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orientation side_orientation)
+{
+    // if h and coming from south (negative y direction), then access cell below (y + 1)
+    if (side_orientation == HORIZONTAL) {
+        if (ray_direction.y < 0)
+            return light_map[x + ((y + 1) * COLS)];
+        else
+            return light_map[x + ((y - 1) * COLS)];
+    } else {
+        if (ray_direction.x < 0)
+            return light_map[x + 1 + (y * COLS)];
+        else
+            return light_map[x - 1 + (y * COLS)];
+    }
+
+    // if vertical, and x is
+    return 0;
 }

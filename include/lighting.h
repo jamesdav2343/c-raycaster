@@ -3,9 +3,12 @@
 
 #include "map.h"
 #include "transform.h"
+#include "types.h"
 
 extern float light_map[ROWS * COLS];
 
 void bake_light_map();
+
+float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orientation side_orientation);
 
 #endif

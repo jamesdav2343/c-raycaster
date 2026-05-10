@@ -1,4 +1,5 @@
 #include "raycaster.h"
+#include "types.h"
 
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDestroy);
@@ -317,11 +318,22 @@ void write_vertical_wall_strip(
     // Starting texture coordinate
     double texture_coord = (draw_start - buffer_height / 2 + line_height / 2) * step;
 
-    float base_lighting_level = light_map[dda_data->wall_coordinates.x + (dda_data->wall_coordinates.y * COLS)];
+    bool is_centre = current_x == SCREEN_WIDTH / 2;
 
-    // if (current_x == SCREEN_WIDTH / 2) {
-    //     printf("base lightining for centre: %f\n", base_lighting_level);
-    // }
+    // Need to use the ray direction to determine which index the wall should take its light value from
+    if (is_centre) {
+        const char* ori = dda_data->side_orientation == VERTICAL ? "vertical" : "horizontal";
+
+        printf("for the wall in the centre:\n");
+        printf("wall coordinates: x = %d, y = %d\n", dda_data->wall_coordinates.x, dda_data->wall_coordinates.y);
+        printf("side orientation: %s\n", ori);
+        printf("ray direction: ");
+        vector2_print(dda_data->ray_direction);
+    }
+
+    float base_lighting_level = 1.0f
+        - get_wall_light_intensity(dda_data->wall_coordinates.x, dda_data->wall_coordinates.y, dda_data->ray_direction,
+            dda_data->side_orientation);
 
     for (int y = draw_start; y < draw_end; y++) {
         // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
@@ -330,8 +342,11 @@ void write_vertical_wall_strip(
 
         Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
 
-        if (current_x == SCREEN_WIDTH / 2) {
-            color = 0xFFFFFFFF;
+        // debugging
+        color = 0xFFFFFFFF;
+
+        if (is_centre) {
+            color = 0xFFFF0000;
         }
 
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
@@ -347,6 +362,10 @@ void dda(const Position* position, const Direction* direction, const Plane* plan
 
     Vector2 ray_direction = { direction->x + plane->x * camera_x, direction->y + plane->y * camera_x };
     Vector2I ray_origin = { (int)floorf(position->x), (int)floorf(position->y) };
+
+    if (screen_x == SCREEN_WIDTH / 2) {
+        printf("ray origin: %d, %d\n", ray_origin.x, ray_origin.y);
+    }
 
     float dist_to_x;
     float dist_to_y;
@@ -380,11 +399,11 @@ void dda(const Position* position, const Direction* direction, const Plane* plan
         if (dist_to_x < dist_to_y) {
             dist_to_x += dist_between_cols;
             ray_origin.x += step_x;
-            side_orientation = HORIZONTAL;
+            side_orientation = VERTICAL; // Crossing vertical lines
         } else {
             dist_to_y += dist_between_rows;
             ray_origin.y += step_y;
-            side_orientation = VERTICAL;
+            side_orientation = HORIZONTAL; // Crossing horizontal lines
         }
 
         if (world_map[ray_origin.x + (ray_origin.y * COLS)] > 0)
@@ -400,7 +419,7 @@ void dda(const Position* position, const Direction* direction, const Plane* plan
     output_dda_data->dist_to_x = dist_to_x;
     output_dda_data->dist_to_y = dist_to_y;
     output_dda_data->perp_wall_dist
-        = side_orientation == HORIZONTAL ? dist_to_x - dist_between_cols : dist_to_y - dist_between_rows;
+        = side_orientation == VERTICAL ? dist_to_x - dist_between_cols : dist_to_y - dist_between_rows;
     output_dda_data->wall_coordinates = ray_origin;
 }
 
@@ -444,12 +463,25 @@ void write_floor_and_celing(const Position* position, const Direction* direction
 
             // Floor colour
             colour = textures[1][TEXTURE_WIDTH * texture_y + texture_x];
+
+            // debugging
+            colour = 0xFFFFFFFF;
+
+            // If its the light source, draw in red
+            if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
+                colour = 0xFFFF0000;
+            }
+
             colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
             dest_buffer_data->buffer[x + (y * screen_width)] = colour;
 
             // Ceiling colour
             colour = textures[2][TEXTURE_WIDTH * texture_y + texture_x];
+
+            // debugging
+            colour = 0xFFFFFFFF;
+
             colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             dest_buffer_data->buffer[x + ((screen_height - y - 1) * screen_width)] = colour;
         }
