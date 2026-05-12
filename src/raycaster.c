@@ -321,15 +321,15 @@ void write_vertical_wall_strip(
     bool is_centre = current_x == SCREEN_WIDTH / 2;
 
     // Need to use the ray direction to determine which index the wall should take its light value from
-    if (is_centre) {
-        const char* ori = dda_data->side_orientation == VERTICAL ? "vertical" : "horizontal";
+    // if (is_centre) {
+    //     const char* ori = dda_data->side_orientation == VERTICAL ? "vertical" : "horizontal";
 
-        printf("for the wall in the centre:\n");
-        printf("wall coordinates: x = %d, y = %d\n", dda_data->wall_coordinates.x, dda_data->wall_coordinates.y);
-        printf("side orientation: %s\n", ori);
-        printf("ray direction: ");
-        vector2_print(dda_data->ray_direction);
-    }
+    //     printf("for the wall in the centre:\n");
+    //     printf("wall coordinates: x = %d, y = %d\n", dda_data->wall_coordinates.x, dda_data->wall_coordinates.y);
+    //     printf("side orientation: %s\n", ori);
+    //     printf("ray direction: ");
+    //     vector2_print(dda_data->ray_direction);
+    // }
 
     float base_lighting_level = 1.0f
         - get_wall_light_intensity(dda_data->wall_coordinates.x, dda_data->wall_coordinates.y, dda_data->ray_direction,
@@ -363,9 +363,9 @@ void dda(const Position* position, const Direction* direction, const Plane* plan
     Vector2 ray_direction = { direction->x + plane->x * camera_x, direction->y + plane->y * camera_x };
     Vector2I ray_origin = { (int)floorf(position->x), (int)floorf(position->y) };
 
-    if (screen_x == SCREEN_WIDTH / 2) {
-        printf("ray origin: %d, %d\n", ray_origin.x, ray_origin.y);
-    }
+    // if (screen_x == SCREEN_WIDTH / 2) {
+    //     printf("ray origin: %d, %d\n", ray_origin.x, ray_origin.y);
+    // }
 
     float dist_to_x;
     float dist_to_y;

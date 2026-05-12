@@ -7,8 +7,9 @@
 #include <flecs.h>
 #include "transform.h"
 #include "sprite.h"
-#include "controller.h"
 #include "camera.h"
+#include "components/input.h"
+#include "systems/input.h"
 
 #define ANGLE_MULTIPLIER 3
 #define LINE_LENGTH_MULTIPLIER 20

@@ -9,7 +9,7 @@ void PlayerModuleImport(ecs_world_t *world)
     ECS_IMPORT(world, TransformModule);
     ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
-    ECS_IMPORT(world, ControllerModule);
+    ECS_IMPORT(world, ControllerComponents);
 
     ecs_system(
         world, {.entity = ecs_entity(world, {.name = "PlayerUpdate", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),

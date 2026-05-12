@@ -7,8 +7,8 @@
 #include "window.h"
 #include "map.h"
 #include "player.h"
-#include "controller.h"
 #include "raycaster.h"
+#include "components/input.h"
 
 #define GAME_TITLE "raycaster-engine"
 

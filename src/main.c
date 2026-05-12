@@ -20,6 +20,9 @@ int main(int argc, char* argv[])
     ecs_world_t* world = ecs_init();
     game_status.is_running = true;
 
+    // Not sure if theres a way so this is done automatically
+    ECS_IMPORT(world, ControllerSystems);
+
     ECS_IMPORT(world, GameManagerModule);
     ECS_IMPORT(world, PlayerModule);
     ECS_IMPORT(world, RaycasterModule);

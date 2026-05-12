@@ -8,7 +8,6 @@ set(SRC_FILES
     window.c
     game_manager.c
     player.c
-    controller.c
     transform.c
     ui.c
     raycaster.c
@@ -19,6 +18,8 @@ set(SRC_FILES
     lighting.c
     ht.c
     debug.c
+    components/input.c
+    systems/input.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)
