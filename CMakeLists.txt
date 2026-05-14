@@ -8,18 +8,19 @@ set(SRC_FILES
     window.c
     game_manager.c
     player.c
-    transform.c
     ui.c
     raycaster.c
     sprite.c
     camera.c
     math_utils.c
     general_utils.c
-    lighting.c
     ht.c
     debug.c
     components/input.c
+    components/transform.c
     systems/input.c
+    systems/transform.c
+    lighting.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)

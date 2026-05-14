@@ -75,7 +75,7 @@ void RaycasterModuleImport(ecs_world_t* world)
 {
     ECS_MODULE(world, RaycasterModule);
 
-    ECS_IMPORT(world, TransformModule);
+    ECS_IMPORT(world, TransformComponents);
     ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
 

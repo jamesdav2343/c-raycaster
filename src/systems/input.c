@@ -2,12 +2,13 @@
 
 ECS_SYSTEM_DECLARE(ControllerUpdate);
 
-void ControllerSystemsImport(ecs_world_t* world)
+void InputSystemsImport(ecs_world_t* world)
 {
-    ECS_IMPORT(world, ControllerComponents);
-    printf("\nafter being imported here\n");
+    ECS_IMPORT(world, InputComponents);
 
     ECS_SYSTEM_DEFINE(world, ControllerUpdate, EcsOnUpdate, Controller);
+
+    ECS_MODULE(world, InputSystems);
 }
 
 // Returns a vector of the current keyboard input direction.

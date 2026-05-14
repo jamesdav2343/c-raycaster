@@ -1,6 +1,7 @@
 #include "lighting.h"
 #include "debug.h"
 #include <glib.h>
+#include <math.h>
 
 #define NUM_DIRECTIONS 4
 #define NUM_LIGHTS 3
@@ -11,7 +12,7 @@
 
 float light_map[ROWS * COLS] = { 0 };
 
-void test(gpointer data, gpointer user_data) { printf("%zu\n", data); }
+// void test(gpointer data, gpointer user_data) { printf("%zu\n", data); }
 
 void bake_light_map()
 {
@@ -27,7 +28,7 @@ void bake_light_map()
     Uint8 light_intensities[ROWS * COLS] = { 0 };
 
     for (int i = 0; i < NUM_LIGHTS; i++) {
-        g_queue_push_tail(light_queue, light_sources[i]);
+        g_queue_push_tail(light_queue, (gpointer)light_sources[i]);
         light_intensities[light_sources[i]] = INITIAL_INTENSITY;
     }
 
@@ -51,7 +52,7 @@ void bake_light_map()
             if (!world_map[left_neighbour] && light_int > 0
                 && light_intensities[left_neighbour] <= light_int - INTENSITY_DIFF) {
                 light_intensities[left_neighbour] = light_int - DECAY;
-                g_queue_push_tail(light_queue, left_neighbour);
+                g_queue_push_tail(light_queue, (gpointer)left_neighbour);
             }
         }
 
@@ -61,7 +62,7 @@ void bake_light_map()
             if (!world_map[right_neighbour] && light_int > 0
                 && light_intensities[right_neighbour] <= light_int - INTENSITY_DIFF) {
                 light_intensities[right_neighbour] = light_int - DECAY;
-                g_queue_push_tail(light_queue, right_neighbour);
+                g_queue_push_tail(light_queue, (gpointer)right_neighbour);
             }
         }
 
@@ -71,7 +72,7 @@ void bake_light_map()
             if (!world_map[bottom_neighbour] && light_int > 0
                 && light_intensities[bottom_neighbour] <= light_int - INTENSITY_DIFF) {
                 light_intensities[bottom_neighbour] = light_int - DECAY;
-                g_queue_push_tail(light_queue, bottom_neighbour);
+                g_queue_push_tail(light_queue, (gpointer)bottom_neighbour);
             }
         }
 
@@ -81,7 +82,7 @@ void bake_light_map()
             if (!world_map[top_neighbour] && light_int > 0
                 && light_intensities[top_neighbour] <= light_int - INTENSITY_DIFF) {
                 light_intensities[top_neighbour] = light_int - DECAY;
-                g_queue_push_tail(light_queue, top_neighbour);
+                g_queue_push_tail(light_queue, (gpointer)top_neighbour);
             }
         }
     }

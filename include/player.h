@@ -5,7 +5,6 @@
 #include <SDL3/SDL_render.h>
 #include <math.h>
 #include <flecs.h>
-#include "transform.h"
 #include "sprite.h"
 #include "camera.h"
 #include "components/input.h"

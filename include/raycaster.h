@@ -1,6 +1,7 @@
 #ifndef RAYCASTER_H
 #define RAYCASTER_H
 
+#include "components/transform.h"
 #include "game_manager.h"
 #include "general_utils.h"
 #include "lighting.h"

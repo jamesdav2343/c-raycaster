@@ -3,6 +3,8 @@
 #include "lighting.h"
 #include "map.h"
 #include "player.h"
+#include "systems/input.h"
+#include "systems/transform.h"
 #include "window.h"
 #include <SDL3/SDL.h>
 #include <flecs.h>
@@ -12,16 +14,17 @@
 
 int main(int argc, char* argv[])
 {
+    ecs_world_t* world = ecs_init();
+    // Not sure if theres a way so this is done automatically
+    ECS_IMPORT(world, TransformSystems);
+    ECS_IMPORT(world, InputSystems);
+
     bake_light_map();
 
     SDL_Event event;
     GameStatus game_status;
 
-    ecs_world_t* world = ecs_init();
     game_status.is_running = true;
-
-    // Not sure if theres a way so this is done automatically
-    ECS_IMPORT(world, ControllerSystems);
 
     ECS_IMPORT(world, GameManagerModule);
     ECS_IMPORT(world, PlayerModule);
@@ -37,8 +40,6 @@ int main(int argc, char* argv[])
     ecs_add(world, raycaster, Raycaster);
 
     ecs_set_target_fps(world, FPS);
-
-    printf("Creating a hash table here\n");
 
     while (game_status.is_running) {
         handle_events(&event, &game_status);

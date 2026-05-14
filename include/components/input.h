@@ -7,7 +7,7 @@
 
 extern ECS_COMPONENT_DECLARE(Controller);
 
-void ControllerComponentsImport(ecs_world_t* world);
+void InputComponentsImport(ecs_world_t* world);
 
 typedef struct Controller {
     int x;
