@@ -9,7 +9,6 @@ set(SRC_FILES
     game_manager.c
     player.c
     ui.c
-    raycaster.c
     sprite.c
     camera.c
     math_utils.c
@@ -18,8 +17,10 @@ set(SRC_FILES
     debug.c
     components/input.c
     components/transform.c
+    components/raycaster.c
     systems/input.c
     systems/transform.c
+    systems/raycaster.c
     lighting.c
 )
 

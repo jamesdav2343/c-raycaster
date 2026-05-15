@@ -1,11 +1,9 @@
-#include "raycaster.h"
+#include "systems/raycaster.h"
 #include "types.h"
 
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDestroy);
 ECS_SYSTEM_DECLARE(RaycasterDraw);
-ECS_TAG_DECLARE(Raycaster);
-ECS_COMPONENT_DECLARE(BufferData);
 
 static SDL_Texture* pixels_texture;
 static Uint32* textures[8];
@@ -71,18 +69,16 @@ static void sortSprites(int* order, double* dist, int amount)
     free(sprites);
 }
 
-void RaycasterModuleImport(ecs_world_t* world)
+void RaycasterSystemsImport(ecs_world_t* world)
 {
-    ECS_MODULE(world, RaycasterModule);
-
+    ECS_IMPORT(world, RaycasterComponents);
     ECS_IMPORT(world, TransformComponents);
     ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
+    ECS_IMPORT(world, GameManagerModule);
 
-    ECS_TAG_DEFINE(world, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterDraw, EcsOnStore, Raycaster);
-    ECS_COMPONENT_DEFINE(world, BufferData);
 
     SDL_Renderer* renderer = ecs_singleton_get(world, Renderer)->value;
 
@@ -139,6 +135,8 @@ void RaycasterModuleImport(ecs_world_t* world)
 
     textures[3] = (Uint32*)pillar_1->pixels;
     textures[4] = (Uint32*)light_1->pixels;
+
+    ECS_MODULE(world, RaycasterSystems);
 }
 
 void RaycasterUpdate(ecs_iter_t* it)

@@ -4,6 +4,7 @@
 #include "map.h"
 #include "player.h"
 #include "systems/input.h"
+#include "systems/raycaster.h"
 #include "systems/transform.h"
 #include "window.h"
 #include <SDL3/SDL.h>
@@ -18,6 +19,7 @@ int main(int argc, char* argv[])
     // Not sure if theres a way so this is done automatically
     ECS_IMPORT(world, TransformSystems);
     ECS_IMPORT(world, InputSystems);
+    ECS_IMPORT(world, RaycasterSystems);
 
     bake_light_map();
 
@@ -26,9 +28,7 @@ int main(int argc, char* argv[])
 
     game_status.is_running = true;
 
-    ECS_IMPORT(world, GameManagerModule);
     ECS_IMPORT(world, PlayerModule);
-    ECS_IMPORT(world, RaycasterModule);
 
     // Instantiates a player from a prefab
     ecs_entity_t player = ecs_new_w_pair(world, EcsIsA, Player);

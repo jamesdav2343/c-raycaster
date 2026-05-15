@@ -1,6 +1,7 @@
-#ifndef RAYCASTER_H
-#define RAYCASTER_H
+#ifndef RAYCASTER_SYSTEMS_H
+#define RAYCASTER_SYSTEMS_H
 
+#include "components/raycaster.h"
 #include "components/transform.h"
 #include "game_manager.h"
 #include "general_utils.h"
@@ -14,11 +15,10 @@
 #include <flecs.h>
 
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
+// extern ECS_SYSTEM_DECLARE(RaycasterDestroy);
 extern ECS_SYSTEM_DECLARE(RaycasterDraw);
-extern ECS_TAG_DECLARE(Raycaster);
-extern ECS_COMPONENT_DECLARE(BufferData);
 
-void RaycasterModuleImport(ecs_world_t* world);
+void RaycasterSystemsImport(ecs_world_t* world);
 
 #define TEXTURE_WIDTH 128
 #define TEXTURE_HEIGHT 128
@@ -34,26 +34,6 @@ void RaycasterModuleImport(ecs_world_t* world);
 
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;
-
-// Holds data outputted from the DDA algorithm.
-struct DdaData {
-    enum Orientation side_orientation;
-    Vector2 ray_direction;
-    float dist_to_x;
-    float dist_to_y;
-    float perp_wall_dist;
-    Vector2I wall_coordinates;
-};
-
-typedef struct BufferData {
-    Uint32* buffer;
-    int width;
-    int height;
-    size_t size;
-} BufferData;
-
-// The pixel buffer that will be rendered.
-// extern Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
 /*
 Casts a ray.
