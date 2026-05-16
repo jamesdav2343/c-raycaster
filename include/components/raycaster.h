@@ -6,28 +6,29 @@
 #include <flecs.h>
 
 extern ECS_TAG_DECLARE(Raycaster);
-extern ECS_COMPONENT_DECLARE(BufferData);
+extern ECS_COMPONENT_DECLARE(PixelBuffer);
 
 void RaycasterComponentsImport(ecs_world_t* world);
 
-// Holds data outputted from the DDA algorithm.
-struct DdaData {
-    enum Orientation side_orientation;
-    Vector2 ray_direction;
-    float dist_to_x;
-    float dist_to_y;
-    float perp_wall_dist;
-    Vector2I wall_coordinates;
-};
-
-typedef struct BufferData {
-    Uint32* buffer;
+typedef struct PixelBuffer {
+    Uint32* pixels;
     int width;
     int height;
     size_t size;
-} BufferData;
+} PixelBuffer;
 
-// The pixel buffer that will be rendered.
-// extern Uint32 buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+typedef struct Wall {
+    enum Orientation side_orientation;
+    Vector2I wall_position;
+} Wall;
+
+// Holds data outputted from the DDA algorithm.
+typedef struct Ray {
+    Vector2 direction;
+    float dist_to_x;
+    float dist_to_y;
+    float perp_wall_dist;
+    Wall wall;
+} Ray;
 
 #endif

@@ -35,33 +35,6 @@ void RaycasterSystemsImport(ecs_world_t* world);
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;
 
-/*
-Casts a ray.
-Uses the digital differential analyser algorithm.
-Great explanation of the algorithm here:
-https://aaaa.sh/creatures/dda-algorithm-interactive/
-*/
-void dda(const Position* position, const Direction* direction, const Plane* plane, int screen_x, int screen_width,
-    int screen_height, struct DdaData* output_dda_data);
-
-void clear_buffer(BufferData* buffer_data);
-
-void write_to_buffer(const Position* position, const Direction* direction, const Plane* plane, BufferData* buffer_data);
-
-void blit_buffer_to_texture(SDL_Texture* dest_pixels_texture, BufferData* src_buffer_data);
-
-/*
-Writes a vertical wall strip to the pixel buffer.
-*/
-void write_vertical_wall_strip(
-    struct DdaData* dda_data, const Position* position, int current_x, BufferData* dest_buffer_data);
-
-/*
-Writes the horizontal wall and ceiling strips to the pixel buffer.
-*/
-void write_floor_and_celing(const Position* position, const Direction* direction, const Plane* plane,
-    BufferData* dest_buffer_data, int screen_width, int screen_height);
-
 void RaycasterUpdate(ecs_iter_t* it);
 
 void RaycasterDraw(ecs_iter_t* it);
