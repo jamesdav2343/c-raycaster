@@ -3,7 +3,6 @@
 
 #include "components/raycaster.h"
 #include "components/transform.h"
-#include "game_manager.h"
 #include "general_utils.h"
 #include "lighting.h"
 #include "map.h"

@@ -6,7 +6,6 @@ set(SRC_FILES
     main.c
     map.c
     window.c
-    game_manager.c
     player.c
     ui.c
     sprite.c
@@ -18,9 +17,11 @@ set(SRC_FILES
     components/input.c
     components/transform.c
     components/raycaster.c
+    components/game_manager.c
     systems/input.c
     systems/transform.c
     systems/raycaster.c
+    systems/game_manager.c
     lighting.c
 )
 

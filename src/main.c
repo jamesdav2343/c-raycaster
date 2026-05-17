@@ -1,4 +1,3 @@
-#include "game_manager.h"
 #include "ht.h"
 #include "lighting.h"
 #include "map.h"
@@ -6,6 +5,7 @@
 #include "systems/input.h"
 #include "systems/raycaster.h"
 #include "systems/transform.h"
+#include "systems/game_manager.h"
 #include "window.h"
 #include <SDL3/SDL.h>
 #include <flecs.h>
@@ -16,7 +16,8 @@
 int main(int argc, char* argv[])
 {
     ecs_world_t* world = ecs_init();
-    // Not sure if theres a way so this is done automatically
+
+    ECS_IMPORT(world, GameManagerSystems);
     ECS_IMPORT(world, TransformSystems);
     ECS_IMPORT(world, InputSystems);
     ECS_IMPORT(world, RaycasterSystems);

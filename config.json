@@ -1,7 +1,10 @@
 {
   "video": {
-    "resolution": "1920x1080",
-    "fps_limit": 60,
+    "resolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "fps_cap": 60,
     "enable_lighting": true
   },
   "textures": {

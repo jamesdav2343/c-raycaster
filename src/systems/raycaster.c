@@ -1,4 +1,5 @@
 #include "systems/raycaster.h"
+#include "components/game_manager.h"
 #include "types.h"
 
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
@@ -382,9 +383,9 @@ void RaycasterSystemsImport(ecs_world_t* world)
 {
     ECS_IMPORT(world, RaycasterComponents);
     ECS_IMPORT(world, TransformComponents);
+    ECS_IMPORT(world, GameManagerComponents);
     ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
-    ECS_IMPORT(world, GameManagerModule);
 
     ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterDraw, EcsOnStore, Raycaster);

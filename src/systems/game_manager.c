@@ -1,19 +1,27 @@
-#include "game_manager.h"
+#include "systems/game_manager.h"
 #include "general_utils.h"
 
-ECS_COMPONENT_DECLARE(Window);
-ECS_COMPONENT_DECLARE(Renderer);
-
-void GameManagerModuleImport(ecs_world_t* world)
+void GameManagerSystemsImport(ecs_world_t* world)
 {
-    cJSON* config = load_config_json(CONFIG_FILE);
+    ECS_IMPORT(world, GameManagerComponents);
 
-    printf("%s\n", cJSON_Print(config));
+    // Config loading
+    cJSON* json = load_config_json(CONFIG_FILE);
+    cJSON* video_config = cJSON_GetObjectItem(json, "video");
 
-    ECS_MODULE(world, GameManager);
+    cJSON* resolution = cJSON_GetObjectItem(video_config, "resolution");
+    cJSON* screen_width = cJSON_GetObjectItem(resolution, "width");
+    cJSON* screen_height = cJSON_GetObjectItem(resolution, "height");
 
-    ECS_COMPONENT_DEFINE(world, Window);
-    ECS_COMPONENT_DEFINE(world, Renderer);
+    cJSON* fps_cap = cJSON_GetObjectItem(video_config, "fps_cap");
+
+    ecs_singleton_set(world, VideoConfig, { { screen_width->valueint, screen_height->valueint }, fps_cap->valueint });
+
+    printf("%s\n", cJSON_Print(json));
+
+    printf("%d\n", ecs_singleton_get(world, VideoConfig)->fps_cap);
+
+    ECS_MODULE(world, GameManagerSystems);
 
     SDL_Window* window;
     SDL_Renderer* renderer;
@@ -45,6 +53,8 @@ void GameManagerModuleImport(ecs_world_t* world)
     ecs_singleton_set(world, Renderer, { renderer });
 
     ecs_atfini(world, game_manager_cleanup, NULL);
+
+    cJSON_Delete(json);
 }
 
 void handle_events(SDL_Event* event, GameStatus* game_status)
