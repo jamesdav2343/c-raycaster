@@ -202,12 +202,12 @@ static void dda(const Position* position, const Direction* direction, const Plan
             has_hit_side = true;
     }
 
-    ray_out->wall.side_orientation = side_orientation;
     ray_out->direction = ray_direction;
     ray_out->dist_to_x = dist_to_x;
     ray_out->dist_to_y = dist_to_y;
     ray_out->perp_wall_dist
         = side_orientation == VERTICAL ? dist_to_x - dist_between_cols : dist_to_y - dist_between_rows;
+    ray_out->wall.side_orientation = side_orientation;
     ray_out->wall.wall_position = ray_origin;
 }
 
@@ -409,42 +409,6 @@ void RaycasterSystemsImport(ecs_world_t* world)
     ecs_set_ptr(world, ecs_id(PixelBuffer), PixelBuffer, &buffer_data);
 
     // Generate some textures
-    for (int i = 0; i < 8; i++) {
-        textures[i] = (Uint32*)malloc(TEXTURE_HEIGHT * TEXTURE_WIDTH * sizeof(Uint32));
-
-        if (textures[i] == NULL) {
-            SDL_Log("Unable to init textures.");
-            return;
-        }
-    }
-
-    SDL_Surface* wall = IMG_Load("assets/Wall_1.png");
-    SDL_Surface* wall_1 = SDL_ConvertSurface(wall, SDL_PIXELFORMAT_ARGB8888);
-    SDL_DestroySurface(wall);
-
-    SDL_Surface* floor = IMG_Load("assets/Floor_1.png");
-    SDL_Surface* floor_1 = SDL_ConvertSurface(floor, SDL_PIXELFORMAT_ARGB8888);
-    SDL_DestroySurface(floor);
-
-    SDL_Surface* ceiling = IMG_Load("assets/Ceiling_1.png");
-    SDL_Surface* ceiling_1 = SDL_ConvertSurface(ceiling, SDL_PIXELFORMAT_ARGB8888);
-    SDL_DestroySurface(ceiling);
-
-    SDL_Surface* pillar = IMG_Load("test/pillar.png");
-    SDL_Surface* pillar_1 = SDL_ConvertSurface(pillar, SDL_PIXELFORMAT_ARGB8888);
-    SDL_DestroySurface(pillar);
-
-    SDL_Surface* light = IMG_Load("test/greenlight.png");
-    SDL_Surface* light_1 = SDL_ConvertSurface(light, SDL_PIXELFORMAT_ABGR8888);
-    SDL_DestroySurface(light);
-
-    textures[0] = (Uint32*)wall_1->pixels;
-    textures[1] = (Uint32*)floor_1->pixels;
-    textures[2] = (Uint32*)ceiling_1->pixels;
-
-    textures[3] = (Uint32*)pillar_1->pixels;
-    textures[4] = (Uint32*)light_1->pixels;
-
     ECS_MODULE(world, RaycasterSystems);
 }
 

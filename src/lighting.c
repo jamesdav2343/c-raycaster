@@ -87,16 +87,16 @@ void bake_light_map()
         }
     }
 
-    printf("map:\n");
-    pretty_print_grid(world_map, COLS, 2);
-    printf("light intensities:\n");
-    pretty_print_grid(light_intensities, COLS, 2);
-    printf("\n\n");
+    // printf("map:\n");
+    // pretty_print_grid(world_map, COLS, 2);
+    // printf("light intensities:\n");
+    // pretty_print_grid(light_intensities, COLS, 2);
+    // printf("\n\n");
 
     for (int i = 0; i < ROWS * COLS; i++) {
         Uint8 intensity = light_intensities[i];
         light_map[i] = powf(0.8f, INITIAL_INTENSITY - intensity);
-        printf("%f, ", light_map[i]);
+        // printf("%f, ", light_map[i]);
     }
 
     free(light_sources);

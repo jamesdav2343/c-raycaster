@@ -27,10 +27,6 @@ void RaycasterSystemsImport(ecs_world_t* world);
 #define SPRITE_TEXTURE_HEIGHT 64
 
 #define BLACK 0x00000000
-#define MAX_SHADOW 0.9f
-#define MIN_SHADOW 0.0f
-
-#define SHADOW_LEVEL 1 // 1 (minumum) to whatever
 
 extern const int DRAW_START_MIN;
 extern const int DRAW_END_MAX;

@@ -1,43 +1,35 @@
 #ifndef GAME_MANAGER_H
 #define GAME_MANAGER_H
 
-#include <SDL3/SDL.h>
-#include <flecs.h>
-#include <ini.h>
-#include "window.h"
+#include "components/input.h"
 #include "map.h"
 #include "player.h"
-#include "components/input.h"
+#include "window.h"
+#include <SDL3/SDL.h>
+#include <flecs.h>
 
-#define GAME_TITLE "raycaster-engine"
+#define TITLE "raycaster"
+#define CONFIG_FILE "config.json"
 
 extern ECS_COMPONENT_DECLARE(Renderer);
 extern ECS_COMPONENT_DECLARE(Window);
 
-typedef struct Renderer
-{
-    SDL_Renderer *value;
+typedef struct Renderer {
+    SDL_Renderer* value;
 } Renderer;
 
-typedef struct Window
-{
-    SDL_Window *value;
+typedef struct Window {
+    SDL_Window* value;
 } Window;
 
-void GameManagerModuleImport(ecs_world_t *world);
+void GameManagerModuleImport(ecs_world_t* world);
 
-typedef struct GameStatus
-{
+typedef struct GameStatus {
     bool is_running;
 } GameStatus;
 
-void handle_events(SDL_Event *event, GameStatus *game_status);
+void handle_events(SDL_Event* event, GameStatus* game_status);
 
-void game_manager_cleanup(ecs_world_t *world, void *ctx);
-
-/*
-Loads the game config from the .ini file
-*/
-void load_config(const char *path);
+void game_manager_cleanup(ecs_world_t* world, void* ctx);
 
 #endif

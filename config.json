@@ -1,0 +1,30 @@
+{
+  "video": {
+    "resolution": "1920x1080",
+    "fps_limit": 60,
+    "enable_lighting": true
+  },
+  "textures": {
+    "walls": {
+      "1": {
+        "path": "assets/Wall_1.png",
+        "width": 128,
+        "height": 128
+      }
+    },
+    "ceilings": {
+      "1": {
+        "path": "assets/Ceiling_1.png",
+        "width": 128,
+        "height": 128
+      }
+    },
+    "floors": {
+      "1": {
+        "path": "assets/Floor_1.png",
+        "width": 128,
+        "height": 128
+      }
+    }
+  }
+}

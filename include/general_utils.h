@@ -2,6 +2,7 @@
 #define GENERAL_UTILS_H
 
 #include <SDL3/SDL.h>
+#include <cjson/cJSON.h>
 
 #define ALPHA_OPAQUE_HEX 0xFF000000
 
@@ -18,5 +19,10 @@
  * https://stackoverflow.com/a/21010385
  */
 Uint32 interpolate(int color1, int color2, float fraction);
+
+/**
+ * loads raycaster config from a .ini file
+ */
+cJSON* load_config_json(const char* path);
 
 #endif
