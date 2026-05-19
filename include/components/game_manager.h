@@ -30,11 +30,12 @@ typedef struct GameStatus {
 typedef struct VideoConfig {
     Vector2I screen_size;
     int fps_cap;
+    bool enable_lighting;
 } VideoConfig;
 
 // Textures config.
 typedef struct TexturesConfig {
-    ht* table;
+    ht* config;
 } TexturesConfig;
 
 typedef struct TextureData {

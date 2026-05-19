@@ -9,6 +9,4 @@ void RaycasterComponentsImport(ecs_world_t* world)
     ECS_COMPONENT_DEFINE(world, PixelBuffer);
 
     ECS_MODULE(world, RaycasterComponents);
-
-    printf("\n\n\n raycaster components imported\n\n\n");
 }

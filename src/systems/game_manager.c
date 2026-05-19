@@ -1,11 +1,11 @@
 #include "systems/game_manager.h"
 #include "general_utils.h"
 
-void GameManagerSystemsImport(ecs_world_t* world)
+static void set_config(ecs_world_t* world)
 {
-    ECS_IMPORT(world, GameManagerComponents);
+    // -- Config loading --
 
-    // Config loading
+    // Video
     cJSON* json = load_config_json(CONFIG_FILE);
     cJSON* video_config = cJSON_GetObjectItem(json, "video");
 
@@ -14,12 +14,81 @@ void GameManagerSystemsImport(ecs_world_t* world)
     cJSON* screen_height = cJSON_GetObjectItem(resolution, "height");
 
     cJSON* fps_cap = cJSON_GetObjectItem(video_config, "fps_cap");
+    cJSON* enable_lighting = cJSON_GetObjectItem(video_config, "enable_lighting");
 
-    ecs_singleton_set(world, VideoConfig, { { screen_width->valueint, screen_height->valueint }, fps_cap->valueint });
+    ecs_singleton_set(world, VideoConfig,
+        { { screen_width->valueint, screen_height->valueint }, fps_cap->valueint, enable_lighting->valueint });
 
-    printf("%s\n", cJSON_Print(json));
+    // Textures
+    cJSON* textures_json = cJSON_GetObjectItem(json, "textures");
+    ht* textures = ht_create();
 
-    printf("%d\n", ecs_singleton_get(world, VideoConfig)->fps_cap);
+    // Walls
+    ht* walls = ht_create();
+    const cJSON* wall = NULL;
+
+    cJSON_ArrayForEach(wall, cJSON_GetObjectItem(textures_json, "walls"))
+    {
+        const char* path = cJSON_GetObjectItem(wall, "path")->valuestring;
+        int width = cJSON_GetObjectItem(wall, "width")->valueint;
+        int height = cJSON_GetObjectItem(wall, "height")->valueint;
+
+        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
+        texture_data->path = path;
+        texture_data->size = (Vector2I) { width, height };
+
+        ht_set(walls, wall->string, texture_data);
+    };
+
+    ht_set(textures, "walls", walls);
+
+    // Ceilings
+    ht* ceilings = ht_create();
+    const cJSON* ceiling = NULL;
+
+    cJSON_ArrayForEach(ceiling, cJSON_GetObjectItem(textures_json, "ceilings"))
+    {
+        const char* path = cJSON_GetObjectItem(ceiling, "path")->valuestring;
+        int width = cJSON_GetObjectItem(ceiling, "width")->valueint;
+        int height = cJSON_GetObjectItem(ceiling, "height")->valueint;
+
+        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
+        texture_data->path = path;
+        texture_data->size = (Vector2I) { width, height };
+
+        ht_set(ceilings, ceiling->string, texture_data);
+    };
+
+    ht_set(textures, "ceilings", ceilings);
+
+    // Floors
+    ht* floors = ht_create();
+    const cJSON* floor = NULL;
+
+    cJSON_ArrayForEach(floor, cJSON_GetObjectItem(textures_json, "floors"))
+    {
+        const char* path = cJSON_GetObjectItem(floor, "path")->valuestring;
+        int width = cJSON_GetObjectItem(floor, "width")->valueint;
+        int height = cJSON_GetObjectItem(floor, "height")->valueint;
+
+        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
+        texture_data->path = path;
+        texture_data->size = (Vector2I) { width, height };
+
+        ht_set(floors, floor->string, texture_data);
+    };
+
+    ht_set(textures, "floors", floors);
+
+    ecs_singleton_set(world, TexturesConfig, { textures });
+    cJSON_Delete(json);
+}
+
+void GameManagerSystemsImport(ecs_world_t* world)
+{
+    ECS_IMPORT(world, GameManagerComponents);
+
+    set_config(world);
 
     ECS_MODULE(world, GameManagerSystems);
 
@@ -31,7 +100,9 @@ void GameManagerSystemsImport(ecs_world_t* world)
         return;
     }
 
-    window = SDL_CreateWindow(TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
+    const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);
+
+    window = SDL_CreateWindow(TITLE, video_config->screen_size.x, video_config->screen_size.y, SDL_WINDOW_RESIZABLE);
 
     if (!window) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
@@ -53,8 +124,6 @@ void GameManagerSystemsImport(ecs_world_t* world)
     ecs_singleton_set(world, Renderer, { renderer });
 
     ecs_atfini(world, game_manager_cleanup, NULL);
-
-    cJSON_Delete(json);
 }
 
 void handle_events(SDL_Event* event, GameStatus* game_status)
