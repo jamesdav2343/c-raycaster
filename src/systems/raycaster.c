@@ -9,8 +9,8 @@ ECS_SYSTEM_DECLARE(RaycasterDraw);
 static SDL_Texture* pixels_texture;
 static Uint32* textures[8];
 
-const int DRAW_START_MIN = 0;
-const int DRAW_END_MAX = SCREEN_HEIGHT;
+static int DRAW_START_MIN;
+static int DRAW_END_MAX;
 
 // SPRITE STUFF
 #define numSprites 19
@@ -18,7 +18,7 @@ const int DRAW_END_MAX = SCREEN_HEIGHT;
 Sprite sprite[numSprites] = { { 12, 14, 3 }, // pillar
     { 12, 15, 4 } }; // light
 
-double ZBuffer[SCREEN_WIDTH];
+static double* ZBuffer = NULL;
 
 // arrays used to sort the sprites
 int spriteOrder[numSprites];
@@ -119,9 +119,6 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, int cu
     // Starting texture coordinate
     double texture_coord = (draw_start - buffer_height / 2 + line_height / 2) * step;
 
-    // debugging
-    bool is_centre = current_x == SCREEN_WIDTH / 2;
-
     float base_lighting_level = 1.0f
         - get_wall_light_intensity(
             ray->wall.wall_position.x, ray->wall.wall_position.y, ray->direction, ray->wall.side_orientation);
@@ -135,10 +132,6 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, int cu
 
         // debugging
         color = 0xFFFFFFFF;
-
-        if (is_centre) {
-            color = 0xFFFF0000;
-        }
 
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
@@ -390,10 +383,20 @@ void RaycasterSystemsImport(ecs_world_t* world)
     ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
     ECS_SYSTEM_DEFINE(world, RaycasterDraw, EcsOnStore, Raycaster);
 
+    const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);
+
+    ZBuffer = (double*)calloc(video_config->screen_size.x, sizeof(double));
+
     SDL_Renderer* renderer = ecs_singleton_get(world, Renderer)->value;
 
+    int screen_width = video_config->screen_size.x;
+    int screen_height = video_config->screen_size.y;
+
+    DRAW_START_MIN = 0;
+    DRAW_END_MAX = screen_height;
+
     pixels_texture = SDL_CreateTexture(
-        renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+        renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
 
     if (pixels_texture == NULL) {
         SDL_Log("Unabled to create pixels texture: %s\n", SDL_GetError());
@@ -401,13 +404,15 @@ void RaycasterSystemsImport(ecs_world_t* world)
     }
 
     PixelBuffer buffer_data = { 0 };
-    buffer_data.pixels = (Uint32*)malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(Uint32));
-    buffer_data.width = SCREEN_WIDTH;
-    buffer_data.height = SCREEN_HEIGHT;
-    buffer_data.size = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(Uint32);
+    buffer_data.pixels = (Uint32*)malloc(screen_width * screen_height * sizeof(Uint32));
+    buffer_data.width = screen_width;
+    buffer_data.height = screen_height;
+    buffer_data.size = screen_width * screen_height * sizeof(Uint32);
 
     ecs_add_id(world, ecs_id(PixelBuffer), EcsSingleton);
     ecs_set_ptr(world, ecs_id(PixelBuffer), PixelBuffer, &buffer_data);
+
+    ecs_atfini(world, raycaster_cleanup, NULL);
 
     // Generate some textures
     ECS_MODULE(world, RaycasterSystems);
@@ -436,4 +441,18 @@ void RaycasterDraw(ecs_iter_t* it)
     SDL_RenderPresent(renderer);
     SDL_UpdateWindowSurface(window);
     SDL_RenderClear(renderer);
+}
+
+void raycaster_cleanup(ecs_world_t* world, void* ctx)
+{
+    if (ZBuffer != NULL) {
+        free(ZBuffer);
+        ZBuffer = NULL;
+    }
+
+    const PixelBuffer* pixel_buffer = ecs_get(world, ecs_id(PixelBuffer), PixelBuffer);
+
+    if (pixel_buffer->pixels != NULL) {
+        free(pixel_buffer->pixels);
+    }
 }

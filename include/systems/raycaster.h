@@ -27,11 +27,10 @@ void RaycasterSystemsImport(ecs_world_t* world);
 
 #define BLACK 0x00000000
 
-extern const int DRAW_START_MIN;
-extern const int DRAW_END_MAX;
-
 void RaycasterUpdate(ecs_iter_t* it);
 
 void RaycasterDraw(ecs_iter_t* it);
+
+void raycaster_cleanup(ecs_world_t* world, void* ctx);
 
 #endif
