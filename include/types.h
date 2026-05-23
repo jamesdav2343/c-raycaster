@@ -1,6 +1,9 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include "ht.h"
+#include <stdlib.h>
+
 // Enum to represent a wall's orientation.
 enum Orientation { VERTICAL = 0, HORIZONTAL = 1 };
 
@@ -15,5 +18,24 @@ typedef struct Vector2I {
     int x;
     int y;
 } Vector2I;
+
+// -- Config components --
+
+// Video config.
+typedef struct VideoConfig {
+    Vector2I screen_size;
+    int fps_cap;
+    bool enable_lighting;
+} VideoConfig;
+
+// Textures config.
+typedef struct TexturesConfig {
+    ht* config;
+} TexturesConfig;
+
+typedef struct TextureData {
+    const char* path;
+    Vector2I size;
+} TextureData;
 
 #endif

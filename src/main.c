@@ -2,16 +2,14 @@
 #include "lighting.h"
 #include "map.h"
 #include "player.h"
+#include "systems/game_manager.h"
 #include "systems/input.h"
 #include "systems/raycaster.h"
 #include "systems/transform.h"
-#include "systems/game_manager.h"
 #include "window.h"
 #include <SDL3/SDL.h>
 #include <flecs.h>
 #include <stdio.h>
-
-#define FPS 60
 
 int main(int argc, char* argv[])
 {
@@ -23,6 +21,7 @@ int main(int argc, char* argv[])
     ECS_IMPORT(world, RaycasterSystems);
 
     bake_light_map();
+    const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);
 
     SDL_Event event;
     GameStatus game_status;
@@ -40,7 +39,7 @@ int main(int argc, char* argv[])
     ecs_entity_t raycaster = ecs_new(world);
     ecs_add(world, raycaster, Raycaster);
 
-    ecs_set_target_fps(world, FPS);
+    ecs_set_target_fps(world, video_config->fps_cap);
 
     while (game_status.is_running) {
         handle_events(&event, &game_status);

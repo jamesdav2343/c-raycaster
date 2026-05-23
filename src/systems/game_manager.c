@@ -1,6 +1,25 @@
 #include "systems/game_manager.h"
 #include "general_utils.h"
 
+static void initialise_map(ht* table, cJSON* textures_json, const char* texture_type)
+{
+    const cJSON* element = NULL;
+
+    cJSON_ArrayForEach(element, cJSON_GetObjectItem(textures_json, texture_type))
+    {
+        const char* path = cJSON_GetObjectItem(element, "path")->valuestring;
+        int width = cJSON_GetObjectItem(element, "width")->valueint;
+        int height = cJSON_GetObjectItem(element, "height")->valueint;
+
+        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
+        // TODO: Free this string in cleanup
+        texture_data->path = strdup(path);
+        texture_data->size = (Vector2I) { width, height };
+
+        ht_set(table, element->string, texture_data);
+    };
+}
+
 static void set_config(ecs_world_t* world)
 {
     // -- Config loading --
@@ -25,59 +44,17 @@ static void set_config(ecs_world_t* world)
 
     // Walls
     ht* walls = ht_create();
-    const cJSON* wall = NULL;
-
-    cJSON_ArrayForEach(wall, cJSON_GetObjectItem(textures_json, "walls"))
-    {
-        const char* path = cJSON_GetObjectItem(wall, "path")->valuestring;
-        int width = cJSON_GetObjectItem(wall, "width")->valueint;
-        int height = cJSON_GetObjectItem(wall, "height")->valueint;
-
-        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
-        texture_data->path = path;
-        texture_data->size = (Vector2I) { width, height };
-
-        ht_set(walls, wall->string, texture_data);
-    };
-
+    initialise_map(walls, textures_json, "walls");
     ht_set(textures, "walls", walls);
 
     // Ceilings
     ht* ceilings = ht_create();
-    const cJSON* ceiling = NULL;
-
-    cJSON_ArrayForEach(ceiling, cJSON_GetObjectItem(textures_json, "ceilings"))
-    {
-        const char* path = cJSON_GetObjectItem(ceiling, "path")->valuestring;
-        int width = cJSON_GetObjectItem(ceiling, "width")->valueint;
-        int height = cJSON_GetObjectItem(ceiling, "height")->valueint;
-
-        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
-        texture_data->path = path;
-        texture_data->size = (Vector2I) { width, height };
-
-        ht_set(ceilings, ceiling->string, texture_data);
-    };
-
+    initialise_map(ceilings, textures_json, "ceilings");
     ht_set(textures, "ceilings", ceilings);
 
     // Floors
     ht* floors = ht_create();
-    const cJSON* floor = NULL;
-
-    cJSON_ArrayForEach(floor, cJSON_GetObjectItem(textures_json, "floors"))
-    {
-        const char* path = cJSON_GetObjectItem(floor, "path")->valuestring;
-        int width = cJSON_GetObjectItem(floor, "width")->valueint;
-        int height = cJSON_GetObjectItem(floor, "height")->valueint;
-
-        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
-        texture_data->path = path;
-        texture_data->size = (Vector2I) { width, height };
-
-        ht_set(floors, floor->string, texture_data);
-    };
-
+    initialise_map(floors, textures_json, "floors");
     ht_set(textures, "floors", floors);
 
     ecs_singleton_set(world, TexturesConfig, { textures });
@@ -137,6 +114,24 @@ void handle_events(SDL_Event* event, GameStatus* game_status)
 
 void game_manager_cleanup(ecs_world_t* world, void* ctx)
 {
+    ht* textures_config = ecs_singleton_get(world, TexturesConfig)->config;
+
+    ht* walls = (ht*)ht_get(textures_config, "walls");
+    ht* ceilings = (ht*)ht_get(textures_config, "ceilings");
+    ht* floors = (ht*)ht_get(textures_config, "floors");
+
+    if (walls != NULL)
+        ht_destroy(walls);
+
+    if (ceilings != NULL)
+        ht_destroy(ceilings);
+
+    if (floors != NULL)
+        ht_destroy(floors);
+
+    if (textures_config != NULL)
+        ht_destroy(textures_config);
+
     SDL_Renderer* renderer = ecs_singleton_get(world, Renderer)->value;
     SDL_Window* window = ecs_singleton_get(world, Window)->value;
 

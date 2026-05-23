@@ -10,7 +10,6 @@
 #include "types.h"
 #include "window.h"
 #include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
 #include <flecs.h>
 
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);

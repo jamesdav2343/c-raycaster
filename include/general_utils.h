@@ -1,6 +1,7 @@
 #ifndef GENERAL_UTILS_H
 #define GENERAL_UTILS_H
 
+#include "ht.h"
 #include <SDL3/SDL.h>
 #include <cjson/cJSON.h>
 
@@ -24,5 +25,9 @@ Uint32 interpolate(int color1, int color2, float fraction);
  * loads raycaster config from a .ini file
  */
 cJSON* load_config_json(const char* path);
+
+SDL_Surface* load_formatted_img_surface(const char* img_path, SDL_PixelFormat format);
+
+ht* create_textures_from_config(ht* config, size_t num_textures);
 
 #endif

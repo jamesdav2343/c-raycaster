@@ -1,5 +1,7 @@
 #include "general_utils.h"
-#include "systems/raycaster.h"
+#include "types.h"
+#include <SDL3_image/SDL_image.h>
+#include <stdlib.h>
 
 Uint32 interpolate(int color1, int color2, float fraction)
 {
@@ -13,12 +15,6 @@ Uint32 interpolate(int color1, int color2, float fraction)
     return (int)((r2 - r1) * fraction + r1) << 16 | (int)((g2 - g1) * fraction + g1) << 8
         | (int)((b2 - b1) * fraction + b1);
 }
-
-typedef struct {
-    int version;
-    const char* name;
-    const char* email;
-} configuration;
 
 cJSON* load_config_json(const char* path)
 {
@@ -59,45 +55,51 @@ cJSON* load_config_json(const char* path)
     }
 
     return json;
+}
 
-    // char* string = cJSON_Print(json);
-    // printf("\n%s\n", string);
+SDL_Surface* load_formatted_img_surface(const char* img_path, SDL_PixelFormat format)
+{
+    SDL_Surface* img_surface = IMG_Load(img_path);
+    SDL_Surface* formatted_surface = SDL_ConvertSurface(img_surface, format);
+    SDL_DestroySurface(img_surface);
 
-    // Uint32* textures[8];
+    return formatted_surface;
+}
 
-    // for (int i = 0; i < 8; i++) {
-    //     textures[i] = (Uint32*)malloc(TEXTURE_HEIGHT * TEXTURE_WIDTH * sizeof(Uint32));
+ht* create_textures_from_config(ht* config, size_t num_textures)
+{
+    ht* textures = ht_create();
 
-    //     if (textures[i] == NULL) {
-    //         SDL_Log("Unable to init textures.");
-    //         return;
-    //     }
-    // }
+    ht* walls = (ht*)ht_get(config, "walls");
+    ht* ceilings = (ht*)ht_get(config, "ceilings");
+    ht* floors = (ht*)ht_get(config, "floors");
 
-    // SDL_Surface* wall = IMG_Load("assets/Wall_1.png");
-    // SDL_Surface* wall_1 = SDL_ConvertSurface(wall, SDL_PIXELFORMAT_ARGB8888);
-    // SDL_DestroySurface(wall);
+    ht* walls_textures = ht_create();
+    ht* ceilings_textures = ht_create();
+    ht* floors_textures = ht_create();
 
-    // SDL_Surface* floor = IMG_Load("assets/Floor_1.png");
-    // SDL_Surface* floor_1 = SDL_ConvertSurface(floor, SDL_PIXELFORMAT_ARGB8888);
-    // SDL_DestroySurface(floor);
+    hti it;
 
-    // SDL_Surface* ceiling = IMG_Load("assets/Ceiling_1.png");
-    // SDL_Surface* ceiling_1 = SDL_ConvertSurface(ceiling, SDL_PIXELFORMAT_ARGB8888);
-    // SDL_DestroySurface(ceiling);
+    it = ht_iterator(walls);
+    while (ht_next(&it)) {
+        ht_set(walls_textures, it.key,
+            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+    }
+    ht_set(textures, "walls", walls_textures);
 
-    // SDL_Surface* pillar = IMG_Load("test/pillar.png");
-    // SDL_Surface* pillar_1 = SDL_ConvertSurface(pillar, SDL_PIXELFORMAT_ARGB8888);
-    // SDL_DestroySurface(pillar);
+    it = ht_iterator(ceilings);
+    while (ht_next(&it)) {
+        ht_set(ceilings_textures, it.key,
+            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+    }
+    ht_set(textures, "ceilings", ceilings_textures);
 
-    // SDL_Surface* light = IMG_Load("test/greenlight.png");
-    // SDL_Surface* light_1 = SDL_ConvertSurface(light, SDL_PIXELFORMAT_ABGR8888);
-    // SDL_DestroySurface(light);
+    it = ht_iterator(floors);
+    while (ht_next(&it)) {
+        ht_set(floors_textures, it.key,
+            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+    }
+    ht_set(textures, "floors", floors_textures);
 
-    // textures[0] = (Uint32*)wall_1->pixels;
-    // textures[1] = (Uint32*)floor_1->pixels;
-    // textures[2] = (Uint32*)ceiling_1->pixels;
-
-    // textures[3] = (Uint32*)pillar_1->pixels;
-    // textures[4] = (Uint32*)light_1->pixels;
+    return textures;
 }

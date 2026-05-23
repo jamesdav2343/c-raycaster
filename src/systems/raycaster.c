@@ -6,7 +6,12 @@ ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDestroy);
 ECS_SYSTEM_DECLARE(RaycasterDraw);
 
+#define TEXTURE_WIDTH 128
+#define TEXTURE_HEIGHT 128
+
 static SDL_Texture* pixels_texture;
+
+// Convert this to a map of wall id to array
 static Uint32* textures[8];
 
 static int DRAW_START_MIN;
@@ -416,6 +421,10 @@ void RaycasterSystemsImport(ecs_world_t* world)
 
     // Generate some textures
     ECS_MODULE(world, RaycasterSystems);
+
+    ht* textures_config = ecs_singleton_get(world, TexturesConfig)->config;
+
+    create_textures_from_config(textures_config, numSprites);
 }
 
 void RaycasterUpdate(ecs_iter_t* it)

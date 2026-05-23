@@ -24,25 +24,6 @@ typedef struct GameStatus {
     bool is_running;
 } GameStatus;
 
-// -- Config components --
-
-// Video config.
-typedef struct VideoConfig {
-    Vector2I screen_size;
-    int fps_cap;
-    bool enable_lighting;
-} VideoConfig;
-
-// Textures config.
-typedef struct TexturesConfig {
-    ht* config;
-} TexturesConfig;
-
-typedef struct TextureData {
-    const char* path;
-    Vector2I size;
-} TextureData;
-
 void GameManagerComponentsImport(ecs_world_t* world);
 
 #endif
