@@ -106,7 +106,7 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, int cu
     int draw_end = (int)fmin(line_height / 2 + buffer_height / 2, DRAW_END_MAX);
 
     // calculate value of wallX
-    double wall_x = ray->wall.side_orientation == HORIZONTAL ? position->y + ray->perp_wall_dist * ray->direction.y
+    double wall_x = ray->wall.side_orientation == VERTICAL ? position->y + ray->perp_wall_dist * ray->direction.y
                                                              : position->x + ray->perp_wall_dist * ray->direction.x;
 
     wall_x -= floor(wall_x);
