@@ -1,6 +1,7 @@
 #include "systems/raycaster.h"
 #include "components/game_manager.h"
 #include "types.h"
+#include <SDL3_image/SDL_image.h>
 
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDestroy);
@@ -11,8 +12,8 @@ ECS_SYSTEM_DECLARE(RaycasterDraw);
 
 static SDL_Texture* pixels_texture;
 
-// Convert this to a map of wall id to array
-static Uint32* textures[8];
+// this will eventually replace textures array
+static ht* texture_map;
 
 static int DRAW_START_MIN;
 static int DRAW_END_MAX;
@@ -128,15 +129,42 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, int cu
         - get_wall_light_intensity(
             ray->wall.wall_position.x, ray->wall.wall_position.y, ray->direction, ray->wall.side_orientation);
 
+    // Textures stuff
+
+    // ---- Gets the walls texture ----
+    ht* wall_textures = (ht*)ht_get(texture_map, "walls");
+    Uint8 wall_val = world_map[ray->wall.wall_position.x + (ray->wall.wall_position.y * COLS)];
+
+    int buffer_len = 1024;
+
+    char buffer[buffer_len];
+    snprintf(buffer, buffer_len, "%d", wall_val);
+    SDL_Surface* wall = (SDL_Surface*)ht_get(wall_textures, buffer);
+
+    Uint32* texture_pixels = NULL;
+
+    if (wall != NULL) {
+        texture_pixels = (Uint32*)wall->pixels;
+    }
+
+    // ---- end of getting the walls texture ----
+
+    if (current_x == 960) {
+        printf("wall val: %d\n", wall_val);
+        printf("buffer: %.*s\n", buffer_len, buffer);
+        printf("wall: %p\n", wall);
+    }
+
     for (int y = draw_start; y < draw_end; y++) {
         // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
         int tex_y = (int)texture_coord & (TEXTURE_HEIGHT - 1);
         texture_coord += step;
 
-        Uint32 color = textures[0][TEXTURE_HEIGHT * tex_y + tex_x];
+        Uint32 color = texture_pixels != NULL ? texture_pixels[tex_x + (tex_y * TEXTURE_WIDTH)] : 0xFFFFFFFF;
 
-        // debugging
-        color = 0xFFFFFFFF;
+        if (current_x == 960) {
+            color = 0xFFFF0000;
+        }
 
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
@@ -251,11 +279,14 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
             Uint32 colour;
 
+            ht* floors = (ht*)ht_get(texture_map, "floors");
+            Uint32* floor_texture = (Uint32*)((SDL_Surface*)ht_get(floors, "1"))->pixels;
+
             // Floor colour
-            colour = textures[1][TEXTURE_WIDTH * texture_y + texture_x];
+            colour = floor_texture[TEXTURE_WIDTH * texture_y + texture_x];
 
             // debugging
-            colour = 0xFFFFFFFF;
+            // colour = 0xFFFFFFFF;
 
             // If its the light source, draw in red
             if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
@@ -267,7 +298,7 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             dest_buffer_data->pixels[x + (y * screen_width)] = colour;
 
             // Ceiling colour
-            colour = textures[2][TEXTURE_WIDTH * texture_y + texture_x];
+            // colour = textures[2][TEXTURE_WIDTH * texture_y + texture_x];
 
             // debugging
             colour = 0xFFFFFFFF;
@@ -361,17 +392,18 @@ static void write_to_buffer(
             // 3) it's on the screen (right)
             // 4) ZBuffer, with perpendicular distance
             if (transformY > 0 && stripe > 0 && stripe < screen_width && transformY < ZBuffer[stripe]) {
-                for (int y = drawStartY; y < drawEndY; y++) // for every pixel of the current stripe
-                {
-                    int d = (y) * 256 - screen_height * 128 + spriteHeight * 128; // 256 and 128 factors to avoid floats
-                    int texY = ((d * SPRITE_TEXTURE_HEIGHT) / spriteHeight) / 256;
-                    Uint32 color = textures[sprite[spriteOrder[i]].texture]
-                                           [SPRITE_TEXTURE_WIDTH * texY + texX]; // get current color from the texture
-                    if ((color & 0x00FFFFFF) != 0) {
-                        dest_pixel_buffer->pixels[stripe + (y * dest_pixel_buffer->width)]
-                            = color; // paint pixel if it isn't black, black is the invisible color
-                    }
-                }
+                //     for (int y = drawStartY; y < drawEndY; y++) // for every pixel of the current stripe
+                //     {
+                //         int d = (y) * 256 - screen_height * 128 + spriteHeight * 128; // 256 and 128 factors to avoid
+                //         floats int texY = ((d * SPRITE_TEXTURE_HEIGHT) / spriteHeight) / 256; Uint32 color =
+                //         textures[sprite[spriteOrder[i]].texture]
+                //                                [SPRITE_TEXTURE_WIDTH * texY + texX]; // get current color from the
+                //                                texture
+                //         if ((color & 0x00FFFFFF) != 0) {
+                //             dest_pixel_buffer->pixels[stripe + (y * dest_pixel_buffer->width)]
+                //                 = color; // paint pixel if it isn't black, black is the invisible color
+                //         }
+                //     }
             }
         }
     }
@@ -424,7 +456,7 @@ void RaycasterSystemsImport(ecs_world_t* world)
 
     ht* textures_config = ecs_singleton_get(world, TexturesConfig)->config;
 
-    create_textures_from_config(textures_config);
+    texture_map = create_textures_from_config(textures_config);
 }
 
 void RaycasterUpdate(ecs_iter_t* it)

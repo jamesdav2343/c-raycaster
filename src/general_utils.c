@@ -101,5 +101,15 @@ ht* create_textures_from_config(ht* config)
     }
     ht_set(textures, "floors", floors_textures);
 
+    // Debugging
+    // printf("in create textures from config\n");
+    // ht* w = (ht*)ht_get(textures, "walls");
+    // hti i = ht_iterator(w);
+
+    // while (ht_next(&i)) {
+    //     printf("%s\n", i.key);
+    //     printf("%d\n", ((SDL_Surface*)i.value)->h);
+    // }
+
     return textures;
 }
