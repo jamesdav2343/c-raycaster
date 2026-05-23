@@ -424,7 +424,7 @@ void RaycasterSystemsImport(ecs_world_t* world)
 
     ht* textures_config = ecs_singleton_get(world, TexturesConfig)->config;
 
-    create_textures_from_config(textures_config, numSprites);
+    create_textures_from_config(textures_config);
 }
 
 void RaycasterUpdate(ecs_iter_t* it)

@@ -28,6 +28,6 @@ cJSON* load_config_json(const char* path);
 
 SDL_Surface* load_formatted_img_surface(const char* img_path, SDL_PixelFormat format);
 
-ht* create_textures_from_config(ht* config, size_t num_textures);
+ht* create_textures_from_config(ht* config);
 
 #endif

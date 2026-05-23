@@ -66,7 +66,7 @@ SDL_Surface* load_formatted_img_surface(const char* img_path, SDL_PixelFormat fo
     return formatted_surface;
 }
 
-ht* create_textures_from_config(ht* config, size_t num_textures)
+ht* create_textures_from_config(ht* config)
 {
     ht* textures = ht_create();
 
