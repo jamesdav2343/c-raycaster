@@ -4,7 +4,6 @@
 #include <SDL3_image/SDL_image.h>
 
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
-ECS_SYSTEM_DECLARE(RaycasterDestroy);
 ECS_SYSTEM_DECLARE(RaycasterDraw);
 
 #define TEXTURE_WIDTH 128
@@ -24,7 +23,7 @@ static int DRAW_END_MAX;
 Sprite sprite[numSprites] = { { 12, 14, 3 }, // pillar
     { 12, 15, 4 } }; // light
 
-static double* ZBuffer = NULL;
+static double* z_buffer = NULL;
 
 // arrays used to sort the sprites
 int spriteOrder[numSprites];
@@ -107,7 +106,7 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, int cu
 
     // calculate value of wallX
     double wall_x = ray->wall.side_orientation == VERTICAL ? position->y + ray->perp_wall_dist * ray->direction.y
-                                                             : position->x + ray->perp_wall_dist * ray->direction.x;
+                                                           : position->x + ray->perp_wall_dist * ray->direction.x;
 
     wall_x -= floor(wall_x);
 
@@ -265,6 +264,9 @@ static void write_floor_and_celing(const Position* position, const Direction* di
         float floor_x = position->x + row_distance * ray_dir_x_0;
         float floor_y = position->y + row_distance * ray_dir_y_0;
 
+        ht* floors = (ht*)ht_get(texture_map, "floors");
+        Uint32* floor_texture = (Uint32*)((SDL_Surface*)ht_get(floors, "1"))->pixels;
+
         for (int x = 0; x < screen_width; ++x) {
             int cell_x = (int)floor_x;
             int cell_y = (int)floor_y;
@@ -279,11 +281,8 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
             Uint32 colour;
 
-            ht* floors = (ht*)ht_get(texture_map, "floors");
-            Uint32* floor_texture = (Uint32*)((SDL_Surface*)ht_get(floors, "1"))->pixels;
-
             // Floor colour
-            colour = floor_texture[TEXTURE_WIDTH * texture_y + texture_x];
+            colour = floor_texture[texture_x + (TEXTURE_WIDTH * texture_y)];
 
             // debugging
             // colour = 0xFFFFFFFF;
@@ -309,24 +308,9 @@ static void write_floor_and_celing(const Position* position, const Direction* di
     }
 }
 
-static void write_to_buffer(
-    const Position* position, const Direction* direction, const Plane* plane, PixelBuffer* dest_pixel_buffer)
+static void write_sprites(const Position* position, const Direction* direction, const Plane* plane,
+    PixelBuffer* dest_pixel_buffer, int screen_width, int screen_height)
 {
-    int screen_width = dest_pixel_buffer->width;
-    int screen_height = dest_pixel_buffer->height;
-
-    write_floor_and_celing(position, direction, plane, dest_pixel_buffer, screen_width, screen_height);
-
-    // Wall casting for the current frame
-    for (int x = 0; x < screen_width; x++) {
-        Ray ray = { 0 };
-
-        dda(position, direction, plane, x, screen_width, screen_height, &ray);
-        write_vertical_wall_strip(&ray, position, x, dest_pixel_buffer);
-
-        ZBuffer[x] = ray.perp_wall_dist;
-    }
-
     // SPRITE CASTING
     /**
      * foreach sprite
@@ -391,7 +375,7 @@ static void write_to_buffer(
             // 2) it's on the screen (left)
             // 3) it's on the screen (right)
             // 4) ZBuffer, with perpendicular distance
-            if (transformY > 0 && stripe > 0 && stripe < screen_width && transformY < ZBuffer[stripe]) {
+            if (transformY > 0 && stripe > 0 && stripe < screen_width && transformY < z_buffer[stripe]) {
                 //     for (int y = drawStartY; y < drawEndY; y++) // for every pixel of the current stripe
                 //     {
                 //         int d = (y) * 256 - screen_height * 128 + spriteHeight * 128; // 256 and 128 factors to avoid
@@ -409,11 +393,50 @@ static void write_to_buffer(
     }
 }
 
+/**
+ * The main function called every frame.
+ */
+static void write_to_buffer(
+    const Position* position, const Direction* direction, const Plane* plane, PixelBuffer* dest_pixel_buffer)
+{
+    int screen_width = dest_pixel_buffer->width;
+    int screen_height = dest_pixel_buffer->height;
+
+    write_floor_and_celing(position, direction, plane, dest_pixel_buffer, screen_width, screen_height);
+
+    // Wall casting for the current frame
+    for (int x = 0; x < screen_width; x++) {
+        Ray ray = { 0 };
+
+        dda(position, direction, plane, x, screen_width, screen_height, &ray);
+        write_vertical_wall_strip(&ray, position, x, dest_pixel_buffer);
+
+        z_buffer[x] = ray.perp_wall_dist;
+    }
+
+    write_sprites(position, direction, plane, dest_pixel_buffer, screen_width, screen_height);
+}
+
+static void raycaster_cleanup(ecs_world_t* world, void* ctx)
+{
+    if (z_buffer != NULL) {
+        free(z_buffer);
+        z_buffer = NULL;
+    }
+
+    const PixelBuffer* pixel_buffer = ecs_get(world, ecs_id(PixelBuffer), PixelBuffer);
+
+    if (pixel_buffer->pixels != NULL) {
+        free(pixel_buffer->pixels);
+    }
+}
+
 void RaycasterSystemsImport(ecs_world_t* world)
 {
     ECS_IMPORT(world, RaycasterComponents);
     ECS_IMPORT(world, TransformComponents);
     ECS_IMPORT(world, GameManagerComponents);
+
     ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
 
@@ -422,7 +445,7 @@ void RaycasterSystemsImport(ecs_world_t* world)
 
     const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);
 
-    ZBuffer = (double*)calloc(video_config->screen_size.x, sizeof(double));
+    z_buffer = (double*)calloc(video_config->screen_size.x, sizeof(double));
 
     SDL_Renderer* renderer = ecs_singleton_get(world, Renderer)->value;
 
@@ -482,18 +505,4 @@ void RaycasterDraw(ecs_iter_t* it)
     SDL_RenderPresent(renderer);
     SDL_UpdateWindowSurface(window);
     SDL_RenderClear(renderer);
-}
-
-void raycaster_cleanup(ecs_world_t* world, void* ctx)
-{
-    if (ZBuffer != NULL) {
-        free(ZBuffer);
-        ZBuffer = NULL;
-    }
-
-    const PixelBuffer* pixel_buffer = ecs_get(world, ecs_id(PixelBuffer), PixelBuffer);
-
-    if (pixel_buffer->pixels != NULL) {
-        free(pixel_buffer->pixels);
-    }
 }
