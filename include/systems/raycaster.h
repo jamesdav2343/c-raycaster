@@ -17,10 +17,15 @@ extern ECS_SYSTEM_DECLARE(RaycasterDraw);
 
 void RaycasterSystemsImport(ecs_world_t* world);
 
+#define TEXTURE_WIDTH_FALLBACK 128
+#define TEXTURE_HEIGHT_FALLBACK 128
+
 #define SPRITE_TEXTURE_WIDTH 64
 #define SPRITE_TEXTURE_HEIGHT 64
 
 #define BLACK 0x00000000
+#define WHITE 0xFFFFFFFF
+#define RED 0xFFFF0000
 
 void RaycasterUpdate(ecs_iter_t* it);
 

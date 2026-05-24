@@ -6,177 +6,27 @@
 ECS_SYSTEM_DECLARE(RaycasterUpdate);
 ECS_SYSTEM_DECLARE(RaycasterDraw);
 
-#define TEXTURE_WIDTH 128
-#define TEXTURE_HEIGHT 128
-
+/**
+ * Runtime globals.
+ */
 static SDL_Texture* pixels_texture;
-
-// this will eventually replace textures array
 static ht* texture_map;
-
 static int DRAW_START_MIN;
 static int DRAW_END_MAX;
-
-// SPRITE STUFF
-#define numSprites 19
-
-Sprite sprite[numSprites] = { { 12, 14, 3 }, // pillar
-    { 12, 15, 4 } }; // light
-
 static double* z_buffer = NULL;
 
+#define SPRITE_COUNT 19
+Sprite sprite[SPRITE_COUNT] = { { 12, 14, 3 }, // pillar
+    { 12, 15, 4 } }; // light
 // arrays used to sort the sprites
-int spriteOrder[numSprites];
-double spriteDistance[numSprites];
+int sprite_order[SPRITE_COUNT];
+double sprite_distance[SPRITE_COUNT];
 
-// function used to sort the sprites
-typedef struct {
-    double dist;
-    int order;
-} SpriteSortPair;
-
-// Comparison function for qsort (ascending order)
-static int compareSprites(const void* a, const void* b)
-{
-    const SpriteSortPair* p1 = (const SpriteSortPair*)a;
-    const SpriteSortPair* p2 = (const SpriteSortPair*)b;
-
-    if (p1->dist < p2->dist)
-        return -1;
-    if (p1->dist > p2->dist)
-        return 1;
-    return 0;
-}
-
-static void sortSprites(int* order, double* dist, int amount)
-{
-    if (amount <= 0)
-        return;
-
-    // Allocate temporary array for sorting
-    SpriteSortPair* sprites = malloc(sizeof(SpriteSortPair) * amount);
-    if (!sprites)
-        return; // Handle allocation failure
-
-    for (int i = 0; i < amount; i++) {
-        sprites[i].dist = dist[i];
-        sprites[i].order = order[i];
-    }
-
-    // Sort the array in ascending order
-    qsort(sprites, amount, sizeof(SpriteSortPair), compareSprites);
-
-    // Restore in reverse order (farthest to nearest)
-    for (int i = 0; i < amount; i++) {
-        dist[i] = sprites[amount - i - 1].dist;
-        order[i] = sprites[amount - i - 1].order;
-    }
-
-    free(sprites);
-}
-
-static void clear_buffer(PixelBuffer* pixel_buffer) { memset(pixel_buffer->pixels, 0, pixel_buffer->size); }
-
-static void blit_buffer_to_texture(SDL_Texture* dest_pixels_texture, PixelBuffer* src_pixel_buffer)
-{
-    void* pixels_buffer = NULL;
-    int texture_pitch = src_pixel_buffer->width * sizeof(Uint32);
-
-    if (!SDL_LockTexture(dest_pixels_texture, NULL, &pixels_buffer, &texture_pitch)) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error locking pixels texture.");
-        return;
-    }
-
-    memcpy(pixels_buffer, src_pixel_buffer->pixels, src_pixel_buffer->size);
-
-    SDL_UnlockTexture(pixels_texture);
-}
-
-/*
-Writes a vertical wall strip to the pixel buffer.
-*/
-static void write_vertical_wall_strip(Ray* ray, const Position* position, int current_x, PixelBuffer* dest_buffer_data)
-{
-    int buffer_height = dest_buffer_data->height;
-    int buffer_width = dest_buffer_data->width;
-
-    int line_height = (int)(buffer_height / ray->perp_wall_dist);
-    int draw_start = (int)fmax(-line_height / 2 + buffer_height / 2, DRAW_START_MIN);
-    int draw_end = (int)fmin(line_height / 2 + buffer_height / 2, DRAW_END_MAX);
-
-    // calculate value of wallX
-    double wall_x = ray->wall.side_orientation == VERTICAL ? position->y + ray->perp_wall_dist * ray->direction.y
-                                                           : position->x + ray->perp_wall_dist * ray->direction.x;
-
-    wall_x -= floor(wall_x);
-
-    // x coordinate on the texture
-    int tex_x = (int)(wall_x * (double)TEXTURE_WIDTH);
-
-    if (ray->wall.side_orientation == HORIZONTAL && ray->direction.x > 0)
-        tex_x = TEXTURE_WIDTH - tex_x - 1;
-
-    if (ray->wall.side_orientation == VERTICAL && ray->direction.y < 0)
-        tex_x = TEXTURE_WIDTH - tex_x - 1;
-
-    double step = 1.0 * TEXTURE_HEIGHT / line_height;
-
-    // Starting texture coordinate
-    double texture_coord = (draw_start - buffer_height / 2 + line_height / 2) * step;
-
-    float base_lighting_level = 1.0f
-        - get_wall_light_intensity(
-            ray->wall.wall_position.x, ray->wall.wall_position.y, ray->direction, ray->wall.side_orientation);
-
-    // Textures stuff
-
-    // ---- Gets the walls texture ----
-    ht* wall_textures = (ht*)ht_get(texture_map, "walls");
-    Uint8 wall_val = world_map[ray->wall.wall_position.x + (ray->wall.wall_position.y * COLS)];
-
-    int buffer_len = 1024;
-
-    char buffer[buffer_len];
-    snprintf(buffer, buffer_len, "%d", wall_val);
-    SDL_Surface* wall = (SDL_Surface*)ht_get(wall_textures, buffer);
-
-    Uint32* texture_pixels = NULL;
-
-    if (wall != NULL) {
-        texture_pixels = (Uint32*)wall->pixels;
-    }
-
-    // ---- end of getting the walls texture ----
-
-    if (current_x == 960) {
-        printf("wall val: %d\n", wall_val);
-        printf("buffer: %.*s\n", buffer_len, buffer);
-        printf("wall: %p\n", wall);
-    }
-
-    for (int y = draw_start; y < draw_end; y++) {
-        // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
-        int tex_y = (int)texture_coord & (TEXTURE_HEIGHT - 1);
-        texture_coord += step;
-
-        Uint32 color = texture_pixels != NULL ? texture_pixels[tex_x + (tex_y * TEXTURE_WIDTH)] : 0xFFFFFFFF;
-
-        if (current_x == 960) {
-            color = 0xFFFF0000;
-        }
-
-        color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
-
-        dest_buffer_data->pixels[current_x + (y * buffer_width)] = color;
-    }
-}
-
-/*
-Casts a ray.
-Uses the digital differential analyser (DDA) algorithm.
-Great explanation of the algorithm here:
-https://aaaa.sh/creatures/dda-algorithm-interactive/
-*/
+/**
+ * Casts a ray.
+ * Great explanation of the algorithm here:
+ * https://aaaa.sh/creatures/dda-algorithm-interactive/
+ */
 static void dda(const Position* position, const Direction* direction, const Plane* plane, int screen_x,
     int screen_width, int screen_height, Ray* ray_out)
 {
@@ -237,12 +87,99 @@ static void dda(const Position* position, const Direction* direction, const Plan
     ray_out->wall.wall_position = ray_origin;
 }
 
-/*
-Writes the horizontal wall and ceiling strips to the pixel buffer.
-*/
+/**
+ * Resets the pixel buffer. Sets all values to 0.
+ */
+static void clear_buffer(PixelBuffer* pixel_buffer) { memset(pixel_buffer->pixels, 0, pixel_buffer->size); }
+
+static void blit_buffer_to_texture(SDL_Texture* dest_pixels_texture, PixelBuffer* src_pixel_buffer)
+{
+    void* pixels_buffer = NULL;
+    int texture_pitch = src_pixel_buffer->width * sizeof(Uint32);
+
+    if (!SDL_LockTexture(dest_pixels_texture, NULL, &pixels_buffer, &texture_pitch)) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error locking pixels texture.");
+        return;
+    }
+
+    memcpy(pixels_buffer, src_pixel_buffer->pixels, src_pixel_buffer->size);
+
+    SDL_UnlockTexture(pixels_texture);
+}
+
+/**
+ *  Writes a vertical wall strip to the pixel buffer.
+ */
+static void write_vertical_wall_strip(Ray* ray, const Position* position, int current_x, PixelBuffer* dest_buffer_data)
+{
+    ht* textures = (ht*)ht_get(texture_map, "walls");
+    Uint8 wall_id = world_map[ray->wall.wall_position.x + (ray->wall.wall_position.y * COLS)];
+
+    int buffer_len = 1024;
+
+    char buffer[buffer_len];
+    snprintf(buffer, buffer_len, "%d", wall_id);
+    SDL_Surface* wall = (SDL_Surface*)ht_get(textures, buffer);
+
+    Uint32* tex_pixels = wall != NULL ? (Uint32*)wall->pixels : NULL;
+
+    int tex_width = wall != NULL ? wall->w : TEXTURE_WIDTH_FALLBACK;
+    int tex_height = wall != NULL ? wall->h : TEXTURE_HEIGHT_FALLBACK;
+
+    int buffer_height = dest_buffer_data->height;
+    int buffer_width = dest_buffer_data->width;
+
+    int line_height = (int)(buffer_height / ray->perp_wall_dist);
+    int draw_start = (int)fmax(-line_height / 2 + buffer_height / 2, DRAW_START_MIN);
+    int draw_end = (int)fmin(line_height / 2 + buffer_height / 2, DRAW_END_MAX);
+
+    double wall_x = ray->wall.side_orientation == VERTICAL ? position->y + ray->perp_wall_dist * ray->direction.y
+                                                           : position->x + ray->perp_wall_dist * ray->direction.x;
+
+    wall_x -= floor(wall_x);
+
+    int tex_x = (int)(wall_x * (double)tex_width);
+
+    if (ray->wall.side_orientation == HORIZONTAL && ray->direction.x > 0)
+        tex_x = tex_width - tex_x - 1;
+
+    if (ray->wall.side_orientation == VERTICAL && ray->direction.y < 0)
+        tex_x = tex_width - tex_x - 1;
+
+    double tex_step = 1.0 * tex_height / line_height;
+
+    double tex_coord = (draw_start - buffer_height / 2 + line_height / 2) * tex_step;
+
+    float base_lighting_level = 1.0f
+        - get_wall_light_intensity(
+            ray->wall.wall_position.x, ray->wall.wall_position.y, ray->direction, ray->wall.side_orientation);
+
+    for (int y = draw_start; y < draw_end; y++) {
+        // Masked with tex_height - 1 in case of overflow
+        int tex_y = (int)tex_coord & (tex_height - 1);
+        tex_coord += tex_step;
+
+        Uint32 color = tex_pixels != NULL ? tex_pixels[tex_x + (tex_y * tex_width)] : WHITE;
+
+        color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
+
+        dest_buffer_data->pixels[current_x + (y * buffer_width)] = color;
+    }
+}
+
+/**
+ * Writes the horizontal wall and ceiling strips to the pixel buffer.
+ */
 static void write_floor_and_celing(const Position* position, const Direction* direction, const Plane* plane,
     PixelBuffer* dest_buffer_data, int screen_width, int screen_height)
 {
+    ht* textures = (ht*)ht_get(texture_map, "floors");
+    SDL_Surface* floor = (SDL_Surface*)ht_get(textures, "1");
+    Uint32* tex_pixels = floor != NULL ? floor->pixels : NULL;
+
+    int tex_width = floor != NULL ? floor->w : TEXTURE_WIDTH_FALLBACK;
+    int tex_height = floor != NULL ? floor->h : TEXTURE_HEIGHT_FALLBACK;
+
     float ray_dir_x_0 = direction->x - plane->x;
     float ray_dir_y_0 = direction->y - plane->y;
     float ray_dir_x_1 = direction->x + plane->x;
@@ -252,7 +189,6 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
     int starting_y = screen_height / 2 + 1;
 
-    // Floor casting
     for (int y = starting_y; y < screen_height; ++y) {
         int p = y - screen_height / 2;
 
@@ -264,17 +200,14 @@ static void write_floor_and_celing(const Position* position, const Direction* di
         float floor_x = position->x + row_distance * ray_dir_x_0;
         float floor_y = position->y + row_distance * ray_dir_y_0;
 
-        ht* floors = (ht*)ht_get(texture_map, "floors");
-        Uint32* floor_texture = (Uint32*)((SDL_Surface*)ht_get(floors, "1"))->pixels;
-
         for (int x = 0; x < screen_width; ++x) {
             int cell_x = (int)floor_x;
             int cell_y = (int)floor_y;
 
             float base_lighting_level = 1.0f - light_map[cell_x + (cell_y * COLS)];
 
-            int texture_x = (int)(TEXTURE_WIDTH * (floor_x - cell_x)) & (TEXTURE_WIDTH - 1);
-            int texture_y = (int)(TEXTURE_HEIGHT * (floor_y - cell_y)) & (TEXTURE_HEIGHT - 1);
+            int texture_x = (int)(tex_width * (floor_x - cell_x)) & (tex_width - 1);
+            int texture_y = (int)(tex_height * (floor_y - cell_y)) & (tex_height - 1);
 
             floor_x += floor_step_x;
             floor_y += floor_step_y;
@@ -282,14 +215,11 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             Uint32 colour;
 
             // Floor colour
-            colour = floor_texture[texture_x + (TEXTURE_WIDTH * texture_y)];
-
-            // debugging
-            // colour = 0xFFFFFFFF;
+            colour = tex_pixels[texture_x + (tex_width * texture_y)];
 
             // If its the light source, draw in red
             if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
-                colour = 0xFFFF0000;
+                colour = RED;
             }
 
             colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
@@ -297,10 +227,7 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             dest_buffer_data->pixels[x + (y * screen_width)] = colour;
 
             // Ceiling colour
-            // colour = textures[2][TEXTURE_WIDTH * texture_y + texture_x];
-
-            // debugging
-            colour = 0xFFFFFFFF;
+            colour = tex_pixels[texture_x + (tex_width * texture_y)];
 
             colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             dest_buffer_data->pixels[x + ((screen_height - y - 1) * screen_width)] = colour;
@@ -311,83 +238,69 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 static void write_sprites(const Position* position, const Direction* direction, const Plane* plane,
     PixelBuffer* dest_pixel_buffer, int screen_width, int screen_height)
 {
-    // SPRITE CASTING
-    /**
-     * foreach sprite
-     * draw the sprite similar to how walls and floors are drawn
-     */
-
-    for (int i = 0; i < numSprites; i++) {
-        spriteOrder[i] = i;
-        spriteDistance[i] = ((position->x - sprite[i].x) * (position->x - sprite[i].x)
-            + (position->y - sprite[i].y) * (position->y - sprite[i].y)); // sqrt not taken, unneeded
+    // Sorts the sprites from far to close
+    for (int i = 0; i < SPRITE_COUNT; i++) {
+        sprite_order[i] = i;
+        sprite_distance[i] = ((position->x - sprite[i].x) * (position->x - sprite[i].x)
+            + (position->y - sprite[i].y) * (position->y - sprite[i].y));
     }
 
-    sortSprites(spriteOrder, spriteDistance, numSprites);
+    sort_sprites(sprite_order, sprite_distance, SPRITE_COUNT);
 
-    // after sorting the sprites, do the projection and draw them
-    for (int i = 0; i < numSprites; i++) {
-        // translate sprite position to relative to camera
-        double spriteX = sprite[spriteOrder[i]].x - position->x;
-        double spriteY = sprite[spriteOrder[i]].y - position->y;
+    for (int i = 0; i < SPRITE_COUNT; i++) {
+        double sprite_x = sprite[sprite_order[i]].x - position->x;
+        double sprite_y = sprite[sprite_order[i]].y - position->y;
 
-        // transform sprite with the inverse camera matrix
-        //  [ planeX   dirX ] -1                                       [ dirY      -dirX ]
-        //  [               ]       =  1/(planeX*dirY-dirX*planeY) *   [                 ]
-        //  [ planeY   dirY ]                                          [ -planeY  planeX ]
-
-        double invDet
+        double inv_det
             = 1.0 / (plane->x * direction->y - direction->x * plane->y); // required for correct matrix multiplication
 
-        double transformX = invDet * (direction->y * spriteX - direction->x * spriteY);
-        double transformY = invDet
-            * (-plane->y * spriteX
-                + plane->x * spriteY); // this is actually the depth inside the screen, that what Z is in 3D
+        double transform_x = inv_det * (direction->y * sprite_x - direction->x * sprite_y);
+        double transform_y = inv_det * (-plane->y * sprite_x + plane->x * sprite_y);
 
-        int spriteScreenX = (int)((screen_width / 2) * (1 + transformX / transformY));
+        int sprite_screen_x = (int)((screen_width / 2) * (1 + transform_x / transform_y));
 
-        // calculate height of the sprite on screen
-        int spriteHeight = abs(
-            (int)(screen_height / (transformY))); // using 'transformY' instead of the real distance prevents fisheye
-        // calculate lowest and highest pixel to fill in current stripe
-        int drawStartY = -spriteHeight / 2 + screen_height / 2;
-        if (drawStartY < 0)
-            drawStartY = 0;
-        int drawEndY = spriteHeight / 2 + screen_height / 2;
-        if (drawEndY >= screen_height)
-            drawEndY = screen_height - 1;
+        int sprite_height = abs((int)(screen_height / (transform_y)));
 
-        // calculate width of the sprite
-        int spriteWidth = abs((int)(screen_height / (transformY)));
-        int drawStartX = -spriteWidth / 2 + spriteScreenX;
-        if (drawStartX < 0)
-            drawStartX = 0;
-        int drawEndX = spriteWidth / 2 + spriteScreenX;
-        if (drawEndX >= screen_width)
-            drawEndX = screen_width - 1;
+        int draw_start_y = -sprite_height / 2 + screen_height / 2;
+        if (draw_start_y < 0)
+            draw_start_y = 0;
 
-        // loop through every vertical stripe of the sprite on screen
-        for (int stripe = drawStartX; stripe < drawEndX; stripe++) {
-            int texX
-                = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * SPRITE_TEXTURE_WIDTH / spriteWidth) / 256;
-            // the conditions in the if are:
-            // 1) it's in front of camera plane so you don't see things behind you
-            // 2) it's on the screen (left)
-            // 3) it's on the screen (right)
-            // 4) ZBuffer, with perpendicular distance
-            if (transformY > 0 && stripe > 0 && stripe < screen_width && transformY < z_buffer[stripe]) {
-                //     for (int y = drawStartY; y < drawEndY; y++) // for every pixel of the current stripe
-                //     {
-                //         int d = (y) * 256 - screen_height * 128 + spriteHeight * 128; // 256 and 128 factors to avoid
-                //         floats int texY = ((d * SPRITE_TEXTURE_HEIGHT) / spriteHeight) / 256; Uint32 color =
-                //         textures[sprite[spriteOrder[i]].texture]
-                //                                [SPRITE_TEXTURE_WIDTH * texY + texX]; // get current color from the
-                //                                texture
-                //         if ((color & 0x00FFFFFF) != 0) {
-                //             dest_pixel_buffer->pixels[stripe + (y * dest_pixel_buffer->width)]
-                //                 = color; // paint pixel if it isn't black, black is the invisible color
-                //         }
-                //     }
+        int draw_end_y = sprite_height / 2 + screen_height / 2;
+        if (draw_end_y >= screen_height)
+            draw_end_y = screen_height - 1;
+
+        int sprite_width = abs((int)(screen_height / (transform_y)));
+        int draw_start_x = -sprite_width / 2 + sprite_screen_x;
+        if (draw_start_x < 0)
+            draw_start_x = 0;
+
+        int draw_end_x = sprite_width / 2 + sprite_screen_x;
+        if (draw_end_x >= screen_width)
+            draw_end_x = screen_width - 1;
+
+        for (int stripe = draw_start_x; stripe < draw_end_x; stripe++) {
+            int tex_x
+                = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * SPRITE_TEXTURE_WIDTH / sprite_width)
+                / 256;
+
+            if (transform_y > 0 && stripe > 0 && stripe < screen_width && transform_y < z_buffer[stripe]) {
+
+                for (int y = draw_start_y; y < draw_end_y; y++) // for every pixel of the current stripe
+                {
+                    // 256 and 128 factors to avoid floats
+                    int d = (y) * 256 - screen_height * 128 + sprite_height * 128;
+
+                    int tex_y = ((d * SPRITE_TEXTURE_HEIGHT) / sprite_height) / 256;
+
+                    // get current color from the texture
+                    // Uint32 color = textures[sprite[sprite_order[i]].texture][SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
+                    Uint32 color = WHITE;
+
+                    if ((color & 0x00FFFFFF) != 0) {
+                        // paint pixel if it isn't black, black is the invisible color
+                        dest_pixel_buffer->pixels[stripe + (y * dest_pixel_buffer->width)] = color;
+                    }
+                }
             }
         }
     }
@@ -404,7 +317,6 @@ static void write_to_buffer(
 
     write_floor_and_celing(position, direction, plane, dest_pixel_buffer, screen_width, screen_height);
 
-    // Wall casting for the current frame
     for (int x = 0; x < screen_width; x++) {
         Ray ray = { 0 };
 

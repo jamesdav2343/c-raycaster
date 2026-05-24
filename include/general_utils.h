@@ -30,4 +30,8 @@ SDL_Surface* load_formatted_img_surface(const char* img_path, SDL_PixelFormat fo
 
 ht* create_textures_from_config(ht* config);
 
+int compare_sprites(const void* a, const void* b);
+
+void sort_sprites(int* order, double* distance, int amount);
+
 #endif

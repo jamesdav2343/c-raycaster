@@ -38,4 +38,9 @@ typedef struct TextureData {
     Vector2I size;
 } TextureData;
 
+typedef struct {
+    double distance;
+    int order;
+} SpriteSortPair;
+
 #endif

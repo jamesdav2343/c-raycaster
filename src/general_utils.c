@@ -16,6 +16,7 @@ Uint32 interpolate(int color1, int color2, float fraction)
         | (int)((b2 - b1) * fraction + b1);
 }
 
+// ---- Config loading helpers ----
 cJSON* load_config_json(const char* path)
 {
     cJSON* json = NULL;
@@ -112,4 +113,46 @@ ht* create_textures_from_config(ht* config)
     // }
 
     return textures;
+}
+
+// ---- Sprite casting helpers ----
+
+// Comparison function for qsort (ascending order)
+int compare_sprites(const void* a, const void* b)
+{
+    const SpriteSortPair* p1 = (const SpriteSortPair*)a;
+    const SpriteSortPair* p2 = (const SpriteSortPair*)b;
+
+    if (p1->distance < p2->distance)
+        return -1;
+    if (p1->distance > p2->distance)
+        return 1;
+    return 0;
+}
+
+void sort_sprites(int* order, double* distance, int amount)
+{
+    if (amount <= 0)
+        return;
+
+    // Allocate temporary array for sorting
+    SpriteSortPair* sprites = malloc(sizeof(SpriteSortPair) * amount);
+    if (!sprites)
+        return; // Handle allocation failure
+
+    for (int i = 0; i < amount; i++) {
+        sprites[i].distance = distance[i];
+        sprites[i].order = order[i];
+    }
+
+    // Sort the array in ascending order
+    qsort(sprites, amount, sizeof(SpriteSortPair), compare_sprites);
+
+    // Restore in reverse order (farthest to nearest)
+    for (int i = 0; i < amount; i++) {
+        distance[i] = sprites[amount - i - 1].distance;
+        order[i] = sprites[amount - i - 1].order;
+    }
+
+    free(sprites);
 }
