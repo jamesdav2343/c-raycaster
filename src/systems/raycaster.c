@@ -372,8 +372,8 @@ void RaycasterSystemsImport(ecs_world_t* world)
     ECS_IMPORT(world, RaycasterComponents);
     ECS_IMPORT(world, TransformComponents);
     ECS_IMPORT(world, GameManagerComponents);
+    ECS_IMPORT(world, SpriteComponents);
 
-    ECS_IMPORT(world, SpriteModule);
     ECS_IMPORT(world, CameraModule);
 
     ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
