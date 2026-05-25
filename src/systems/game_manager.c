@@ -1,7 +1,7 @@
 #include "systems/game_manager.h"
 #include "general_utils.h"
 
-static void initialise_map(ht* table, cJSON* textures_json, const char* texture_type)
+static void initialise_textures_table(ht* textures_table, cJSON* textures_json, const char* texture_type)
 {
     const cJSON* element = NULL;
 
@@ -16,7 +16,7 @@ static void initialise_map(ht* table, cJSON* textures_json, const char* texture_
         texture_data->path = strdup(path);
         texture_data->size = (Vector2I) { width, height };
 
-        ht_set(table, element->string, texture_data);
+        ht_set(textures_table, element->string, texture_data);
     };
 }
 
@@ -24,7 +24,7 @@ static void set_config(ecs_world_t* world)
 {
     // -- Config loading --
 
-    // Video
+    // VIDEO
     cJSON* json = load_config_json(CONFIG_FILE);
     cJSON* video_config = cJSON_GetObjectItem(json, "video");
 
@@ -38,26 +38,32 @@ static void set_config(ecs_world_t* world)
     ecs_singleton_set(world, VideoConfig,
         { { screen_width->valueint, screen_height->valueint }, fps_cap->valueint, enable_lighting->valueint });
 
-    // Textures
+    // TEXTURES
     cJSON* textures_json = cJSON_GetObjectItem(json, "textures");
-    ht* textures = ht_create();
+    ht* textures_config = ht_create();
 
     // Walls
     ht* walls = ht_create();
-    initialise_map(walls, textures_json, "walls");
-    ht_set(textures, "walls", walls);
+    initialise_textures_table(walls, textures_json, "walls");
+    ht_set(textures_config, "walls", walls);
 
     // Ceilings
     ht* ceilings = ht_create();
-    initialise_map(ceilings, textures_json, "ceilings");
-    ht_set(textures, "ceilings", ceilings);
+    initialise_textures_table(ceilings, textures_json, "ceilings");
+    ht_set(textures_config, "ceilings", ceilings);
 
     // Floors
     ht* floors = ht_create();
-    initialise_map(floors, textures_json, "floors");
-    ht_set(textures, "floors", floors);
+    initialise_textures_table(floors, textures_json, "floors");
+    ht_set(textures_config, "floors", floors);
 
-    ecs_singleton_set(world, TexturesConfig, { textures });
+    // Sprites
+    ht* sprites = ht_create();
+    initialise_textures_table(sprites, textures_json, "sprites");
+    ht_set(textures_config, "sprites", sprites);
+
+    ecs_singleton_set(world, TexturesConfig, { textures_config });
+
     cJSON_Delete(json);
 }
 

@@ -74,10 +74,12 @@ ht* create_textures_from_config(ht* config)
     ht* walls = (ht*)ht_get(config, "walls");
     ht* ceilings = (ht*)ht_get(config, "ceilings");
     ht* floors = (ht*)ht_get(config, "floors");
+    ht* sprites = (ht*)ht_get(config, "sprites");
 
     ht* walls_textures = ht_create();
     ht* ceilings_textures = ht_create();
     ht* floors_textures = ht_create();
+    ht* sprites_textures = ht_create();
 
     hti it;
 
@@ -102,15 +104,12 @@ ht* create_textures_from_config(ht* config)
     }
     ht_set(textures, "floors", floors_textures);
 
-    // Debugging
-    // printf("in create textures from config\n");
-    // ht* w = (ht*)ht_get(textures, "walls");
-    // hti i = ht_iterator(w);
-
-    // while (ht_next(&i)) {
-    //     printf("%s\n", i.key);
-    //     printf("%d\n", ((SDL_Surface*)i.value)->h);
-    // }
+    it = ht_iterator(sprites);
+    while (ht_next(&it)) {
+        ht_set(sprites_textures, it.key,
+            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+    }
+    ht_set(textures, "sprites", sprites_textures);
 
     return textures;
 }

@@ -235,6 +235,9 @@ static void write_floor_and_celing(const Position* position, const Direction* di
     }
 }
 
+/**
+ * Writes the sprites to the pixel buffer.
+ */
 static void write_sprites(const Position* position, const Direction* direction, const Plane* plane,
     PixelBuffer* dest_pixel_buffer, int screen_width, int screen_height)
 {
@@ -278,6 +281,23 @@ static void write_sprites(const Position* position, const Direction* direction, 
         if (draw_end_x >= screen_width)
             draw_end_x = screen_width - 1;
 
+        // texture stuff
+        ht* sprites = (ht*)ht_get(texture_map, "sprites");
+
+        if (sprites == NULL) {
+            printf("sprites is null\n");
+            return;
+        }
+
+        SDL_Surface* surface = (SDL_Surface*)ht_get(sprites, "1");
+
+        if (surface == NULL) {
+            printf("could not get surface\n");
+            return;
+        }
+
+        Uint32* pixels = (Uint32*)((SDL_Surface*)ht_get(sprites, "1"))->pixels;
+
         for (int stripe = draw_start_x; stripe < draw_end_x; stripe++) {
             int tex_x
                 = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * SPRITE_TEXTURE_WIDTH / sprite_width)
@@ -294,7 +314,8 @@ static void write_sprites(const Position* position, const Direction* direction, 
 
                     // get current color from the texture
                     // Uint32 color = textures[sprite[sprite_order[i]].texture][SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
-                    Uint32 color = WHITE;
+                    Uint32 color = pixels[SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
+                    // Uint32 color = WHITE;
 
                     if ((color & 0x00FFFFFF) != 0) {
                         // paint pixel if it isn't black, black is the invisible color
@@ -329,6 +350,9 @@ static void write_to_buffer(
     write_sprites(position, direction, plane, dest_pixel_buffer, screen_width, screen_height);
 }
 
+/**
+ * Cleanup function. Frees resources.
+ */
 static void raycaster_cleanup(ecs_world_t* world, void* ctx)
 {
     if (z_buffer != NULL) {

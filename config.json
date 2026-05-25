@@ -33,6 +33,13 @@
         "width": 128,
         "height": 128
       }
+    },
+    "sprites": {
+      "1": {
+        "path": "test/barrel.png",
+        "width": 64,
+        "height": 64
+      }
     }
   }
 }
