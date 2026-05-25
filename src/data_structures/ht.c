@@ -1,4 +1,4 @@
-#include "ht.h"
+#include "data_structures/ht.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>

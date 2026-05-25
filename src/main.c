@@ -1,4 +1,4 @@
-#include "ht.h"
+#include "data_structures/ht.h"
 #include "lighting.h"
 #include "map.h"
 #include "player.h"
@@ -6,7 +6,6 @@
 #include "systems/input.h"
 #include "systems/raycaster.h"
 #include "systems/transform.h"
-#include "window.h"
 #include <SDL3/SDL.h>
 #include <flecs.h>
 #include <stdio.h>

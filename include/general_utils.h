@@ -1,7 +1,7 @@
 #ifndef GENERAL_UTILS_H
 #define GENERAL_UTILS_H
 
-#include "ht.h"
+#include "data_structures/ht.h"
 #include <SDL3/SDL.h>
 #include <cjson/cJSON.h>
 

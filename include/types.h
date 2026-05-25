@@ -1,7 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "ht.h"
+#include "data_structures/ht.h"
 #include <stdlib.h>
 
 // Enum to represent a wall's orientation.

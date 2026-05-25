@@ -5,14 +5,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SRC_FILES
     main.c
     map.c
-    window.c
     player.c
-    ui.c
     camera.c
     math_utils.c
     general_utils.c
-    ht.c
     debug.c
+    data_structures/ht.c
     components/input.c
     components/transform.c
     components/raycaster.c

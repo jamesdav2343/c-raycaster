@@ -1,7 +1,7 @@
 #ifndef GAME_MANAGER_COMPONENTS_H
 #define GAME_MANAGER_COMPONENTS_H
 
-#include "ht.h"
+#include "data_structures/ht.h"
 #include "types.h"
 #include <SDL3/SDL.h>
 #include <flecs.h>

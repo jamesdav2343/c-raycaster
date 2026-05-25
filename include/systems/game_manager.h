@@ -5,7 +5,6 @@
 #include "components/input.h"
 #include "map.h"
 #include "player.h"
-#include "window.h"
 #include <SDL3/SDL.h>
 #include <cjson/cJSON.h>
 #include <flecs.h>

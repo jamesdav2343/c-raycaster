@@ -8,7 +8,6 @@
 #include "map.h"
 #include "player.h"
 #include "types.h"
-#include "window.h"
 #include <SDL3/SDL.h>
 #include <flecs.h>
 
