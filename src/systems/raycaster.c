@@ -16,8 +16,11 @@ static int DRAW_END_MAX;
 static double* z_buffer = NULL;
 
 #define SPRITE_COUNT 19
-Sprite sprite[SPRITE_COUNT] = { { 12, 14, 3 }, // pillar
-    { 12, 15, 4 } }; // light
+TestEntity entities[SPRITE_COUNT] = {
+    { (Vector2I) { 12, 14 }, 1 },
+    { (Vector2I) { 10, 15 }, 1 },
+};
+
 // arrays used to sort the sprites
 int sprite_order[SPRITE_COUNT];
 double sprite_distance[SPRITE_COUNT];
@@ -173,12 +176,21 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, int cu
 static void write_floor_and_celing(const Position* position, const Direction* direction, const Plane* plane,
     PixelBuffer* dest_buffer_data, int screen_width, int screen_height)
 {
-    ht* textures = (ht*)ht_get(texture_map, "floors");
-    SDL_Surface* floor = (SDL_Surface*)ht_get(textures, "1");
-    Uint32* tex_pixels = floor != NULL ? floor->pixels : NULL;
+    // Gets floor texture
+    ht* floor_textures = (ht*)ht_get(texture_map, "floors");
+    SDL_Surface* floor = (SDL_Surface*)ht_get(floor_textures, "1");
+    Uint32* floor_pixels = floor != NULL ? floor->pixels : NULL;
 
-    int tex_width = floor != NULL ? floor->w : TEXTURE_WIDTH_FALLBACK;
-    int tex_height = floor != NULL ? floor->h : TEXTURE_HEIGHT_FALLBACK;
+    int floor_width = floor != NULL ? floor->w : TEXTURE_WIDTH_FALLBACK;
+    int floor_height = floor != NULL ? floor->h : TEXTURE_HEIGHT_FALLBACK;
+
+    // Gets ceiling texture
+    ht* ceiling_textures = (ht*)ht_get(texture_map, "ceilings");
+    SDL_Surface* ceiling = (SDL_Surface*)ht_get(ceiling_textures, "1");
+    Uint32* ceiling_pixels = ceiling != NULL ? ceiling->pixels : NULL;
+
+    int ceiling_width = ceiling != NULL ? ceiling->w : TEXTURE_WIDTH_FALLBACK;
+    int ceiling_height = ceiling != NULL ? ceiling->h : TEXTURE_HEIGHT_FALLBACK;
 
     float ray_dir_x_0 = direction->x - plane->x;
     float ray_dir_y_0 = direction->y - plane->y;
@@ -194,28 +206,25 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
         float row_distance = pos_z / p;
 
-        float floor_step_x = row_distance * (ray_dir_x_1 - ray_dir_x_0) / screen_width;
-        float floor_step_y = row_distance * (ray_dir_y_1 - ray_dir_y_0) / screen_width;
+        float unit_step_x = row_distance * (ray_dir_x_1 - ray_dir_x_0) / screen_width;
+        float unit_step_y = row_distance * (ray_dir_y_1 - ray_dir_y_0) / screen_width;
 
-        float floor_x = position->x + row_distance * ray_dir_x_0;
-        float floor_y = position->y + row_distance * ray_dir_y_0;
+        float cell_pos_x = position->x + row_distance * ray_dir_x_0;
+        float cell_pos_y = position->y + row_distance * ray_dir_y_0;
 
         for (int x = 0; x < screen_width; ++x) {
-            int cell_x = (int)floor_x;
-            int cell_y = (int)floor_y;
+            int cell_x = (int)cell_pos_x;
+            int cell_y = (int)cell_pos_y;
 
             float base_lighting_level = 1.0f - light_map[cell_x + (cell_y * COLS)];
 
-            int texture_x = (int)(tex_width * (floor_x - cell_x)) & (tex_width - 1);
-            int texture_y = (int)(tex_height * (floor_y - cell_y)) & (tex_height - 1);
-
-            floor_x += floor_step_x;
-            floor_y += floor_step_y;
+            int texture_x = (int)(floor_width * (cell_pos_x - cell_x)) & (floor_width - 1);
+            int texture_y = (int)(floor_height * (cell_pos_y - cell_y)) & (floor_height - 1);
 
             Uint32 colour;
 
             // Floor colour
-            colour = tex_pixels[texture_x + (tex_width * texture_y)];
+            colour = floor_pixels[texture_x + (floor_width * texture_y)];
 
             // If its the light source, draw in red
             if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
@@ -226,8 +235,14 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
             dest_buffer_data->pixels[x + (y * screen_width)] = colour;
 
+            // Recalculate texture x and y
+            texture_x = (int)(ceiling_width * (cell_pos_x - cell_x)) & (ceiling_width - 1);
+            texture_y = (int)(ceiling_height * (cell_pos_y - cell_y)) & (ceiling_height - 1);
+            cell_pos_x += unit_step_x;
+            cell_pos_y += unit_step_y;
+
             // Ceiling colour
-            colour = tex_pixels[texture_x + (tex_width * texture_y)];
+            colour = ceiling_pixels[texture_x + (ceiling_width * texture_y)];
 
             colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             dest_buffer_data->pixels[x + ((screen_height - y - 1) * screen_width)] = colour;
@@ -241,18 +256,21 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 static void write_sprites(const Position* position, const Direction* direction, const Plane* plane,
     PixelBuffer* dest_pixel_buffer, int screen_width, int screen_height)
 {
+
+    // Get all entities (e.g. barrels, torches, etc.)
+
     // Sorts the sprites from far to close
     for (int i = 0; i < SPRITE_COUNT; i++) {
         sprite_order[i] = i;
-        sprite_distance[i] = ((position->x - sprite[i].x) * (position->x - sprite[i].x)
-            + (position->y - sprite[i].y) * (position->y - sprite[i].y));
+        sprite_distance[i] = ((position->x - entities[i].position.x) * (position->x - entities[i].position.x)
+            + (position->y - entities[i].position.y) * (position->y - entities[i].position.y));
     }
 
     sort_sprites(sprite_order, sprite_distance, SPRITE_COUNT);
 
     for (int i = 0; i < SPRITE_COUNT; i++) {
-        double sprite_x = sprite[sprite_order[i]].x - position->x;
-        double sprite_y = sprite[sprite_order[i]].y - position->y;
+        double sprite_x = entities[sprite_order[i]].position.x - position->x;
+        double sprite_y = entities[sprite_order[i]].position.y - position->y;
 
         double inv_det
             = 1.0 / (plane->x * direction->y - direction->x * plane->y); // required for correct matrix multiplication

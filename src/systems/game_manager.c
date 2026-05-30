@@ -64,6 +64,12 @@ static void set_config(ecs_world_t* world)
 
     ecs_singleton_set(world, TexturesConfig, { textures_config });
 
+    // ENTITIES
+    cJSON* entities_json = cJSON_GetObjectItem(json, "entities");
+    ht* entities_config = ht_create();
+
+    // Create world entities from config
+
     cJSON_Delete(json);
 }
 
