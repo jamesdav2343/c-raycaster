@@ -1,6 +1,38 @@
 #include "systems/game_manager.h"
 #include "general_utils.h"
 
+static void initialise_entities(ecs_world_t* world, cJSON* entities_json)
+{
+    const cJSON* element = NULL;
+
+    cJSON_ArrayForEach(element, entities_json)
+    {
+        ecs_entity_t entity = ecs_new(world);
+        ecs_add(world, entity, Drawable);
+
+        // Tag
+        const char* tag = cJSON_GetObjectItem(element, "tag")->valuestring;
+        // ECS_TAG(world, $tag);
+        ecs_entity_desc_t desc = { 0 };
+        desc.id = entity;
+        desc.name = tag;
+        desc.add_expr = "0";
+
+        ecs_entity_init(world, &desc);
+
+        // Position
+        cJSON* position = cJSON_GetObjectItem(element, "position");
+        double x = cJSON_GetObjectItem(position, "x")->valuedouble;
+        double y = cJSON_GetObjectItem(position, "y")->valuedouble;
+
+        ecs_set(world, entity, Position, { (float)x, (float)y });
+
+        // Sprite Id
+        int sprite_id = cJSON_GetObjectItem(element, "sprite_id")->valueint;
+        ecs_set(world, entity, Sprite, { sprite_id });
+    }
+}
+
 static void initialise_textures_table(ht* textures_table, cJSON* textures_json, const char* texture_type)
 {
     const cJSON* element = NULL;
@@ -66,9 +98,7 @@ static void set_config(ecs_world_t* world)
 
     // ENTITIES
     cJSON* entities_json = cJSON_GetObjectItem(json, "entities");
-    ht* entities_config = ht_create();
-
-    // Create world entities from config
+    initialise_entities(world, entities_json);
 
     cJSON_Delete(json);
 }
@@ -76,6 +106,8 @@ static void set_config(ecs_world_t* world)
 void GameManagerSystemsImport(ecs_world_t* world)
 {
     ECS_IMPORT(world, GameManagerComponents);
+    ECS_IMPORT(world, TransformComponents);
+    ECS_IMPORT(world, SpriteComponents);
 
     set_config(world);
 
