@@ -6,7 +6,6 @@
 #include <flecs.h>
 
 extern ECS_COMPONENT_DECLARE(Sprite);
-extern ECS_TAG_DECLARE(Drawable);
 
 typedef struct Sprite {
     int sprite_id;

@@ -8,7 +8,6 @@ static void initialise_entities(ecs_world_t* world, cJSON* entities_json)
     cJSON_ArrayForEach(element, entities_json)
     {
         ecs_entity_t entity = ecs_new(world);
-        ecs_add(world, entity, Drawable);
 
         // Tag
         const char* tag = cJSON_GetObjectItem(element, "tag")->valuestring;

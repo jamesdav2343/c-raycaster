@@ -5,6 +5,7 @@
 #include "systems/game_manager.h"
 #include "systems/input.h"
 #include "systems/raycaster.h"
+#include "systems/sprite.h"
 #include "systems/transform.h"
 #include <SDL3/SDL.h>
 #include <flecs.h>
@@ -18,6 +19,7 @@ int main(int argc, char* argv[])
     ECS_IMPORT(world, TransformSystems);
     ECS_IMPORT(world, InputSystems);
     ECS_IMPORT(world, RaycasterSystems);
+    ECS_IMPORT(world, SpriteSystems);
 
     bake_light_map();
     const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);

@@ -16,10 +16,6 @@ static int DRAW_END_MAX;
 static double* z_buffer = NULL;
 
 #define SPRITE_COUNT 19
-TestEntity entities[SPRITE_COUNT] = {
-    { (Vector2I) { 12, 14 }, 1 },
-    { (Vector2I) { 10, 15 }, 1 },
-};
 
 // arrays used to sort the sprites
 int sprite_order[SPRITE_COUNT];
@@ -254,90 +250,107 @@ static void write_floor_and_celing(const Position* position, const Direction* di
  * Writes the sprites to the pixel buffer.
  */
 static void write_sprites(const Position* position, const Direction* direction, const Plane* plane,
-    PixelBuffer* dest_pixel_buffer, int screen_width, int screen_height)
+    PixelBuffer* dest_pixel_buffer, int screen_width, int screen_height, ecs_world_t* world)
 {
-
     // Get all entities (e.g. barrels, torches, etc.)
+    ecs_query_t* q = ecs_query(world,
+        { .terms = { { .id = ecs_id(Position) }, { .id = ecs_id(Sprite), .inout = EcsIn } },
+
+            // QueryCache Auto automatically caches all terms that can be cached.
+            .cache_kind = EcsQueryCacheAuto });
 
     // Sorts the sprites from far to close
-    for (int i = 0; i < SPRITE_COUNT; i++) {
-        sprite_order[i] = i;
-        sprite_distance[i] = ((position->x - entities[i].position.x) * (position->x - entities[i].position.x)
-            + (position->y - entities[i].position.y) * (position->y - entities[i].position.y));
-    }
+    // for (int i = 0; i < SPRITE_COUNT; i++) {
+    //     sprite_order[i] = i;
+    //     sprite_distance[i] = ((position->x - entities[i].position.x) * (position->x - entities[i].position.x)
+    //         + (position->y - entities[i].position.y) * (position->y - entities[i].position.y));
+    // }
 
     sort_sprites(sprite_order, sprite_distance, SPRITE_COUNT);
 
-    for (int i = 0; i < SPRITE_COUNT; i++) {
-        double sprite_x = entities[sprite_order[i]].position.x - position->x;
-        double sprite_y = entities[sprite_order[i]].position.y - position->y;
+    ecs_iter_t it = ecs_query_iter(world, q);
+    printf("number of results: %d\n", ecs_query_count(q).entities);
 
-        double inv_det
-            = 1.0 / (plane->x * direction->y - direction->x * plane->y); // required for correct matrix multiplication
+    while (ecs_query_next(&it)) {
+        Position* p = ecs_field(&it, Position, 0);
+        Sprite* s = ecs_field(&it, Sprite, 1);
 
-        double transform_x = inv_det * (direction->y * sprite_x - direction->x * sprite_y);
-        double transform_y = inv_det * (-plane->y * sprite_x + plane->x * sprite_y);
+        for (int i = 0; i < it.count; i++) {
 
-        int sprite_screen_x = (int)((screen_width / 2) * (1 + transform_x / transform_y));
+            double sprite_x = p[i].x - position->x;
+            double sprite_y = p[i].y - position->y;
 
-        int sprite_height = abs((int)(screen_height / (transform_y)));
+            double inv_det = 1.0
+                / (plane->x * direction->y - direction->x * plane->y); // required for correct matrix multiplication
 
-        int draw_start_y = -sprite_height / 2 + screen_height / 2;
-        if (draw_start_y < 0)
-            draw_start_y = 0;
+            double transform_x = inv_det * (direction->y * sprite_x - direction->x * sprite_y);
+            double transform_y = inv_det * (-plane->y * sprite_x + plane->x * sprite_y);
 
-        int draw_end_y = sprite_height / 2 + screen_height / 2;
-        if (draw_end_y >= screen_height)
-            draw_end_y = screen_height - 1;
+            int sprite_screen_x = (int)((screen_width / 2) * (1 + transform_x / transform_y));
 
-        int sprite_width = abs((int)(screen_height / (transform_y)));
-        int draw_start_x = -sprite_width / 2 + sprite_screen_x;
-        if (draw_start_x < 0)
-            draw_start_x = 0;
+            int sprite_height = abs((int)(screen_height / (transform_y)));
 
-        int draw_end_x = sprite_width / 2 + sprite_screen_x;
-        if (draw_end_x >= screen_width)
-            draw_end_x = screen_width - 1;
+            int draw_start_y = -sprite_height / 2 + screen_height / 2;
+            if (draw_start_y < 0)
+                draw_start_y = 0;
 
-        // texture stuff
-        ht* sprites = (ht*)ht_get(texture_map, "sprites");
+            int draw_end_y = sprite_height / 2 + screen_height / 2;
+            if (draw_end_y >= screen_height)
+                draw_end_y = screen_height - 1;
 
-        if (sprites == NULL) {
-            printf("sprites is null\n");
-            return;
-        }
+            int sprite_width = abs((int)(screen_height / (transform_y)));
+            int draw_start_x = -sprite_width / 2 + sprite_screen_x;
+            if (draw_start_x < 0)
+                draw_start_x = 0;
 
-        SDL_Surface* surface = (SDL_Surface*)ht_get(sprites, "1");
+            int draw_end_x = sprite_width / 2 + sprite_screen_x;
+            if (draw_end_x >= screen_width)
+                draw_end_x = screen_width - 1;
 
-        if (surface == NULL) {
-            printf("could not get surface\n");
-            return;
-        }
+            // texture stuff
+            ht* sprites = (ht*)ht_get(texture_map, "sprites");
 
-        Uint32* pixels = (Uint32*)((SDL_Surface*)ht_get(sprites, "1"))->pixels;
+            if (sprites == NULL) {
+                printf("sprites is null\n");
+                return;
+            }
 
-        for (int stripe = draw_start_x; stripe < draw_end_x; stripe++) {
-            int tex_x
-                = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * SPRITE_TEXTURE_WIDTH / sprite_width)
-                / 256;
+            char buffer[1024];
+            SDL_itoa(s[i].sprite_id, buffer, 10);
 
-            if (transform_y > 0 && stripe > 0 && stripe < screen_width && transform_y < z_buffer[stripe]) {
+            SDL_Surface* surface = (SDL_Surface*)ht_get(sprites, buffer);
 
-                for (int y = draw_start_y; y < draw_end_y; y++) // for every pixel of the current stripe
-                {
-                    // 256 and 128 factors to avoid floats
-                    int d = (y) * 256 - screen_height * 128 + sprite_height * 128;
+            if (surface == NULL) {
+                printf("could not get surface\n");
+                return;
+            }
 
-                    int tex_y = ((d * SPRITE_TEXTURE_HEIGHT) / sprite_height) / 256;
+            Uint32* pixels = (Uint32*)surface->pixels;
 
-                    // get current color from the texture
-                    // Uint32 color = textures[sprite[sprite_order[i]].texture][SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
-                    Uint32 color = pixels[SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
-                    // Uint32 color = WHITE;
+            for (int stripe = draw_start_x; stripe < draw_end_x; stripe++) {
+                int tex_x = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * SPRITE_TEXTURE_WIDTH
+                                / sprite_width)
+                    / 256;
 
-                    if ((color & 0x00FFFFFF) != 0) {
-                        // paint pixel if it isn't black, black is the invisible color
-                        dest_pixel_buffer->pixels[stripe + (y * dest_pixel_buffer->width)] = color;
+                if (transform_y > 0 && stripe > 0 && stripe < screen_width && transform_y < z_buffer[stripe]) {
+
+                    for (int y = draw_start_y; y < draw_end_y; y++) // for every pixel of the current stripe
+                    {
+                        // 256 and 128 factors to avoid floats
+                        int d = (y) * 256 - screen_height * 128 + sprite_height * 128;
+
+                        int tex_y = ((d * SPRITE_TEXTURE_HEIGHT) / sprite_height) / 256;
+
+                        // get current color from the texture
+                        // Uint32 color = textures[sprite[sprite_order[i]].texture][SPRITE_TEXTURE_WIDTH * tex_y +
+                        // tex_x];
+                        Uint32 color = pixels[SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
+                        // Uint32 color = WHITE;
+
+                        if ((color & 0x00FFFFFF) != 0) {
+                            // paint pixel if it isn't black, black is the invisible color
+                            dest_pixel_buffer->pixels[stripe + (y * dest_pixel_buffer->width)] = color;
+                        }
                     }
                 }
             }
@@ -348,8 +361,8 @@ static void write_sprites(const Position* position, const Direction* direction, 
 /**
  * The main function called every frame.
  */
-static void write_to_buffer(
-    const Position* position, const Direction* direction, const Plane* plane, PixelBuffer* dest_pixel_buffer)
+static void write_to_buffer(const Position* position, const Direction* direction, const Plane* plane,
+    PixelBuffer* dest_pixel_buffer, ecs_world_t* world)
 {
     int screen_width = dest_pixel_buffer->width;
     int screen_height = dest_pixel_buffer->height;
@@ -365,7 +378,7 @@ static void write_to_buffer(
         z_buffer[x] = ray.perp_wall_dist;
     }
 
-    write_sprites(position, direction, plane, dest_pixel_buffer, screen_width, screen_height);
+    write_sprites(position, direction, plane, dest_pixel_buffer, screen_width, screen_height, world);
 }
 
 /**
@@ -446,7 +459,7 @@ void RaycasterUpdate(ecs_iter_t* it)
     PixelBuffer* buffer_data = ecs_singleton_get_mut(it->world, PixelBuffer);
 
     clear_buffer(buffer_data);
-    write_to_buffer(position, direction, plane, buffer_data);
+    write_to_buffer(position, direction, plane, buffer_data, it->world);
     blit_buffer_to_texture(pixels_texture, buffer_data);
 }
 
