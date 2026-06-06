@@ -8,8 +8,12 @@ install dependencies with conan
 cmake --build ./build/Release
 ./build/Release/raycasting-engine
 
+## Pipeline
+
+floor and ceiling -> walls -> sprites
 
 # Sources
+
 https://benhoyt.com/writings/hash-table-in-c/
 https://lodev.org/cgtutor/raycasting.html
 https://github.com/miguelggcc/raycaster/tree/master

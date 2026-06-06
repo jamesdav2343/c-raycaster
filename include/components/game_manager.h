@@ -10,6 +10,7 @@ extern ECS_COMPONENT_DECLARE(Renderer);
 extern ECS_COMPONENT_DECLARE(Window);
 extern ECS_COMPONENT_DECLARE(VideoConfig);
 extern ECS_COMPONENT_DECLARE(TexturesConfig);
+extern ECS_COMPONENT_DECLARE(Textures);
 extern ECS_TAG_DECLARE(Config);
 
 typedef struct Renderer {

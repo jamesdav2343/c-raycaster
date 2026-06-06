@@ -13,13 +13,8 @@ static SDL_Texture* pixels_texture;
 static ht* texture_map;
 static int DRAW_START_MIN;
 static int DRAW_END_MAX;
-static double* z_buffer = NULL;
 
-#define SPRITE_COUNT 19
-
-// arrays used to sort the sprites
-int sprite_order[SPRITE_COUNT];
-double sprite_distance[SPRITE_COUNT];
+ecs_entity_t RaycasterMap;
 
 /**
  * Casts a ray.
@@ -85,11 +80,6 @@ static void dda(const Position* position, const Direction* direction, const Plan
     ray_out->wall.side_orientation = side_orientation;
     ray_out->wall.wall_position = ray_origin;
 }
-
-/**
- * Resets the pixel buffer. Sets all values to 0.
- */
-static void clear_buffer(PixelBuffer* pixel_buffer) { memset(pixel_buffer->pixels, 0, pixel_buffer->size); }
 
 static void blit_buffer_to_texture(SDL_Texture* dest_pixels_texture, PixelBuffer* src_pixel_buffer)
 {
@@ -247,151 +237,18 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 }
 
 /**
- * Writes the sprites to the pixel buffer.
- */
-static void write_sprites(const Position* position, const Direction* direction, const Plane* plane,
-    PixelBuffer* dest_pixel_buffer, int screen_width, int screen_height, ecs_world_t* world)
-{
-    // Get all entities (e.g. barrels, torches, etc.)
-    ecs_query_t* q = ecs_query(world,
-        { .terms = { { .id = ecs_id(Position) }, { .id = ecs_id(Sprite), .inout = EcsIn } },
-
-            // QueryCache Auto automatically caches all terms that can be cached.
-            .cache_kind = EcsQueryCacheAuto });
-
-    // Sorts the sprites from far to close
-    // for (int i = 0; i < SPRITE_COUNT; i++) {
-    //     sprite_order[i] = i;
-    //     sprite_distance[i] = ((position->x - entities[i].position.x) * (position->x - entities[i].position.x)
-    //         + (position->y - entities[i].position.y) * (position->y - entities[i].position.y));
-    // }
-
-    sort_sprites(sprite_order, sprite_distance, SPRITE_COUNT);
-
-    ecs_iter_t it = ecs_query_iter(world, q);
-    printf("number of results: %d\n", ecs_query_count(q).entities);
-
-    while (ecs_query_next(&it)) {
-        Position* p = ecs_field(&it, Position, 0);
-        Sprite* s = ecs_field(&it, Sprite, 1);
-
-        for (int i = 0; i < it.count; i++) {
-
-            double sprite_x = p[i].x - position->x;
-            double sprite_y = p[i].y - position->y;
-
-            double inv_det = 1.0
-                / (plane->x * direction->y - direction->x * plane->y); // required for correct matrix multiplication
-
-            double transform_x = inv_det * (direction->y * sprite_x - direction->x * sprite_y);
-            double transform_y = inv_det * (-plane->y * sprite_x + plane->x * sprite_y);
-
-            int sprite_screen_x = (int)((screen_width / 2) * (1 + transform_x / transform_y));
-
-            int sprite_height = abs((int)(screen_height / (transform_y)));
-
-            int draw_start_y = -sprite_height / 2 + screen_height / 2;
-            if (draw_start_y < 0)
-                draw_start_y = 0;
-
-            int draw_end_y = sprite_height / 2 + screen_height / 2;
-            if (draw_end_y >= screen_height)
-                draw_end_y = screen_height - 1;
-
-            int sprite_width = abs((int)(screen_height / (transform_y)));
-            int draw_start_x = -sprite_width / 2 + sprite_screen_x;
-            if (draw_start_x < 0)
-                draw_start_x = 0;
-
-            int draw_end_x = sprite_width / 2 + sprite_screen_x;
-            if (draw_end_x >= screen_width)
-                draw_end_x = screen_width - 1;
-
-            // texture stuff
-            ht* sprites = (ht*)ht_get(texture_map, "sprites");
-
-            if (sprites == NULL) {
-                printf("sprites is null\n");
-                return;
-            }
-
-            char buffer[1024];
-            SDL_itoa(s[i].sprite_id, buffer, 10);
-
-            SDL_Surface* surface = (SDL_Surface*)ht_get(sprites, buffer);
-
-            if (surface == NULL) {
-                printf("could not get surface\n");
-                return;
-            }
-
-            Uint32* pixels = (Uint32*)surface->pixels;
-
-            for (int stripe = draw_start_x; stripe < draw_end_x; stripe++) {
-                int tex_x = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * SPRITE_TEXTURE_WIDTH
-                                / sprite_width)
-                    / 256;
-
-                if (transform_y > 0 && stripe > 0 && stripe < screen_width && transform_y < z_buffer[stripe]) {
-
-                    for (int y = draw_start_y; y < draw_end_y; y++) // for every pixel of the current stripe
-                    {
-                        // 256 and 128 factors to avoid floats
-                        int d = (y) * 256 - screen_height * 128 + sprite_height * 128;
-
-                        int tex_y = ((d * SPRITE_TEXTURE_HEIGHT) / sprite_height) / 256;
-
-                        // get current color from the texture
-                        // Uint32 color = textures[sprite[sprite_order[i]].texture][SPRITE_TEXTURE_WIDTH * tex_y +
-                        // tex_x];
-                        Uint32 color = pixels[SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
-                        // Uint32 color = WHITE;
-
-                        if ((color & 0x00FFFFFF) != 0) {
-                            // paint pixel if it isn't black, black is the invisible color
-                            dest_pixel_buffer->pixels[stripe + (y * dest_pixel_buffer->width)] = color;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * The main function called every frame.
- */
-static void write_to_buffer(const Position* position, const Direction* direction, const Plane* plane,
-    PixelBuffer* dest_pixel_buffer, ecs_world_t* world)
-{
-    int screen_width = dest_pixel_buffer->width;
-    int screen_height = dest_pixel_buffer->height;
-
-    write_floor_and_celing(position, direction, plane, dest_pixel_buffer, screen_width, screen_height);
-
-    for (int x = 0; x < screen_width; x++) {
-        Ray ray = { 0 };
-
-        dda(position, direction, plane, x, screen_width, screen_height, &ray);
-        write_vertical_wall_strip(&ray, position, x, dest_pixel_buffer);
-
-        z_buffer[x] = ray.perp_wall_dist;
-    }
-
-    write_sprites(position, direction, plane, dest_pixel_buffer, screen_width, screen_height, world);
-}
-
-/**
  * Cleanup function. Frees resources.
  */
 static void raycaster_cleanup(ecs_world_t* world, void* ctx)
 {
+    double* z_buffer = ecs_singleton_get(world, ZBuffer)->buffer;
+
     if (z_buffer != NULL) {
         free(z_buffer);
         z_buffer = NULL;
     }
 
-    const PixelBuffer* pixel_buffer = ecs_get(world, ecs_id(PixelBuffer), PixelBuffer);
+    const PixelBuffer* pixel_buffer = ecs_singleton_get(world, PixelBuffer);
 
     if (pixel_buffer->pixels != NULL) {
         free(pixel_buffer->pixels);
@@ -407,12 +264,22 @@ void RaycasterSystemsImport(ecs_world_t* world)
 
     ECS_IMPORT(world, CameraModule);
 
-    ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
+    RaycasterMap = ecs_new_w_id(world, EcsPhase);
+    ecs_add_pair(world, RaycasterMap, EcsDependsOn, EcsOnUpdate);
+    // ECS_SYSTEM_DEFINE(world, RaycasterUpdate, EcsOnUpdate, Raycaster);
+
+    ecs_system(world,
+        { .entity = ecs_entity(world, { .name = "MapUpdate", .add = ecs_ids(ecs_dependson(RaycasterMap)) }),
+            .callback = RaycasterUpdate });
+
     ECS_SYSTEM_DEFINE(world, RaycasterDraw, EcsOnStore, Raycaster);
 
     const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);
 
-    z_buffer = (double*)calloc(video_config->screen_size.x, sizeof(double));
+    double* z_buffer = (double*)calloc(video_config->screen_size.x, sizeof(double));
+
+    ecs_add_id(world, ecs_id(ZBuffer), EcsSingleton);
+    ecs_singleton_set(world, ZBuffer, { z_buffer });
 
     SDL_Renderer* renderer = ecs_singleton_get(world, Renderer)->value;
 
@@ -447,24 +314,49 @@ void RaycasterSystemsImport(ecs_world_t* world)
     ht* textures_config = ecs_singleton_get(world, TexturesConfig)->config;
 
     texture_map = create_textures_from_config(textures_config);
+
+    // Set as a singleton
+    ecs_singleton_set(world, Textures, { texture_map });
 }
 
 void RaycasterUpdate(ecs_iter_t* it)
 {
+    printf("raycaster update executing\n");
     ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
     const Position* position = ecs_get(it->world, player, Position);
     const Direction* direction = ecs_get(it->world, player, Direction);
     const Plane* plane = ecs_get(it->world, player, Plane);
 
     PixelBuffer* buffer_data = ecs_singleton_get_mut(it->world, PixelBuffer);
+    double* z_buffer = ecs_singleton_get(it->world, ZBuffer)->buffer;
 
-    clear_buffer(buffer_data);
-    write_to_buffer(position, direction, plane, buffer_data, it->world);
-    blit_buffer_to_texture(pixels_texture, buffer_data);
+    // Clear the buffer
+    memset(buffer_data->pixels, 0, buffer_data->size);
+
+    // Write to the buffer
+    int screen_width = buffer_data->width;
+    int screen_height = buffer_data->height;
+
+    write_floor_and_celing(position, direction, plane, buffer_data, screen_width, screen_height);
+
+    for (int x = 0; x < screen_width; x++) {
+        Ray ray = { 0 };
+
+        dda(position, direction, plane, x, screen_width, screen_height, &ray);
+        write_vertical_wall_strip(&ray, position, x, buffer_data);
+
+        z_buffer[x] = ray.perp_wall_dist;
+    }
+
+    // Sprites written after this system is executed
 }
 
 void RaycasterDraw(ecs_iter_t* it)
 {
+    // This could go in an inbetween phase
+    PixelBuffer* buffer_data = ecs_singleton_get_mut(it->world, PixelBuffer);
+    blit_buffer_to_texture(pixels_texture, buffer_data);
+
     SDL_Renderer* renderer = ecs_singleton_get(it->world, Renderer)->value;
     SDL_Window* window = ecs_singleton_get(it->world, Window)->value;
 

@@ -11,6 +11,8 @@
 #include <flecs.h>
 #include <stdio.h>
 
+void Sys(ecs_iter_t* it) { printf("system %s\n", ecs_get_name(it->world, it->system)); }
+
 int main(int argc, char* argv[])
 {
     ecs_world_t* world = ecs_init();

@@ -11,6 +11,8 @@
 #include <SDL3/SDL.h>
 #include <flecs.h>
 
+extern ecs_entity_t RaycasterMap;
+
 extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
 extern ECS_SYSTEM_DECLARE(RaycasterDraw);
 

@@ -7,6 +7,7 @@
 
 extern ECS_TAG_DECLARE(Raycaster);
 extern ECS_COMPONENT_DECLARE(PixelBuffer);
+extern ECS_COMPONENT_DECLARE(ZBuffer);
 
 void RaycasterComponentsImport(ecs_world_t* world);
 
@@ -16,6 +17,10 @@ typedef struct PixelBuffer {
     int height;
     size_t size;
 } PixelBuffer;
+
+typedef struct ZBuffer {
+    double* buffer;
+} ZBuffer;
 
 typedef struct Wall {
     enum Orientation side_orientation;

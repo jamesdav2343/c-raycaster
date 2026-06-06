@@ -38,6 +38,11 @@ typedef struct TextureData {
     Vector2I size;
 } TextureData;
 
+// Textures themselves
+typedef struct Textures {
+    ht* table;
+} Textures;
+
 typedef struct {
     double distance;
     int order;
