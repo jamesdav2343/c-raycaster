@@ -3,10 +3,9 @@
 #include "types.h"
 #include <SDL3_image/SDL_image.h>
 
+#define SPRITE_COUNT 19
 static int DRAW_START_MIN;
 static int DRAW_END_MAX;
-
-#define SPRITE_COUNT 19
 static int sprite_order[SPRITE_COUNT];
 static double sprite_distance[SPRITE_COUNT];
 
@@ -221,7 +220,8 @@ static void write_floor_and_celing(const Position* position, const Direction* di
  */
 static void raycaster_cleanup(ecs_world_t* world, void* ctx)
 {
-    ecs_entity_t z_buffer_entity = ecs_lookup(world, "raycaster.systems.ZBuffer");
+    const char* z_buffer_name = "raycaster.systems.ZBuffer";
+    ecs_entity_t z_buffer_entity = ecs_lookup(world, z_buffer_name);
 
     if (z_buffer_entity) {
         ZBuffer* z_buffer = ecs_get_mut(world, z_buffer_entity, ZBuffer);
@@ -229,10 +229,11 @@ static void raycaster_cleanup(ecs_world_t* world, void* ctx)
         z_buffer->buffer = NULL;
         ecs_delete(world, z_buffer);
     } else {
-        fprintf(stderr, "Could not find z_buffer entity to delete.\n");
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not find z_buffer entity to delete with name: %s\n", z_buffer_name);
     }
 
-    ecs_entity_t pixel_buffer_entity = ecs_lookup(world, "raycaster.systems.PixelBuffer");
+    const char* pixel_buffer_name = "raycaster.systems.PixelBuffer";
+    ecs_entity_t pixel_buffer_entity = ecs_lookup(world, pixel_buffer_name);
 
     if (pixel_buffer_entity) {
         PixelBuffer* pixel_buffer = ecs_get_mut(world, pixel_buffer_entity, PixelBuffer);
@@ -240,7 +241,8 @@ static void raycaster_cleanup(ecs_world_t* world, void* ctx)
         pixel_buffer->pixels = NULL;
         ecs_delete(world, pixel_buffer);
     } else {
-        fprintf(stderr, "Could not find z_buffer entity to delete.\n");
+        SDL_LogError(
+            SDL_LOG_CATEGORY_ERROR, "Could not find pixel_buffer entity to delete with name: %s\n", pixel_buffer_name);
     }
 }
 
