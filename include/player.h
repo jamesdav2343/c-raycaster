@@ -1,9 +1,10 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "camera.h"
 #include "components/input.h"
+#include "components/transform.h"
 #include "systems/input.h"
+#include "types.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_render.h>
 #include <flecs.h>
@@ -18,6 +19,10 @@
 #define PLAYER_ENTITY_NAME "_player_"
 
 extern ECS_SYSTEM_DECLARE(PlayerUpdate);
+extern ECS_COMPONENT_DECLARE(CameraPlane);
+
+// The camera plane.
+typedef Vector2 CameraPlane;
 
 ecs_entity_t Player;
 

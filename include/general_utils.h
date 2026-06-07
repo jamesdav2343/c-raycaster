@@ -34,4 +34,6 @@ int compare_sprites(const void* a, const void* b);
 
 void sort_sprites(int* order, double* distance, int amount);
 
+void pretty_print_grid(Uint8* grid, int row_length, int max_gap);
+
 #endif

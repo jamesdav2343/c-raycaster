@@ -6,11 +6,10 @@ set(SRC_FILES
     main.c
     map.c
     player.c
-    camera.c
     math_utils.c
     general_utils.c
-    debug.c
     data_structures/ht.c
+    lighting.c
     components/input.c
     components/transform.c
     components/raycaster.c
@@ -19,7 +18,6 @@ set(SRC_FILES
     systems/transform.c
     systems/raycaster.c
     systems/game_manager.c
-    lighting.c
 )
 
 list(TRANSFORM SRC_FILES PREPEND src/)

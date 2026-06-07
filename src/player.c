@@ -1,28 +1,28 @@
 #include "player.h"
 
 ECS_SYSTEM_DECLARE(PlayerUpdate);
+ECS_COMPONENT_DECLARE(CameraPlane);
 
 void PlayerModuleImport(ecs_world_t* world)
 {
     ECS_MODULE(world, PlayerModule);
 
     ECS_IMPORT(world, TransformComponents);
-    ECS_IMPORT(world, CameraModule);
     ECS_IMPORT(world, InputComponents);
+
+    ECS_COMPONENT_DEFINE(world, CameraPlane);
 
     ecs_system(world,
         { .entity = ecs_entity(world, { .name = "PlayerUpdate", .add = ecs_ids(ecs_dependson(EcsOnUpdate)) }),
-            .query.terms = { { ecs_id(Position) }, { ecs_id(Direction) }, { ecs_id(Plane) }, { ecs_id(Controller) } },
+            .query.terms
+            = { { ecs_id(Position) }, { ecs_id(Direction) }, { ecs_id(CameraPlane) }, { ecs_id(Controller) } },
             .callback = PlayerUpdate });
-
-    // ECS_SYSTEM_DEFINE(world, PlayerUpdate, EcsOnUpdate, Position, Direction, CameraPlane);
 
     Player = ecs_entity(world, { .add = ecs_ids(EcsPrefab) });
 
     ecs_set(world, Player, Position, { 0, 0 });
     ecs_set(world, Player, Direction, { -1, 0 });
-    ecs_set(world, Player, Plane, { 0, 0.66 });
-
+    ecs_set(world, Player, CameraPlane, { 0, 0.66 });
     ecs_set(world, Player, Controller, { 0, 0 });
 }
 
@@ -32,7 +32,7 @@ void PlayerUpdate(ecs_iter_t* it)
 
     Position* player_position = ecs_field(it, Position, 0);
     Direction* camera_direction = ecs_field(it, Direction, 1);
-    Plane* camera_plane = ecs_field(it, Plane, 2);
+    CameraPlane* camera_plane = ecs_field(it, CameraPlane, 2);
     Controller* controller = ecs_field(it, Controller, 3);
 
     for (int i = 0; i < it->count; i++) {

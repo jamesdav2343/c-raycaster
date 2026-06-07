@@ -14,7 +14,7 @@ static double sprite_distance[SPRITE_COUNT];
  * Great explanation of the algorithm here:
  * https://aaaa.sh/creatures/dda-algorithm-interactive/
  */
-static void dda(const Position* position, const Direction* direction, const Plane* plane, int screen_x,
+static void dda(const Position* position, const Direction* direction, const CameraPlane* plane, int screen_x,
     int screen_width, int screen_height, Ray* ray_out)
 {
     double camera_x = 2 * screen_x / (double)screen_width - 1;
@@ -138,7 +138,7 @@ static void write_vertical_wall_strip(
 /**
  * Writes the horizontal wall and ceiling strips to the pixel buffer.
  */
-static void write_floor_and_celing(const Position* position, const Direction* direction, const Plane* plane,
+static void write_floor_and_celing(const Position* position, const Direction* direction, const CameraPlane* plane,
     PixelBuffer* dest_buffer_data, int screen_width, int screen_height, ht* texture_map)
 {
     // Gets floor texture
@@ -251,7 +251,7 @@ void RaycasterMapUpdate(ecs_iter_t* it)
     ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
     const Position* position = ecs_get(it->world, player, Position);
     const Direction* direction = ecs_get(it->world, player, Direction);
-    const Plane* plane = ecs_get(it->world, player, Plane);
+    const CameraPlane* plane = ecs_get(it->world, player, CameraPlane);
 
     ht* texture_map = ecs_field(it, Textures, 0)->table;
     double* z_buffer = ecs_field(it, ZBuffer, 1)->buffer;
@@ -289,7 +289,7 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
 
     const Position* position = ecs_get(it->world, player, Position);
     const Direction* direction = ecs_get(it->world, player, Direction);
-    const Plane* plane = ecs_get(it->world, player, Plane);
+    const CameraPlane* plane = ecs_get(it->world, player, CameraPlane);
 
     int screen_width = 1920;
     int screen_height = 1080;
@@ -425,7 +425,6 @@ void RaycasterSystemsImport(ecs_world_t* world)
     ECS_IMPORT(world, RaycasterComponents);
     ECS_IMPORT(world, TransformComponents);
     ECS_IMPORT(world, GameManagerComponents);
-    ECS_IMPORT(world, CameraModule);
 
     const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);
 

@@ -1,5 +1,4 @@
 #include "lighting.h"
-#include "debug.h"
 #include <glib.h>
 #include <math.h>
 
