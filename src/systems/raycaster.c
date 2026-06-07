@@ -221,17 +221,21 @@ static void write_floor_and_celing(const Position* position, const Direction* di
  */
 static void raycaster_cleanup(ecs_world_t* world, void* ctx)
 {
-    double* z_buffer = ecs_singleton_get(world, ZBuffer)->buffer;
+    ecs_entity_t z_buffer_entity = ecs_lookup(world, "raycaster.systems.ZBuffer");
 
-    if (z_buffer != NULL) {
-        free(z_buffer);
-        z_buffer = NULL;
+    if (z_buffer_entity) {
+        ZBuffer* z_buffer = ecs_get_mut(world, z_buffer_entity, ZBuffer);
+        free(z_buffer->buffer);
+        z_buffer->buffer = NULL;
+        ecs_delete(world, z_buffer);
     }
 
-    const PixelBuffer* pixel_buffer = ecs_singleton_get(world, PixelBuffer);
+    PixelBuffer* pixel_buffer = ecs_singleton_get_mut(world, PixelBuffer);
 
     if (pixel_buffer->pixels != NULL) {
         free(pixel_buffer->pixels);
+        pixel_buffer->pixels = NULL;
+        ecs_delete(world, pixel_buffer);
     }
 }
 
@@ -243,8 +247,8 @@ void RaycasterMapUpdate(ecs_iter_t* it)
     const Plane* plane = ecs_get(it->world, player, Plane);
 
     PixelBuffer* buffer_data = ecs_singleton_get_mut(it->world, PixelBuffer);
-    double* z_buffer = ecs_singleton_get(it->world, ZBuffer)->buffer;
     ht* texture_map = ecs_field(it, Textures, 0)->table;
+    double* z_buffer = ecs_field(it, ZBuffer, 1)->buffer;
 
     // Clear the buffer
     memset(buffer_data->pixels, 0, buffer_data->size);
@@ -270,15 +274,14 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
     Sprite* s = ecs_field(it, Sprite, 0);
     Position* p = ecs_field(it, Position, 1);
     ht* texture_map = ecs_field(it, Textures, 2)->table;
+    const double* z_buffer = ecs_field(it, ZBuffer, 3)->buffer;
 
     // Use src.id in query instead
-    ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
+    const ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
 
     const Position* position = ecs_get(it->world, player, Position);
     const Direction* direction = ecs_get(it->world, player, Direction);
     const Plane* plane = ecs_get(it->world, player, Plane);
-
-    double* z_buffer = ecs_singleton_get(it->world, ZBuffer)->buffer;
 
     int screen_width = 1920;
     int screen_height = 1080;
@@ -448,9 +451,8 @@ void RaycasterSystemsImport(ecs_world_t* world)
     ecs_add_id(world, ecs_id(PixelBuffer), EcsSingleton);
     ecs_set_ptr(world, ecs_id(PixelBuffer), PixelBuffer, &buffer_data);
 
-    ecs_singleton_set(world, ZBuffer, { (double*)calloc(video_config->screen_size.x, sizeof(double)) });
-    // ecs_entity_t z_buffer = ecs_new(world);
-    // ecs_set(world, z_buffer, ZBuffer, { (double*)calloc(video_config->screen_size.x, sizeof(double)) });
+    ecs_entity_t z_buffer = ecs_entity(world, { .name = "ZBuffer" });
+    ecs_set(world, z_buffer, ZBuffer, { (double*)calloc(video_config->screen_size.x, sizeof(double)) });
 
     const TexturesConfig* textures_config = ecs_singleton_get(world, TexturesConfig);
 
@@ -469,25 +471,27 @@ void RaycasterSystemsImport(ecs_world_t* world)
 
     ecs_system(world,
         { .entity = ecs_entity(world, { .name = "RaycasterMapUpdate", .add = ecs_ids(ecs_dependson(RaycasterMap)) }),
-            .query.terms = { { ecs_id(Textures), .src.id = textures } },
+            .query.terms = { { ecs_id(Textures), .src.id = textures, .inout = EcsIn },
+                { ecs_id(ZBuffer), .src.id = z_buffer, .inout = EcsInOut } },
             .callback = RaycasterMapUpdate });
 
     ecs_system(world,
         { .entity
             = ecs_entity(world, { .name = "RaycasterSpriteUpdate", .add = ecs_ids(ecs_dependson(RaycasterSprite)) }),
-            .query.terms
-            = { { ecs_id(Sprite) }, { ecs_id(Position), .inout = EcsIn }, { ecs_id(Textures), .src.id = textures } },
+            .query.terms = { { ecs_id(Sprite), .inout = EcsIn }, { ecs_id(Position), .inout = EcsIn },
+                { ecs_id(Textures), .src.id = textures, .inout = EcsIn },
+                { ecs_id(ZBuffer), .src.id = z_buffer, .inout = EcsInOut } },
             .callback = RaycasterSpriteUpdate });
 
     ecs_system(world,
         { .entity = ecs_entity(
               world, { .name = "RaycasterBlitBufferToTexture", .add = ecs_ids(ecs_dependson(RaycasterBlit)) }),
-            .query.terms = { { ecs_id(ScreenTexture), .src.id = screen } },
+            .query.terms = { { ecs_id(ScreenTexture), .src.id = screen, .inout = EcsInOut } },
             .callback = RaycasterBlitBufferToTexture });
 
     ecs_system(world,
         { .entity = ecs_entity(world, { .name = "RaycasterDrawWorld", .add = ecs_ids(ecs_dependson(RaycasterDraw)) }),
-            .query.terms = { { ecs_id(ScreenTexture), .src.id = screen } },
+            .query.terms = { { ecs_id(ScreenTexture), .src.id = screen, .inout = EcsIn } },
             .callback = RaycasterDrawWorld });
 
     ecs_atfini(world, raycaster_cleanup, NULL);
