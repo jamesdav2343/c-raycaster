@@ -13,11 +13,6 @@
         "path": "assets/Wall_1.png",
         "width": 128,
         "height": 128
-      },
-      "2": {
-        "path": "assets/example.png",
-        "width": 891238,
-        "height": 1238912
       }
     },
     "ceilings": {

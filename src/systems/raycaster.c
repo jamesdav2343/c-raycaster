@@ -83,10 +83,8 @@ static void write_vertical_wall_strip(
     ht* textures = (ht*)ht_get(texture_map, "walls");
     Uint8 wall_id = world_map[ray->wall.wall_position.x + (ray->wall.wall_position.y * COLS)];
 
-    int buffer_len = 1024;
-
-    char buffer[buffer_len];
-    snprintf(buffer, buffer_len, "%d", wall_id);
+    char buffer[BUFFER_MAX];
+    snprintf(buffer, BUFFER_MAX, "%d", wall_id);
     SDL_Surface* wall = (SDL_Surface*)ht_get(textures, buffer);
 
     Uint32* tex_pixels = wall != NULL ? (Uint32*)wall->pixels : NULL;
@@ -284,6 +282,8 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
     const double* z_buffer = ecs_field(it, ZBuffer, 3)->buffer;
     PixelBuffer* buffer_data = ecs_field(it, PixelBuffer, 4);
 
+    const VideoConfig* video_config = ecs_singleton_get(it->world, VideoConfig);
+
     // Use src.id in query instead
     const ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
 
@@ -291,8 +291,8 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
     const Direction* direction = ecs_get(it->world, player, Direction);
     const CameraPlane* plane = ecs_get(it->world, player, CameraPlane);
 
-    int screen_width = 1920;
-    int screen_height = 1080;
+    int screen_width = video_config->screen_size.x;
+    int screen_height = video_config->screen_size.y;
 
     // Sorts the sprites from far to close
     for (int i = 0; i < it->count; i++) {
@@ -338,48 +338,39 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
         if (draw_end_x >= screen_width)
             draw_end_x = screen_width - 1;
 
-        // texture stuff
         ht* sprites = (ht*)ht_get(texture_map, "sprites");
 
         if (sprites == NULL) {
-            printf("sprites is null\n");
+            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Sprites is null");
             return;
         }
 
-        char buffer[1024];
+        char buffer[BUFFER_MAX];
         SDL_itoa(s->sprite_id, buffer, 10);
 
-        SDL_Surface* surface = (SDL_Surface*)ht_get(sprites, buffer);
+        SDL_Surface* sprite_surface = (SDL_Surface*)ht_get(sprites, buffer);
 
-        if (surface == NULL) {
-            printf("could not get surface\n");
+        if (sprite_surface == NULL) {
+            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Sprite %s surface is null", buffer);
             return;
         }
 
-        Uint32* pixels = (Uint32*)surface->pixels;
+        Uint32* pixels = (Uint32*)sprite_surface->pixels;
 
         for (int stripe = draw_start_x; stripe < draw_end_x; stripe++) {
-            int tex_x
-                = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * SPRITE_TEXTURE_WIDTH / sprite_width)
+            int tex_x = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * sprite_surface->w / sprite_width)
                 / 256;
 
             if (transform_y > 0 && stripe > 0 && stripe < screen_width && transform_y < z_buffer[stripe]) {
 
-                for (int y = draw_start_y; y < draw_end_y; y++) // for every pixel of the current stripe
-                {
-                    // 256 and 128 factors to avoid floats
+                for (int y = draw_start_y; y < draw_end_y; y++) {
                     int d = (y) * 256 - screen_height * 128 + sprite_height * 128;
 
-                    int tex_y = ((d * SPRITE_TEXTURE_HEIGHT) / sprite_height) / 256;
+                    int tex_y = ((d * sprite_surface->h) / sprite_height) / 256;
 
-                    // get current color from the texture
-                    // Uint32 color = textures[sprite[sprite_order[i]].texture][SPRITE_TEXTURE_WIDTH * tex_y +
-                    // tex_x];
-                    Uint32 color = pixels[SPRITE_TEXTURE_WIDTH * tex_y + tex_x];
-                    // Uint32 color = WHITE;
+                    Uint32 color = pixels[sprite_surface->w * tex_y + tex_x];
 
                     if ((color & 0x00FFFFFF) != 0) {
-                        // paint pixel if it isn't black, black is the invisible color
                         buffer_data->pixels[stripe + (y * buffer_data->width)] = color;
                     }
                 }

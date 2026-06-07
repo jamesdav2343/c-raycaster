@@ -6,6 +6,7 @@
 #include <cjson/cJSON.h>
 
 #define ALPHA_OPAQUE_HEX 0xFF000000
+#define BUFFER_MAX 1024
 
 /**
  * interpolate 2 RGB colors

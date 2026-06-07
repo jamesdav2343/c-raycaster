@@ -5,8 +5,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#define BUFFER_MAX 1024
-
 Uint32 interpolate(int color1, int color2, float fraction)
 {
     unsigned char r1 = (color1 >> 16) & 0xff;
