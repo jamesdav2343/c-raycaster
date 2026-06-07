@@ -7,7 +7,6 @@ void PlayerModuleImport(ecs_world_t* world)
     ECS_MODULE(world, PlayerModule);
 
     ECS_IMPORT(world, TransformComponents);
-    ECS_IMPORT(world, SpriteComponents);
     ECS_IMPORT(world, CameraModule);
     ECS_IMPORT(world, InputComponents);
 
@@ -24,7 +23,6 @@ void PlayerModuleImport(ecs_world_t* world)
     ecs_set(world, Player, Direction, { -1, 0 });
     ecs_set(world, Player, Plane, { 0, 0.66 });
 
-    // ecs_set(world, Player, Sprite, {0, 0, 20, 20});
     ecs_set(world, Player, Controller, { 0, 0 });
 }
 

@@ -15,12 +15,10 @@ set(SRC_FILES
     components/transform.c
     components/raycaster.c
     components/game_manager.c
-    components/sprite.c
     systems/input.c
     systems/transform.c
     systems/raycaster.c
     systems/game_manager.c
-    systems/sprite.c
     lighting.c
 )
 

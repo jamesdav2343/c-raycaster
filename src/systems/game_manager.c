@@ -1,4 +1,5 @@
 #include "systems/game_manager.h"
+#include "components/raycaster.h"
 #include "general_utils.h"
 
 static void initialise_entities(ecs_world_t* world, cJSON* entities_json)
@@ -106,7 +107,7 @@ void GameManagerSystemsImport(ecs_world_t* world)
 {
     ECS_IMPORT(world, GameManagerComponents);
     ECS_IMPORT(world, TransformComponents);
-    ECS_IMPORT(world, SpriteComponents);
+    ECS_IMPORT(world, RaycasterComponents);
 
     set_config(world);
 

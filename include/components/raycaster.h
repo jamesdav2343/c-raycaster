@@ -8,6 +8,8 @@
 extern ECS_TAG_DECLARE(Raycaster);
 extern ECS_COMPONENT_DECLARE(PixelBuffer);
 extern ECS_COMPONENT_DECLARE(ZBuffer);
+extern ECS_COMPONENT_DECLARE(Sprite);
+extern ECS_COMPONENT_DECLARE(ScreenTexture);
 
 void RaycasterComponentsImport(ecs_world_t* world);
 
@@ -22,6 +24,10 @@ typedef struct ZBuffer {
     double* buffer;
 } ZBuffer;
 
+typedef struct ScreenTexture {
+    SDL_Texture* texture;
+} ScreenTexture;
+
 typedef struct Wall {
     enum Orientation side_orientation;
     Vector2I wall_position;
@@ -35,5 +41,9 @@ typedef struct Ray {
     float perp_wall_dist;
     Wall wall;
 } Ray;
+
+typedef struct Sprite {
+    int sprite_id;
+} Sprite;
 
 #endif

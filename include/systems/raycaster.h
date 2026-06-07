@@ -11,11 +11,6 @@
 #include <SDL3/SDL.h>
 #include <flecs.h>
 
-extern ecs_entity_t RaycasterMap;
-
-extern ECS_SYSTEM_DECLARE(RaycasterUpdate);
-extern ECS_SYSTEM_DECLARE(RaycasterDraw);
-
 void RaycasterSystemsImport(ecs_world_t* world);
 
 #define TEXTURE_WIDTH_FALLBACK 128
@@ -27,9 +22,5 @@ void RaycasterSystemsImport(ecs_world_t* world);
 #define BLACK 0x00000000
 #define WHITE 0xFFFFFFFF
 #define RED 0xFFFF0000
-
-void RaycasterUpdate(ecs_iter_t* it);
-
-void RaycasterDraw(ecs_iter_t* it);
 
 #endif

@@ -3,7 +3,6 @@
 
 #include "camera.h"
 #include "components/input.h"
-#include "components/sprite.h"
 #include "systems/input.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_render.h>
