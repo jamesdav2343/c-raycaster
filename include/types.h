@@ -33,11 +33,6 @@ typedef struct TexturesConfig {
     ht* config;
 } TexturesConfig;
 
-typedef struct TextureData {
-    const char* path;
-    Vector2I size;
-} TextureData;
-
 // Textures themselves
 typedef struct Textures {
     ht* table;

@@ -87,29 +87,25 @@ ht* create_textures_from_config(ht* config)
 
     it = ht_iterator(walls);
     while (ht_next(&it)) {
-        ht_set(walls_textures, it.key,
-            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+        ht_set(walls_textures, it.key, load_formatted_img_surface(it.value, SDL_PIXELFORMAT_ARGB8888));
     }
     ht_set(textures, "walls", walls_textures);
 
     it = ht_iterator(ceilings);
     while (ht_next(&it)) {
-        ht_set(ceilings_textures, it.key,
-            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+        ht_set(ceilings_textures, it.key, load_formatted_img_surface(it.value, SDL_PIXELFORMAT_ARGB8888));
     }
     ht_set(textures, "ceilings", ceilings_textures);
 
     it = ht_iterator(floors);
     while (ht_next(&it)) {
-        ht_set(floors_textures, it.key,
-            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+        ht_set(floors_textures, it.key, load_formatted_img_surface(it.value, SDL_PIXELFORMAT_ARGB8888));
     }
     ht_set(textures, "floors", floors_textures);
 
     it = ht_iterator(sprites);
     while (ht_next(&it)) {
-        ht_set(sprites_textures, it.key,
-            load_formatted_img_surface(((TextureData*)it.value)->path, SDL_PIXELFORMAT_ARGB8888));
+        ht_set(sprites_textures, it.key, load_formatted_img_surface(it.value, SDL_PIXELFORMAT_ARGB8888));
     }
     ht_set(textures, "sprites", sprites_textures);
 

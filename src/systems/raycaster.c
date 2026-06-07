@@ -84,7 +84,7 @@ static void write_vertical_wall_strip(
     Uint8 wall_id = world_map[ray->wall.wall_position.x + (ray->wall.wall_position.y * COLS)];
 
     char buffer[BUFFER_MAX];
-    snprintf(buffer, BUFFER_MAX, "%d", wall_id);
+    SDL_itoa(wall_id, buffer, 10);
     SDL_Surface* wall = (SDL_Surface*)ht_get(textures, buffer);
 
     Uint32* tex_pixels = wall != NULL ? (Uint32*)wall->pixels : NULL;

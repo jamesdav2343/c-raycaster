@@ -9,37 +9,17 @@
   },
   "textures": {
     "walls": {
-      "1": {
-        "path": "assets/Wall_1.png",
-        "width": 128,
-        "height": 128
-      }
+      "1": "assets/Wall_1.png"
     },
     "ceilings": {
-      "1": {
-        "path": "assets/Ceiling_1.png",
-        "width": 128,
-        "height": 128
-      }
+      "1": "assets/Ceiling_1.png"
     },
     "floors": {
-      "1": {
-        "path": "assets/Floor_1.png",
-        "width": 128,
-        "height": 128
-      }
+      "1": "assets/Floor_1.png"
     },
     "sprites": {
-      "1": {
-        "path": "test/barrel.png",
-        "width": 64,
-        "height": 64
-      },
-      "2": {
-        "path": "test/pillar.png",
-        "width": 64,
-        "height": 64
-      }
+      "1": "test/barrel.png",
+      "2": "test/pillar.png"
     }
   },
   "entities": [

@@ -39,16 +39,8 @@ static void initialise_textures_table(ht* textures_table, cJSON* textures_json, 
 
     cJSON_ArrayForEach(element, cJSON_GetObjectItem(textures_json, texture_type))
     {
-        const char* path = cJSON_GetObjectItem(element, "path")->valuestring;
-        int width = cJSON_GetObjectItem(element, "width")->valueint;
-        int height = cJSON_GetObjectItem(element, "height")->valueint;
-
-        TextureData* texture_data = (TextureData*)malloc(sizeof(TextureData));
         // TODO: Free this string in cleanup
-        texture_data->path = strdup(path);
-        texture_data->size = (Vector2I) { width, height };
-
-        ht_set(textures_table, element->string, texture_data);
+        ht_set(textures_table, element->string, strdup(element->valuestring));
     };
 }
 
