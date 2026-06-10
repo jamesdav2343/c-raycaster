@@ -1,4 +1,6 @@
 #include "lighting.h"
+#include "general_utils.h"
+#include "math_utils.h"
 #include <glib.h>
 #include <math.h>
 
@@ -9,7 +11,52 @@
 #define INTENSITY_DIFF 2
 #define DECAY 1
 
+#define MIN_SMOOTH_LIGHT_VAL 0.0f
+#define MAX_SMOOTH_LIGHT_VAL 1.0f
+
 float light_map[ROWS * COLS] = { 0 };
+float smooth_light_map[ROWS * COLS] = { 0 };
+
+float get_smooth_light_value(Vector2I coords, Vector2I map_size, float* light_map)
+{
+    // Current cell is taken as bottom-right cell
+
+    float bottom_left = 0.0f;
+    if (coords.x > 0 && coords.y < map_size.y) {
+        bottom_left = light_map[coords.x - 1 + map_size.x * coords.y];
+    }
+
+    float bottom_right = 0.0f;
+    if (coords.x < map_size.x && coords.y < map_size.y) {
+        bottom_right = light_map[coords.x + map_size.x * coords.y];
+    }
+
+    float top_right = 0.0f;
+    if (coords.y > 0 && coords.x < map_size.x) {
+        top_right = light_map[coords.x + map_size.x * (coords.y - 1)];
+    }
+
+    float top_left = 0.0f;
+    if (coords.y > 0 && coords.x > 0) {
+        top_left = light_map[coords.x - 1 + map_size.x * (coords.y - 1)];
+    }
+
+    // Return average light value of the cells that meet at position x, y
+    return RAY_CLAMP(
+        (bottom_right + bottom_left + top_right + top_left) / 4.0f, MIN_SMOOTH_LIGHT_VAL, MAX_SMOOTH_LIGHT_VAL);
+}
+
+void bake_smooth_light_map()
+{
+    Vector2I map_size = { COLS, ROWS };
+
+    for (int x = 0; x < COLS; x++) {
+        for (int y = 0; y < ROWS; y++) {
+            Vector2I coords = { x, y };
+            smooth_light_map[x + (y * COLS)] = get_smooth_light_value(coords, map_size, light_map);
+        }
+    }
+}
 
 // void test(gpointer data, gpointer user_data) { printf("%zu\n", data); }
 
@@ -86,11 +133,11 @@ void bake_light_map()
         }
     }
 
-    // printf("map:\n");
-    // pretty_print_grid(world_map, COLS, 2);
-    // printf("light intensities:\n");
-    // pretty_print_grid(light_intensities, COLS, 2);
-    // printf("\n\n");
+    printf("map:\n");
+    pretty_print_grid(world_map, COLS, 2);
+    printf("light intensities:\n");
+    pretty_print_grid(light_intensities, COLS, 2);
+    printf("\n\n");
 
     for (int i = 0; i < ROWS * COLS; i++) {
         Uint8 intensity = light_intensities[i];
@@ -106,14 +153,14 @@ float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orienta
     // if h and coming from south (negative y direction), then access cell below (y + 1)
     if (side_orientation == HORIZONTAL) {
         if (ray_direction.y < 0)
-            return light_map[x + ((y + 1) * COLS)];
+            return smooth_light_map[x + ((y + 1) * COLS)];
         else
-            return light_map[x + ((y - 1) * COLS)];
+            return smooth_light_map[x + ((y - 1) * COLS)];
     } else {
         if (ray_direction.x < 0)
-            return light_map[x + 1 + (y * COLS)];
+            return smooth_light_map[x + 1 + (y * COLS)];
         else
-            return light_map[x - 1 + (y * COLS)];
+            return smooth_light_map[x - 1 + (y * COLS)];
     }
 
     // if vertical, and x is

@@ -126,6 +126,7 @@ static void write_vertical_wall_strip(
         tex_coord += tex_step;
 
         Uint32 color = tex_pixels != NULL ? tex_pixels[tex_x + (tex_y * tex_width)] : WHITE;
+        color = WHITE;
 
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
@@ -179,7 +180,7 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             int cell_x = (int)cell_pos_x;
             int cell_y = (int)cell_pos_y;
 
-            float base_lighting_level = 1.0f - light_map[cell_x + (cell_y * COLS)];
+            float base_lighting_level = 1.0f - smooth_light_map[cell_x + (cell_y * COLS)];
 
             int texture_x = (int)(floor_width * (cell_pos_x - cell_x)) & (floor_width - 1);
             int texture_y = (int)(floor_height * (cell_pos_y - cell_y)) & (floor_height - 1);
@@ -188,13 +189,14 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
             // Floor colour
             colour = floor_pixels[texture_x + (floor_width * texture_y)];
+            colour = WHITE;
+
+            colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
             // If its the light source, draw in red
             if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
                 colour = RED;
             }
-
-            colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
             dest_buffer_data->pixels[x + (y * screen_width)] = colour;
 
@@ -206,6 +208,7 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
             // Ceiling colour
             colour = ceiling_pixels[texture_x + (ceiling_width * texture_y)];
+            colour = WHITE;
 
             colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             dest_buffer_data->pixels[x + ((screen_height - y - 1) * screen_width)] = colour;

@@ -2,6 +2,7 @@
 #define GENERAL_UTILS_H
 
 #include "data_structures/ht.h"
+#include "types.h"
 #include <SDL3/SDL.h>
 #include <cjson/cJSON.h>
 
@@ -36,5 +37,7 @@ int compare_sprites(const void* a, const void* b);
 void sort_sprites(int* order, double* distance, int amount);
 
 void pretty_print_grid(Uint8* grid, int row_length, int max_gap);
+
+void print_array(float* array, Vector2I map_size);
 
 #endif

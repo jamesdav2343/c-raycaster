@@ -186,3 +186,13 @@ void pretty_print_grid(Uint8* grid, int row_length, int max_gap)
         printf("\n");
     }
 }
+
+void print_array(float* array, Vector2I map_size)
+{
+    for (int x = 0; x < map_size.x; x++) {
+        for (int y = 0; y < map_size.y; y++) {
+            printf("%f, ", array[x + map_size.x * y]);
+        }
+        printf("\n");
+    }
+}
