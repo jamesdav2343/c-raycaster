@@ -180,6 +180,9 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             int cell_x = (int)cell_pos_x;
             int cell_y = (int)cell_pos_y;
 
+            float fraction_tx = (int)(cell_pos_x * ceiling_width) % ceiling_width;
+            float fraction_ty = (int)(cell_pos_y * ceiling_width) % ceiling_width;
+
             float base_lighting_level = 1.0f - smooth_light_map[cell_x + (cell_y * COLS)];
 
             int texture_x = (int)(floor_width * (cell_pos_x - cell_x)) & (floor_width - 1);

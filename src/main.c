@@ -22,6 +22,14 @@ int main(int argc, char* argv[])
     bake_light_map();
     bake_smooth_light_map();
 
+    // printf("smooth light map values\n");
+    // for (int x = 0; x < COLS; x++) {
+    //     for (int y = 0; y < ROWS; y++) {
+    //         printf("%f, ", smooth_light_map[x + (COLS * y)]);
+    //     }
+    //     printf("\n");
+    // }
+
     Vector2I map_size = { COLS, ROWS };
 
     print_array(light_map, map_size);

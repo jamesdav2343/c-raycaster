@@ -16,6 +16,16 @@
 
 float light_map[ROWS * COLS] = { 0 };
 float smooth_light_map[ROWS * COLS] = { 0 };
+static float* quadrants;
+
+typedef struct Quadrant {
+    float bottom_left;
+    float bottom_right;
+    float top_right;
+    float top_left;
+} Quadrant;
+
+Quadrant get_vertices(Vector2I coords) { }
 
 float get_smooth_light_value(Vector2I coords, Vector2I map_size, float* light_map)
 {
@@ -56,6 +66,70 @@ void bake_smooth_light_map()
             smooth_light_map[x + (y * COLS)] = get_smooth_light_value(coords, map_size, light_map);
         }
     }
+
+    int slm_length = COLS * ROWS;
+    int quadrants_length = COLS * ROWS * 4;
+    printf("length, x = %d * y = %d * 4, len = %d\n", map_size.x, map_size.y, quadrants_length);
+
+    quadrants = (float*)calloc(quadrants_length, sizeof(float));
+
+    // iterate over in chunks
+    int quad_pos = 0;
+
+    // smooth light map (slm) pos
+    int slm_pos = 0;
+    const int chunk_size = 4;
+
+    while (quad_pos < quadrants_length) {
+        float tl = 0.0f;
+
+        if (slm_pos + (slm_pos / map_size.x) < slm_length) {
+            tl = smooth_light_map[slm_pos + (slm_pos / map_size.x)];
+        }
+
+        float tr = 0.0f;
+
+        if (slm_pos + 1 + (slm_pos / map_size.x) < slm_length) {
+            tr = smooth_light_map[slm_pos + 1 + (slm_pos / map_size.x)];
+        }
+
+        float bl = 0.0f;
+
+        if (slm_pos + map_size.x + 1 + (slm_pos / map_size.x) < slm_length) {
+            bl = smooth_light_map[slm_pos + map_size.x + 1 + (slm_pos / map_size.x)];
+        }
+
+        float br = 0.0f;
+
+        if (slm_pos + map_size.x + 2 + (slm_pos / map_size.x) < slm_length) {
+            br = smooth_light_map[slm_pos + map_size.x + 2 + (slm_pos / map_size.x)];
+        }
+
+        quadrants[quad_pos] = tl;
+        quadrants[quad_pos + 1] = tr;
+        quadrants[quad_pos + 2] = bl;
+        quadrants[quad_pos + 3] = br;
+
+        // if (slm_pos <= 2) {
+        //     printf("current pos: %d\n", slm_pos);
+        //     printf("tl: %d\n", slm_pos + (slm_pos / map_size.x));
+        //     printf("tr: %d\n", slm_pos + 1 + (slm_pos / map_size.x));
+        //     printf("bl: %d\n", slm_pos + map_size.x + 1 + (slm_pos / map_size.x));
+        //     printf("br: %d\n", slm_pos + map_size.x + 2 + (slm_pos / map_size.x));
+        //     printf("values: %f, %f, %f, %f\n", tl, tr, bl, br);
+        //     printf("map_size, x: %d, y: %d\n", map_size.x, map_size.y);
+        //     printf("offset value used: %d\n", slm_pos / map_size.x);
+        // }
+
+        quad_pos += chunk_size;
+        slm_pos++;
+    }
+
+    printf("vertices array info after chunks_mut\n");
+    for (int i = 0; i < quadrants_length; i++) {
+        printf("%f, ", quadrants[i]);
+    }
+    printf("\nend of array here\n");
 }
 
 // void test(gpointer data, gpointer user_data) { printf("%zu\n", data); }
