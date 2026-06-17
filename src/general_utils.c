@@ -18,6 +18,11 @@ Uint32 interpolate(int color1, int color2, float fraction)
         | (int)((b2 - b1) * fraction + b1);
 }
 
+float bilerp(float x, float y, float tl, float tr, float bl, float br)
+{
+    return bl * (1.0f - x) * (1.0f - y) + br * x * (1.0f - y) + tl * y * (1.0f - x) + tr * x * y;
+}
+
 // ---- Config loading helpers ----
 cJSON* load_config_json(const char* path)
 {

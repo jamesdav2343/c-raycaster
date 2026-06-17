@@ -25,7 +25,27 @@ typedef struct Quadrant {
     float top_left;
 } Quadrant;
 
-Quadrant get_vertices(Vector2I coords) { }
+Quadrant get_vertices(int pos, float* quadrants)
+{
+    float tl = quadrants[pos * 4];
+    float tr = quadrants[pos * 4 + 1];
+    float bl = quadrants[pos * 4 + 2];
+    float br = quadrants[pos * 4 + 3];
+
+    Quadrant q = { 0 };
+    q.top_left = tl;
+    q.top_right = tr;
+    q.bottom_left = bl;
+    q.bottom_right = br;
+    return q;
+}
+
+float get_lighting_floor(float x, float y, int pos)
+{
+    Quadrant quadrant = get_vertices(pos, quadrants);
+    // printf("tl: %f, tr: %f, bl: %f, br: %f\n", quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
+    return bilerp(x, 1.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
+}
 
 float get_smooth_light_value(Vector2I coords, Vector2I map_size, float* light_map)
 {

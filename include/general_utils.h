@@ -23,6 +23,8 @@
  */
 Uint32 interpolate(int color1, int color2, float fraction);
 
+float bilerp(float x, float y, float tl, float tr, float bl, float br);
+
 /**
  * loads raycaster config from a .ini file
  */
