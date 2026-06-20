@@ -184,7 +184,8 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             int ftx = (int)(cell_pos_x * ceiling_width) % ceiling_width;
             int fty = (int)(cell_pos_y * ceiling_width) % ceiling_width;
 
-            float base_lighting_level = 1.0f - smooth_light_map[cell_x + (cell_y * COLS)];
+            // Older version
+            // float base_lighting_level = 1.0f - all_vertices[cell_x + (cell_y * COLS)];
 
             int texture_x = (int)(floor_width * (cell_pos_x - cell_x)) & (floor_width - 1);
             int texture_y = (int)(floor_height * (cell_pos_y - cell_y)) & (floor_height - 1);
@@ -201,9 +202,6 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
             // I can see from this that the values are still static, and not varying across the pixels in a cell
             if (x == screen_width / 2 && y >= screen_height / 2 && y <= screen_height - 200) {
-                printf("for map coords, x: %d, y: %d\n", cell_x, cell_y);
-                printf("ftx: %d, fty: %d\n", ftx, fty);
-                printf("light_val: %f\n", light_val);
                 colour = RED;
             }
 

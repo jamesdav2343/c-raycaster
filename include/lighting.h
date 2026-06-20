@@ -4,8 +4,12 @@
 #include "map.h"
 #include "types.h"
 
+#define SMOOTH_LM_LEN (ROWS + 1) * (COLS + 1)
+#define ALL_VERTICES_WIDTH (COLS + 1)
+#define ALL_VERTICES_HEIGHT (ROWS + 1)
+
 extern float light_map[ROWS * COLS];
-extern float smooth_light_map[ROWS * COLS];
+extern float all_vertices[ALL_VERTICES_WIDTH * ALL_VERTICES_HEIGHT];
 
 void bake_light_map();
 

@@ -15,8 +15,8 @@
 #define MAX_SMOOTH_LIGHT_VAL 1.0f
 
 float light_map[ROWS * COLS] = { 0 };
-float smooth_light_map[ROWS * COLS] = { 0 };
-static float* quadrants;
+float all_vertices[ALL_VERTICES_WIDTH * ALL_VERTICES_HEIGHT] = { 0 };
+static float* vertices;
 
 typedef struct Quadrant {
     float bottom_left;
@@ -25,7 +25,7 @@ typedef struct Quadrant {
     float top_left;
 } Quadrant;
 
-Quadrant get_vertices(int pos, float* quadrants)
+static Quadrant get_vertices(int pos, float* quadrants)
 {
     float tl = quadrants[pos * 4];
     float tr = quadrants[pos * 4 + 1];
@@ -42,117 +42,77 @@ Quadrant get_vertices(int pos, float* quadrants)
 
 float get_lighting_floor(float x, float y, int pos)
 {
-    Quadrant quadrant = get_vertices(pos, quadrants);
-    // printf("tl: %f, tr: %f, bl: %f, br: %f\n", quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
+    Quadrant quadrant = get_vertices(pos, vertices);
     return bilerp(x, 1.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
 }
 
-float get_smooth_light_value(Vector2I coords, Vector2I map_size, float* light_map)
+static float get_smooth_light_value(Vector2I coords, Vector2I map_size, float* light_map)
 {
+    int x = coords.x;
+    int y = coords.y;
+
     // Current cell is taken as bottom-right cell
-
-    float bottom_left = 0.0f;
-    if (coords.x > 0 && coords.y < map_size.y) {
-        bottom_left = light_map[coords.x - 1 + map_size.x * coords.y];
+    float bl = 0.0f;
+    if (x > 0 && y < map_size.y) {
+        bl = light_map[x - 1 + map_size.x * y];
     }
 
-    float bottom_right = 0.0f;
-    if (coords.x < map_size.x && coords.y < map_size.y) {
-        bottom_right = light_map[coords.x + map_size.x * coords.y];
+    float br = 0.0f;
+    if (x < map_size.x && y < map_size.y) {
+        br = light_map[x + map_size.x * y];
     }
 
-    float top_right = 0.0f;
-    if (coords.y > 0 && coords.x < map_size.x) {
-        top_right = light_map[coords.x + map_size.x * (coords.y - 1)];
+    float tr = 0.0f;
+    if (y > 0 && x < map_size.x) {
+        tr = light_map[x + map_size.x * (y - 1)];
     }
 
-    float top_left = 0.0f;
-    if (coords.y > 0 && coords.x > 0) {
-        top_left = light_map[coords.x - 1 + map_size.x * (coords.y - 1)];
+    float tl = 0.0f;
+    if (y > 0 && x > 0) {
+        tl = light_map[x - 1 + map_size.x * (y - 1)];
     }
 
     // Return average light value of the cells that meet at position x, y
-    return RAY_CLAMP(
-        (bottom_right + bottom_left + top_right + top_left) / 4.0f, MIN_SMOOTH_LIGHT_VAL, MAX_SMOOTH_LIGHT_VAL);
+    return RAY_CLAMP((br + bl + tr + tl) / 4.0f, MIN_SMOOTH_LIGHT_VAL, MAX_SMOOTH_LIGHT_VAL);
 }
 
 void bake_smooth_light_map()
 {
     Vector2I map_size = { COLS, ROWS };
 
-    for (int x = 0; x < COLS; x++) {
-        for (int y = 0; y < ROWS; y++) {
+    for (int x = 0; x < ALL_VERTICES_WIDTH; x++) {
+        for (int y = 0; y < ALL_VERTICES_HEIGHT; y++) {
             Vector2I coords = { x, y };
-            smooth_light_map[x + (y * COLS)] = get_smooth_light_value(coords, map_size, light_map);
+            all_vertices[x + (y * ALL_VERTICES_WIDTH)] = get_smooth_light_value(coords, map_size, light_map);
         }
     }
 
-    int slm_length = COLS * ROWS;
-    int quadrants_length = COLS * ROWS * 4;
-    printf("length, x = %d * y = %d * 4, len = %d\n", map_size.x, map_size.y, quadrants_length);
+    print_array(all_vertices, (Vector2I) { ALL_VERTICES_WIDTH, ALL_VERTICES_HEIGHT });
 
-    quadrants = (float*)calloc(quadrants_length, sizeof(float));
+    int vertices_len = map_size.x * map_size.y;
+    int quadrants_length = vertices_len * 4;
 
-    // iterate over in chunks
-    int quad_pos = 0;
+    vertices = (float*)calloc(quadrants_length, sizeof(float));
 
-    // smooth light map (slm) pos
-    int slm_pos = 0;
-    const int chunk_size = 4;
+    for (int pos = 0; pos < vertices_len; pos++) {
+        int tl_idx = pos + (pos / map_size.x);
+        float tl = all_vertices[tl_idx];
 
-    while (quad_pos < quadrants_length) {
-        float tl = 0.0f;
+        int tr_idx = pos + 1 + (pos / map_size.x);
+        float tr = all_vertices[tr_idx];
 
-        if (slm_pos + (slm_pos / map_size.x) < slm_length) {
-            tl = smooth_light_map[slm_pos + (slm_pos / map_size.x)];
-        }
+        int bl_idx = pos + map_size.x + 1 + (pos / map_size.x);
+        float bl = all_vertices[bl_idx];
 
-        float tr = 0.0f;
+        int br_idx = pos + map_size.x + 2 + (pos / map_size.x);
+        float br = all_vertices[br_idx];
 
-        if (slm_pos + 1 + (slm_pos / map_size.x) < slm_length) {
-            tr = smooth_light_map[slm_pos + 1 + (slm_pos / map_size.x)];
-        }
-
-        float bl = 0.0f;
-
-        if (slm_pos + map_size.x + 1 + (slm_pos / map_size.x) < slm_length) {
-            bl = smooth_light_map[slm_pos + map_size.x + 1 + (slm_pos / map_size.x)];
-        }
-
-        float br = 0.0f;
-
-        if (slm_pos + map_size.x + 2 + (slm_pos / map_size.x) < slm_length) {
-            br = smooth_light_map[slm_pos + map_size.x + 2 + (slm_pos / map_size.x)];
-        }
-
-        quadrants[quad_pos] = tl;
-        quadrants[quad_pos + 1] = tr;
-        quadrants[quad_pos + 2] = bl;
-        quadrants[quad_pos + 3] = br;
-
-        // if (slm_pos <= 2) {
-        //     printf("current pos: %d\n", slm_pos);
-        //     printf("tl: %d\n", slm_pos + (slm_pos / map_size.x));
-        //     printf("tr: %d\n", slm_pos + 1 + (slm_pos / map_size.x));
-        //     printf("bl: %d\n", slm_pos + map_size.x + 1 + (slm_pos / map_size.x));
-        //     printf("br: %d\n", slm_pos + map_size.x + 2 + (slm_pos / map_size.x));
-        //     printf("values: %f, %f, %f, %f\n", tl, tr, bl, br);
-        //     printf("map_size, x: %d, y: %d\n", map_size.x, map_size.y);
-        //     printf("offset value used: %d\n", slm_pos / map_size.x);
-        // }
-
-        quad_pos += chunk_size;
-        slm_pos++;
+        vertices[pos * 4] = tl;
+        vertices[pos * 4 + 1] = tr;
+        vertices[pos * 4 + 2] = bl;
+        vertices[pos * 4 + 3] = br;
     }
-
-    printf("vertices array info after chunks_mut\n");
-    for (int i = 0; i < quadrants_length; i++) {
-        printf("%f, ", quadrants[i]);
-    }
-    printf("\nend of array here\n");
 }
-
-// void test(gpointer data, gpointer user_data) { printf("%zu\n", data); }
 
 void bake_light_map()
 {
@@ -227,11 +187,11 @@ void bake_light_map()
         }
     }
 
-    printf("map:\n");
-    pretty_print_grid(world_map, COLS, 2);
-    printf("light intensities:\n");
-    pretty_print_grid(light_intensities, COLS, 2);
-    printf("\n\n");
+    // printf("map:\n");
+    // pretty_print_grid(world_map, COLS, 2);
+    // printf("light intensities:\n");
+    // pretty_print_grid(light_intensities, COLS, 2);
+    // printf("\n\n");
 
     for (int i = 0; i < ROWS * COLS; i++) {
         Uint8 intensity = light_intensities[i];
@@ -247,14 +207,14 @@ float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orienta
     // if h and coming from south (negative y direction), then access cell below (y + 1)
     if (side_orientation == HORIZONTAL) {
         if (ray_direction.y < 0)
-            return smooth_light_map[x + ((y + 1) * COLS)];
+            return all_vertices[x + ((y + 1) * COLS)];
         else
-            return smooth_light_map[x + ((y - 1) * COLS)];
+            return all_vertices[x + ((y - 1) * COLS)];
     } else {
         if (ray_direction.x < 0)
-            return smooth_light_map[x + 1 + (y * COLS)];
+            return all_vertices[x + 1 + (y * COLS)];
         else
-            return smooth_light_map[x - 1 + (y * COLS)];
+            return all_vertices[x - 1 + (y * COLS)];
     }
 
     // if vertical, and x is
