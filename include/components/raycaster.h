@@ -29,8 +29,8 @@ typedef struct ScreenTexture {
 } ScreenTexture;
 
 typedef struct Wall {
-    enum Orientation side_orientation;
-    Vector2I wall_position;
+    enum Orientation orientation;
+    Vector2I position;
 } Wall;
 
 // Holds data outputted from the DDA algorithm.

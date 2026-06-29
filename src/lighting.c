@@ -25,19 +25,14 @@ typedef struct Quadrant {
     float top_left;
 } Quadrant;
 
-static Quadrant get_vertices(int pos, float* quadrants)
+static Quadrant get_vertices(int pos, float* vertices)
 {
-    float tl = quadrants[pos * 4];
-    float tr = quadrants[pos * 4 + 1];
-    float bl = quadrants[pos * 4 + 2];
-    float br = quadrants[pos * 4 + 3];
+    float tl = vertices[pos * 4];
+    float tr = vertices[pos * 4 + 1];
+    float bl = vertices[pos * 4 + 2];
+    float br = vertices[pos * 4 + 3];
 
-    Quadrant q = { 0 };
-    q.top_left = tl;
-    q.top_right = tr;
-    q.bottom_left = bl;
-    q.bottom_right = br;
-    return q;
+    return (Quadrant) { bl, br, tr, tl };
 }
 
 float get_lighting_floor(float x, float y, int pos)
@@ -148,7 +143,7 @@ void bake_light_map()
 
             // If there is no wall, the light_intensity has not reached 0,
             // and the light intensity of the neighbour is at least 2 decay values
-            // the light intensity of the current node
+            // less than the light intensity of the current node
             if (!world_map[left_neighbour] && light_int > 0
                 && light_intensities[left_neighbour] <= light_int - INTENSITY_DIFF) {
                 light_intensities[left_neighbour] = light_int - DECAY;
@@ -187,36 +182,90 @@ void bake_light_map()
         }
     }
 
-    // printf("map:\n");
-    // pretty_print_grid(world_map, COLS, 2);
-    // printf("light intensities:\n");
-    // pretty_print_grid(light_intensities, COLS, 2);
-    // printf("\n\n");
-
     for (int i = 0; i < ROWS * COLS; i++) {
         Uint8 intensity = light_intensities[i];
         light_map[i] = powf(0.8f, INITIAL_INTENSITY - intensity);
-        // printf("%f, ", light_map[i]);
     }
 
     free(light_sources);
 }
 
-float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orientation side_orientation)
+float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orientation orientation)
 {
-    // if h and coming from south (negative y direction), then access cell below (y + 1)
-    if (side_orientation == HORIZONTAL) {
+    // If side orientation is horizontal, and the ray is coming from south (negative y direction),
+    // then access the cell below (y + 1)
+    if (orientation == SOUTH || orientation == NORTH) {
         if (ray_direction.y < 0)
-            return all_vertices[x + ((y + 1) * COLS)];
+            return all_vertices[x + (y + 1) * ALL_VERTICES_WIDTH]; // FACING SOUTH
         else
-            return all_vertices[x + ((y - 1) * COLS)];
+            return all_vertices[x + (y - 1) * ALL_VERTICES_WIDTH]; // FACING NORTH
     } else {
         if (ray_direction.x < 0)
-            return all_vertices[x + 1 + (y * COLS)];
+            return all_vertices[x + 1 + (y * ALL_VERTICES_WIDTH)]; // FACING EAST
         else
-            return all_vertices[x - 1 + (y * COLS)];
+            return all_vertices[x - 1 + (y * ALL_VERTICES_WIDTH)]; // FACING WEST
     }
 
-    // if vertical, and x is
-    return 0;
+    return 0.0f;
+}
+
+float get_lighting_wall(float x, float y, int pos, enum Orientation orientation)
+{
+    Quadrant quadrant;
+    switch (orientation) {
+    case NORTH:
+        quadrant = get_vertices(pos - COLS, vertices);
+
+        if (y > 2.0f) {
+            return bilerp(
+                1.0f - x, 3.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
+        } else if (y > 1.0f) {
+            return bilerp(
+                1.0f - x, 2.0f - y, quadrant.top_left, quadrant.top_right, quadrant.top_left, quadrant.top_right);
+        } else {
+            return bilerp(
+                1.0f - x, 1.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.top_left, quadrant.top_right);
+        }
+    case SOUTH:
+        quadrant = get_vertices(pos + COLS, vertices);
+
+        if (y > 2.0f) {
+            return bilerp(
+                x, 3.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.top_left, quadrant.top_right);
+        } else if (y > 1.0f) {
+            return bilerp(
+                x, 2.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.bottom_left, quadrant.bottom_right);
+        } else {
+            return bilerp(
+                x, 1.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
+        }
+    case EAST:
+        quadrant = get_vertices(pos - 1, vertices);
+
+        if (y > 2.0f) {
+            return bilerp(
+                x, 3.0f - y, quadrant.top_left, quadrant.bottom_left, quadrant.top_right, quadrant.bottom_right);
+        } else if (y > 1.0f) {
+            return bilerp(
+                x, 2.0f - y, quadrant.top_left, quadrant.bottom_left, quadrant.top_left, quadrant.bottom_left);
+        } else {
+            return bilerp(
+                x, 1.0f - y, quadrant.top_right, quadrant.bottom_right, quadrant.top_left, quadrant.bottom_left);
+        }
+    case WEST:
+        quadrant = get_vertices(pos + 1, vertices);
+
+        if (y > 2.0f) {
+            return bilerp(
+                x, 3.0f - y, quadrant.bottom_right, quadrant.top_right, quadrant.bottom_left, quadrant.top_left);
+        } else if (y > 1.0f) {
+            return bilerp(
+                x, 2.0f - y, quadrant.bottom_right, quadrant.top_right, quadrant.bottom_right, quadrant.top_right);
+        } else {
+            return bilerp(
+                x, 1.0f - y, quadrant.bottom_left, quadrant.top_left, quadrant.bottom_right, quadrant.top_right);
+        }
+    }
+
+    return 0.0f;
 }

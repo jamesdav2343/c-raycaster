@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 // Enum to represent a wall's orientation.
-enum Orientation { VERTICAL = 0, HORIZONTAL = 1 };
+enum Orientation { NORTH = 0, SOUTH = 1, EAST = 2, WEST = 3 };
 
 // A 2D vector using floating-point coordinates.
 typedef struct Vector2 {

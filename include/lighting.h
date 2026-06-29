@@ -17,8 +17,10 @@ void bake_smooth_light_map();
 
 // Quadrant get_vertices(int pos, float* quadrants);
 
-float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orientation side_orientation);
+float get_wall_light_intensity(int x, int y, Vector2 ray_direction, enum Orientation orientation);
 
 float get_lighting_floor(float x, float y, int pos);
+
+float get_lighting_wall(float x, float y, int pos, enum Orientation orientation);
 
 #endif

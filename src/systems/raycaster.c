@@ -32,7 +32,7 @@ static void dda(const Position* position, const Direction* direction, const Came
     int step_y;
 
     bool has_hit_side = false;
-    enum Orientation side_orientation;
+    enum Orientation orientation;
 
     if (ray_direction.x < 0) {
         step_x = -1;
@@ -54,11 +54,11 @@ static void dda(const Position* position, const Direction* direction, const Came
         if (dist_to_x < dist_to_y) {
             dist_to_x += dist_between_cols;
             ray_origin.x += step_x;
-            side_orientation = VERTICAL;
+            orientation = ray_direction.x < 0.0f ? WEST : EAST;
         } else {
             dist_to_y += dist_between_rows;
             ray_origin.y += step_y;
-            side_orientation = HORIZONTAL;
+            orientation = ray_direction.y < 0.0f ? SOUTH : NORTH;
         }
 
         if (world_map[ray_origin.x + (ray_origin.y * COLS)] > 0)
@@ -69,9 +69,9 @@ static void dda(const Position* position, const Direction* direction, const Came
     ray_out->dist_to_x = dist_to_x;
     ray_out->dist_to_y = dist_to_y;
     ray_out->perp_wall_dist
-        = side_orientation == VERTICAL ? dist_to_x - dist_between_cols : dist_to_y - dist_between_rows;
-    ray_out->wall.side_orientation = side_orientation;
-    ray_out->wall.wall_position = ray_origin;
+        = orientation == WEST || orientation == EAST ? dist_to_x - dist_between_cols : dist_to_y - dist_between_rows;
+    ray_out->wall.orientation = orientation;
+    ray_out->wall.position = ray_origin;
 }
 
 /**
@@ -81,7 +81,7 @@ static void write_vertical_wall_strip(
     Ray* ray, const Position* position, int current_x, PixelBuffer* dest_buffer_data, ht* texture_map)
 {
     ht* textures = (ht*)ht_get(texture_map, "walls");
-    Uint8 wall_id = world_map[ray->wall.wall_position.x + (ray->wall.wall_position.y * COLS)];
+    Uint8 wall_id = world_map[ray->wall.position.x + (ray->wall.position.y * COLS)];
 
     char buffer[BUFFER_MAX];
     SDL_itoa(wall_id, buffer, 10);
@@ -99,17 +99,17 @@ static void write_vertical_wall_strip(
     int draw_start = (int)fmax(-line_height / 2 + buffer_height / 2, DRAW_START_MIN);
     int draw_end = (int)fmin(line_height / 2 + buffer_height / 2, DRAW_END_MAX);
 
-    double wall_x = ray->wall.side_orientation == VERTICAL ? position->y + ray->perp_wall_dist * ray->direction.y
-                                                           : position->x + ray->perp_wall_dist * ray->direction.x;
+    double wall_x = ray->wall.orientation == NORTH ? position->y + ray->perp_wall_dist * ray->direction.y
+                                                   : position->x + ray->perp_wall_dist * ray->direction.x;
 
     wall_x -= floor(wall_x);
 
     int tex_x = (int)(wall_x * (double)tex_width);
 
-    if (ray->wall.side_orientation == HORIZONTAL && ray->direction.x > 0)
+    if (ray->wall.orientation == SOUTH && ray->direction.x > 0)
         tex_x = tex_width - tex_x - 1;
 
-    if (ray->wall.side_orientation == VERTICAL && ray->direction.y < 0)
+    if (ray->wall.orientation == NORTH && ray->direction.y < 0)
         tex_x = tex_width - tex_x - 1;
 
     double tex_step = 1.0 * tex_height / line_height;
@@ -117,8 +117,9 @@ static void write_vertical_wall_strip(
     double tex_coord = (draw_start - buffer_height / 2 + line_height / 2) * tex_step;
 
     float base_lighting_level = 1.0f
-        - get_wall_light_intensity(
-            ray->wall.wall_position.x, ray->wall.wall_position.y, ray->direction, ray->wall.side_orientation);
+        - get_wall_light_intensity(ray->wall.position.x, ray->wall.position.y, ray->direction, ray->wall.orientation);
+
+    int pos = ray->wall.position.x + (ray->wall.position.y * COLS);
 
     for (int y = draw_start; y < draw_end; y++) {
         // Masked with tex_height - 1 in case of overflow
@@ -128,7 +129,20 @@ static void write_vertical_wall_strip(
         Uint32 color = tex_pixels != NULL ? tex_pixels[tex_x + (tex_y * tex_width)] : WHITE;
         color = WHITE;
 
+        // Updated smooth version
+        // float base_lighting_level = 1.0f
+        //     - get_lighting_wall(
+        //         (float)tex_x / tex_width, (float)tex_y * 0.0234375 /*(3.0f / tex_height)*/, pos, ray->wall.orientation);
+
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
+
+        // DEBUGGING
+        const int SCREEN_WIDTH = 1920;
+        const int SCREEN_HEIGHT = 1080;
+
+        if (current_x == SCREEN_WIDTH / 2 && y >= SCREEN_HEIGHT / 2 && y <= SCREEN_HEIGHT - 200) {
+            color = RED;
+        }
 
         dest_buffer_data->pixels[current_x + (y * buffer_width)] = color;
     }
@@ -201,9 +215,9 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             colour = WHITE;
 
             // I can see from this that the values are still static, and not varying across the pixels in a cell
-            if (x == screen_width / 2 && y >= screen_height / 2 && y <= screen_height - 200) {
-                colour = RED;
-            }
+            // if (x == screen_width / 2 && y >= screen_height / 2 && y <= screen_height - 200) {
+            //     colour = RED;
+            // }
 
             // colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             colour = interpolate(colour, BLACK, light_val) | ALPHA_OPAQUE_HEX;
