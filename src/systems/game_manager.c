@@ -115,7 +115,8 @@ void GameManagerSystemsImport(ecs_world_t* world)
 
     const VideoConfig* video_config = ecs_singleton_get(world, VideoConfig);
 
-    window = SDL_CreateWindow(TITLE, video_config->screen_size.x, video_config->screen_size.y, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(TITLE, video_config->screen_size.x, video_config->screen_size.y,
+        SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_FULLSCREEN);
 
     if (!window) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
@@ -139,12 +140,19 @@ void GameManagerSystemsImport(ecs_world_t* world)
     ecs_atfini(world, game_manager_cleanup, NULL);
 }
 
+// Event handler should be moved somewhere else
 void handle_events(SDL_Event* event, GameStatus* game_status)
 {
     SDL_PollEvent(event);
 
     if (event->type == SDL_EVENT_QUIT) {
         game_status->is_running = false;
+    }
+
+    if (event->type == SDL_EVENT_KEY_DOWN) {
+        if (event->key.key == SDLK_X) {
+            game_status->is_running = false;
+        }
     }
 }
 

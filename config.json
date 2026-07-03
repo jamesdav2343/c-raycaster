@@ -1,8 +1,8 @@
 {
   "video": {
     "resolution": {
-      "width": 1920,
-      "height": 1080
+      "width": 640,
+      "height": 480
     },
     "fps_cap": 60,
     "enable_lighting": true
