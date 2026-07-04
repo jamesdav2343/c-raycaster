@@ -437,7 +437,6 @@ void RaycasterDrawWorld(ecs_iter_t* it)
 
     SDL_RenderTexture(renderer, screen_texture->texture, NULL, NULL);
     SDL_RenderPresent(renderer);
-    SDL_UpdateWindowSurface(window);
     SDL_RenderClear(renderer);
 }
 

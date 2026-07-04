@@ -109,7 +109,7 @@ void GameManagerSystemsImport(ecs_world_t* world)
     SDL_Renderer* renderer;
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialise SDL: %s", SDL_GetError());
         return;
     }
 
@@ -123,11 +123,10 @@ void GameManagerSystemsImport(ecs_world_t* world)
         return;
     }
 
-    SDL_Surface* window_surface = SDL_GetWindowSurface(window);
-    renderer = SDL_CreateSoftwareRenderer(window_surface);
+    renderer = SDL_CreateRenderer(window, NULL);
 
     if (!renderer) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create software renderer: %s", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create renderer: %s", SDL_GetError());
         return;
     }
 
