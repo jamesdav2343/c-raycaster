@@ -10,8 +10,8 @@ extern ECS_COMPONENT_DECLARE(Controller);
 void InputComponentsImport(ecs_world_t* world);
 
 typedef struct Controller {
-    int x;
-    int y;
+    Vector2I movement_dir;
+    int viewport_dir;
 } Controller;
 
 #endif

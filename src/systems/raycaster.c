@@ -14,12 +14,12 @@ static double sprite_distance[SPRITE_COUNT];
  * Great explanation of the algorithm here:
  * https://aaaa.sh/creatures/dda-algorithm-interactive/
  */
-static void dda(const Position* position, const Direction* direction, const CameraPlane* plane, int screen_x,
+static void dda(const Position* position, const Direction* direction, const Camera* camera_plane, int screen_x,
     int screen_width, int screen_height, Ray* ray_out)
 {
     double camera_x = 2 * screen_x / (double)screen_width - 1;
 
-    Vector2 ray_direction = { direction->x + plane->x * camera_x, direction->y + plane->y * camera_x };
+    Vector2 ray_direction = { direction->x + camera_plane->x * camera_x, direction->y + camera_plane->y * camera_x };
     Vector2I ray_origin = { (int)floorf(position->x), (int)floorf(position->y) };
 
     float dist_to_x;
@@ -77,8 +77,8 @@ static void dda(const Position* position, const Direction* direction, const Came
 /**
  *  Writes a vertical wall strip to the pixel buffer.
  */
-static void write_vertical_wall_strip(
-    Ray* ray, const Position* position, int current_x, PixelBuffer* dest_buffer_data, ht* texture_map)
+static void write_vertical_wall_strip(Ray* ray, const Position* position, const Pitch* pitch, int current_x,
+    PixelBuffer* dest_buffer_data, ht* texture_map)
 {
     ht* textures = (ht*)ht_get(texture_map, "walls");
     Uint8 wall_id = world_map[ray->wall.position.x + (ray->wall.position.y * COLS)];
@@ -96,8 +96,8 @@ static void write_vertical_wall_strip(
     int buffer_width = dest_buffer_data->width;
 
     int line_height = (int)(buffer_height / ray->perp_wall_dist);
-    int draw_start = (int)fmax(-line_height / 2 + buffer_height / 2, DRAW_START_MIN);
-    int draw_end = (int)fmin(line_height / 2 + buffer_height / 2, DRAW_END_MAX);
+    int draw_start = (int)fmax(-line_height / 2 + buffer_height / 2 + pitch->value, DRAW_START_MIN);
+    int draw_end = (int)fmin(line_height / 2 + buffer_height / 2 + pitch->value, DRAW_END_MAX);
 
     double wall_x = ray->wall.orientation == NORTH ? position->y + ray->perp_wall_dist * ray->direction.y
                                                    : position->x + ray->perp_wall_dist * ray->direction.x;
@@ -132,7 +132,8 @@ static void write_vertical_wall_strip(
         // Updated smooth version
         // float base_lighting_level = 1.0f
         //     - get_lighting_wall(
-        //         (float)tex_x / tex_width, (float)tex_y * 0.0234375 /*(3.0f / tex_height)*/, pos, ray->wall.orientation);
+        //         (float)tex_x / tex_width, (float)tex_y * 0.0234375 /*(3.0f / tex_height)*/, pos,
+        //         ray->wall.orientation);
 
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
@@ -151,8 +152,8 @@ static void write_vertical_wall_strip(
 /**
  * Writes the horizontal wall and ceiling strips to the pixel buffer.
  */
-static void write_floor_and_celing(const Position* position, const Direction* direction, const CameraPlane* plane,
-    PixelBuffer* dest_buffer_data, int screen_width, int screen_height, ht* texture_map)
+static void write_floor_and_celing(const Position* position, const Direction* direction, const Camera* camera_plane,
+    const Pitch* pitch, PixelBuffer* dest_buffer_data, int screen_width, int screen_height, ht* texture_map)
 {
     // Gets floor texture
     ht* floor_textures = (ht*)ht_get(texture_map, "floors");
@@ -170,18 +171,19 @@ static void write_floor_and_celing(const Position* position, const Direction* di
     int ceiling_width = ceiling != NULL ? ceiling->w : TEXTURE_WIDTH_FALLBACK;
     int ceiling_height = ceiling != NULL ? ceiling->h : TEXTURE_HEIGHT_FALLBACK;
 
-    float ray_dir_x_0 = direction->x - plane->x;
-    float ray_dir_y_0 = direction->y - plane->y;
-    float ray_dir_x_1 = direction->x + plane->x;
-    float ray_dir_y_1 = direction->y + plane->y;
+    float ray_dir_x_0 = direction->x - camera_plane->x;
+    float ray_dir_y_0 = direction->y - camera_plane->y;
+    float ray_dir_x_1 = direction->x + camera_plane->x;
+    float ray_dir_y_1 = direction->y + camera_plane->y;
 
     float pos_z = 0.5 * screen_height;
 
-    int starting_y = screen_height / 2 + 1;
+    int starting_y = screen_height / 2 + pitch->value + 1;
 
-    for (int y = starting_y; y < screen_height; ++y) {
-        int p = y - screen_height / 2;
+    // TODO: Should be able to get this all in one loop, see lodec implementation
 
+    // FLOOR CASTING
+    for (int y = starting_y, p = 1; y < screen_height; ++y, ++p) {
         float row_distance = pos_z / p;
 
         float unit_step_x = row_distance * (ray_dir_x_1 - ray_dir_x_0) / screen_width;
@@ -234,13 +236,70 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             texture_y = (int)(ceiling_height * (cell_pos_y - cell_y)) & (ceiling_height - 1);
             cell_pos_x += unit_step_x;
             cell_pos_y += unit_step_y;
+        }
+    }
+
+    // CEILING CASTING
+    for (int y = starting_y, p = 1; y >= 0; y--, ++p) {
+        float row_distance = pos_z / p;
+
+        float unit_step_x = row_distance * (ray_dir_x_1 - ray_dir_x_0) / screen_width;
+        float unit_step_y = row_distance * (ray_dir_y_1 - ray_dir_y_0) / screen_width;
+
+        float cell_pos_x = position->x + row_distance * ray_dir_x_0;
+        float cell_pos_y = position->y + row_distance * ray_dir_y_0;
+
+        for (int x = 0; x < screen_width; ++x) {
+            // Pretty sure this is the current floor x and y equivalent
+            int cell_x = (int)cell_pos_x;
+            int cell_y = (int)cell_pos_y;
+
+            int ftx = (int)(cell_pos_x * ceiling_width) % ceiling_width;
+            int fty = (int)(cell_pos_y * ceiling_width) % ceiling_width;
+
+            // Older version
+            // float base_lighting_level = 1.0f - all_vertices[cell_x + (cell_y * COLS)];
+
+            int texture_x = (int)(floor_width * (cell_pos_x - cell_x)) & (floor_width - 1);
+            int texture_y = (int)(floor_height * (cell_pos_y - cell_y)) & (floor_height - 1);
+
+            int location = cell_x + (cell_y * COLS);
+            float light_val
+                = 1.0f - get_lighting_floor((float)ftx / ceiling_width, (float)fty / ceiling_height, location);
+
+            Uint32 colour;
+
+            // Floor colour
+            colour = floor_pixels[texture_x + (floor_width * texture_y)];
+            colour = WHITE;
+
+            // I can see from this that the values are still static, and not varying across the pixels in a cell
+            // if (x == screen_width / 2 && y >= screen_height / 2 && y <= screen_height - 200) {
+            //     colour = RED;
+            // }
+
+            // colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
+            colour = interpolate(colour, BLACK, light_val) | ALPHA_OPAQUE_HEX;
+
+            // If its the light source, draw in red
+            if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
+                colour = RED;
+            }
+
+            // dest_buffer_data->pixels[x + (y * screen_width)] = colour;
+
+            // Recalculate texture x and y
+            texture_x = (int)(ceiling_width * (cell_pos_x - cell_x)) & (ceiling_width - 1);
+            texture_y = (int)(ceiling_height * (cell_pos_y - cell_y)) & (ceiling_height - 1);
+            cell_pos_x += unit_step_x;
+            cell_pos_y += unit_step_y;
 
             // Ceiling colour
             colour = ceiling_pixels[texture_x + (ceiling_width * texture_y)];
             colour = WHITE;
 
             colour = interpolate(colour, BLACK, light_val) | ALPHA_OPAQUE_HEX;
-            dest_buffer_data->pixels[x + ((screen_height - y - 1) * screen_width)] = colour;
+            dest_buffer_data->pixels[x + y * screen_width] = colour;
         }
     }
 }
@@ -281,7 +340,8 @@ void RaycasterMapUpdate(ecs_iter_t* it)
     ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
     const Position* position = ecs_get(it->world, player, Position);
     const Direction* direction = ecs_get(it->world, player, Direction);
-    const CameraPlane* plane = ecs_get(it->world, player, CameraPlane);
+    const Camera* camera_plane = ecs_get(it->world, player, Camera);
+    const Pitch* pitch = ecs_get(it->world, player, Pitch);
 
     ht* texture_map = ecs_field(it, Textures, 0)->table;
     double* z_buffer = ecs_field(it, ZBuffer, 1)->buffer;
@@ -294,13 +354,14 @@ void RaycasterMapUpdate(ecs_iter_t* it)
     int screen_width = pixel_buffer->width;
     int screen_height = pixel_buffer->height;
 
-    write_floor_and_celing(position, direction, plane, pixel_buffer, screen_width, screen_height, texture_map);
+    write_floor_and_celing(
+        position, direction, camera_plane, pitch, pixel_buffer, screen_width, screen_height, texture_map);
 
     for (int x = 0; x < screen_width; x++) {
         Ray ray = { 0 };
 
-        dda(position, direction, plane, x, screen_width, screen_height, &ray);
-        write_vertical_wall_strip(&ray, position, x, pixel_buffer, texture_map);
+        dda(position, direction, camera_plane, x, screen_width, screen_height, &ray);
+        write_vertical_wall_strip(&ray, position, pitch, x, pixel_buffer, texture_map);
 
         z_buffer[x] = ray.perp_wall_dist;
     }
@@ -321,7 +382,7 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
 
     const Position* position = ecs_get(it->world, player, Position);
     const Direction* direction = ecs_get(it->world, player, Direction);
-    const CameraPlane* plane = ecs_get(it->world, player, CameraPlane);
+    const Camera* camera_plane = ecs_get(it->world, player, Camera);
 
     int screen_width = video_config->screen_size.x;
     int screen_height = video_config->screen_size.y;
@@ -343,11 +404,12 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
         double sprite_x = p->x - position->x;
         double sprite_y = p->y - position->y;
 
-        double inv_det
-            = 1.0 / (plane->x * direction->y - direction->x * plane->y); // required for correct matrix multiplication
+        double inv_det = 1.0
+            / (camera_plane->x * direction->y
+                - direction->x * camera_plane->y); // required for correct matrix multiplication
 
         double transform_x = inv_det * (direction->y * sprite_x - direction->x * sprite_y);
-        double transform_y = inv_det * (-plane->y * sprite_x + plane->x * sprite_y);
+        double transform_y = inv_det * (-camera_plane->y * sprite_x + camera_plane->x * sprite_y);
 
         int sprite_screen_x = (int)((screen_width / 2) * (1 + transform_x / transform_y));
 

@@ -12,7 +12,7 @@ void InputSystemsImport(ecs_world_t* world)
 }
 
 // Returns a vector of the current keyboard input direction.
-static Vector2 get_input_direction()
+static Vector2I get_input_movement_direction()
 {
     const bool* key_states = SDL_GetKeyboardState(NULL);
 
@@ -28,7 +28,20 @@ static Vector2 get_input_direction()
     if (key_states[SDL_SCANCODE_D])
         x_dir++;
 
-    return (Vector2) { x_dir, y_dir };
+    return (Vector2I) { x_dir, y_dir };
+}
+
+static int get_input_viewport_direction()
+{
+    const bool* key_states = SDL_GetKeyboardState(NULL);
+    int angle_dir = 0;
+
+    if (key_states[SDL_SCANCODE_Q])
+        angle_dir--;
+    if (key_states[SDL_SCANCODE_E])
+        angle_dir++;
+
+    return angle_dir;
 }
 
 void ControllerUpdate(ecs_iter_t* it)
@@ -36,9 +49,11 @@ void ControllerUpdate(ecs_iter_t* it)
     Controller* controller = ecs_field(it, Controller, 0);
 
     for (int i = 0; i < it->count; i++) {
-        Vector2 input_direction = get_input_direction();
+        Vector2I movement_dir = get_input_movement_direction();
+        controller[i].movement_dir.x = movement_dir.x;
+        controller[i].movement_dir.y = movement_dir.y;
 
-        controller[i].x = input_direction.x;
-        controller[i].y = input_direction.y;
+        int viewport_dir = get_input_viewport_direction();
+        controller[i].viewport_dir = get_input_viewport_direction();
     }
 }

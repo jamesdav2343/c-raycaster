@@ -15,14 +15,22 @@
 
 #define MOVEMENT_SPEED 2.5f
 #define ROTATION_SPEED 1.5f
+#define CAMERA_VERTICAL_MOVEMENT_SPEED 5.0
+#define PITCH_MAX 128
+#define PITCH_MIN -128
 
 #define PLAYER_ENTITY_NAME "_player_"
 
 extern ECS_SYSTEM_DECLARE(PlayerUpdate);
-extern ECS_COMPONENT_DECLARE(CameraPlane);
+extern ECS_COMPONENT_DECLARE(Camera);
+extern ECS_COMPONENT_DECLARE(Pitch);
 
 // The camera plane.
-typedef Vector2 CameraPlane;
+typedef Vector2 Camera;
+
+typedef struct Pitch {
+    double value;
+} Pitch;
 
 ecs_entity_t Player;
 
