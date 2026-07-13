@@ -1,4 +1,5 @@
 #include "player.h"
+#include "map.h"
 #include "math_utils.h"
 
 ECS_SYSTEM_DECLARE(PlayerUpdate);
@@ -45,17 +46,28 @@ void PlayerUpdate(ecs_iter_t* it)
         float rot_speed = ROTATION_SPEED * it->delta_time; // the constant value is in radians/second
 
         // move forward if no wall in front of you
-        if (controller->movement_dir.y < 0) {
-            player_position[i].x += camera_direction[i].x * move_speed;
-            player_position[i].y += camera_direction[i].y * move_speed;
+        if (controller[i].movement_dir.y < 0) {
+            if (!is_colliding((Vector2I) {
+                    (int)(player_position[i].x + camera_direction[i].x * move_speed), (int)player_position[i].y }))
+                player_position[i].x += camera_direction[i].x * move_speed;
+
+            if (!is_colliding((Vector2I) {
+                    (int)player_position[i].x, (int)(player_position[i].y + camera_direction[i].y * move_speed) }))
+                player_position[i].y += camera_direction[i].y * move_speed;
         }
+
         // move backwards if no wall behind you
-        if (controller->movement_dir.y > 0) {
-            player_position[i].x -= camera_direction[i].x * move_speed;
-            player_position[i].y -= camera_direction[i].y * move_speed;
+        if (controller[i].movement_dir.y > 0) {
+            if (!is_colliding((Vector2I) {
+                    (int)(player_position[i].x - camera_direction[i].x * move_speed), (int)player_position[i].y }))
+                player_position[i].x -= camera_direction[i].x * move_speed;
+
+            if (!is_colliding((Vector2I) {
+                    (int)player_position[i].x, (int)(player_position[i].y - camera_direction[i].y * move_speed) }))
+                player_position[i].y -= camera_direction[i].y * move_speed;
         }
         // rotate to the right
-        if (controller->movement_dir.x > 0) {
+        if (controller[i].movement_dir.x > 0) {
             // both camera direction and camera plane must be rotated
             double old_dir_x = camera_direction[i].x;
             camera_direction[i].x = camera_direction[i].x * cos(-rot_speed) - camera_direction[i].y * sin(-rot_speed);
@@ -66,7 +78,7 @@ void PlayerUpdate(ecs_iter_t* it)
             camera_plane[i].y = old_plane_x * sin(-rot_speed) + camera_plane[i].y * cos(-rot_speed);
         }
         // rotate to the left
-        if (controller->movement_dir.x < 0) {
+        if (controller[i].movement_dir.x < 0) {
             // both camera direction and camera plane must be rotated
             double old_dir_x = camera_direction[i].x;
             camera_direction[i].x = camera_direction[i].x * cos(rot_speed) - camera_direction[i].y * sin(rot_speed);
@@ -77,9 +89,9 @@ void PlayerUpdate(ecs_iter_t* it)
             camera_plane[i].y = old_plane_x * sin(rot_speed) + camera_plane[i].y * cos(rot_speed);
         }
 
-        if (controller->viewport_dir != 0) {
-            pitch->value = RAY_CLAMP(
-                pitch->value + controller->viewport_dir * CAMERA_VERTICAL_MOVEMENT_SPEED, PITCH_MIN, PITCH_MAX);
+        if (controller[i].viewport_dir != 0) {
+            pitch[i].value = RAY_CLAMP(
+                pitch[i].value + controller[i].viewport_dir * CAMERA_VERTICAL_MOVEMENT_SPEED, PITCH_MIN, PITCH_MAX);
         }
     }
 }
