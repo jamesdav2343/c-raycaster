@@ -78,7 +78,7 @@ static void dda(const Position* position, const Direction* direction, const Came
  *  Writes a vertical wall strip to the pixel buffer.
  */
 static void write_vertical_wall_strip(Ray* ray, const Position* position, const Pitch* pitch, int current_x,
-    PixelBuffer* dest_buffer_data, ht* texture_map)
+    PixelBuffer* dest_buffer_data, ht* texture_map, float pos_z)
 {
     ht* textures = (ht*)ht_get(texture_map, "walls");
     Uint8 wall_id = world_map[ray->wall.position.x + (ray->wall.position.y * COLS)];
@@ -99,35 +99,36 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, const 
     int draw_start = (int)fmax(-line_height / 2 + buffer_height / 2 + pitch->value, DRAW_START_MIN);
     int draw_end = (int)fmin(line_height / 2 + buffer_height / 2 + pitch->value, DRAW_END_MAX);
 
-    double wall_x = ray->wall.orientation == NORTH ? position->y + ray->perp_wall_dist * ray->direction.y
-                                                   : position->x + ray->perp_wall_dist * ray->direction.x;
+    bool is_horizontal = ray->wall.orientation == NORTH || ray->wall.orientation == SOUTH;
+
+    double wall_x = !is_horizontal ? position->y + ray->perp_wall_dist * ray->direction.y
+                                   : position->x + ray->perp_wall_dist * ray->direction.x;
 
     wall_x -= floor(wall_x);
 
     int tex_x = (int)(wall_x * (double)tex_width);
 
-    if (ray->wall.orientation == SOUTH && ray->direction.x > 0)
+    if (!is_horizontal && ray->direction.x > 0)
         tex_x = tex_width - tex_x - 1;
 
-    if (ray->wall.orientation == NORTH && ray->direction.y < 0)
+    if (is_horizontal && ray->direction.y < 0)
         tex_x = tex_width - tex_x - 1;
 
     double tex_step = 1.0 * tex_height / line_height;
 
-    double tex_coord = (draw_start - buffer_height / 2 + line_height / 2) * tex_step;
+    double tex_pos
+        = (draw_start - pitch->value - (pos_z / ray->perp_wall_dist) - buffer_height / 2 + line_height / 2) * tex_step;
 
     float base_lighting_level = 1.0f
         - get_wall_light_intensity(ray->wall.position.x, ray->wall.position.y, ray->direction, ray->wall.orientation);
 
-    int pos = ray->wall.position.x + (ray->wall.position.y * COLS);
-
     for (int y = draw_start; y < draw_end; y++) {
         // Masked with tex_height - 1 in case of overflow
-        int tex_y = (int)tex_coord & (tex_height - 1);
-        tex_coord += tex_step;
+        int tex_y = (int)tex_pos & (tex_height - 1);
+        tex_pos += tex_step;
 
         Uint32 color = tex_pixels != NULL ? tex_pixels[tex_x + (tex_y * tex_width)] : WHITE;
-        color = WHITE;
+        // color = WHITE;
 
         // Updated smooth version
         // float base_lighting_level = 1.0f
@@ -153,7 +154,8 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, const 
  * Writes the horizontal wall and ceiling strips to the pixel buffer.
  */
 static void write_floor_and_celing(const Position* position, const Direction* direction, const Camera* camera_plane,
-    const Pitch* pitch, PixelBuffer* dest_buffer_data, int screen_width, int screen_height, ht* texture_map)
+    const Pitch* pitch, PixelBuffer* dest_buffer_data, int screen_width, int screen_height, ht* texture_map,
+    float pos_z)
 {
     // Gets floor texture
     ht* floor_textures = (ht*)ht_get(texture_map, "floors");
@@ -175,8 +177,6 @@ static void write_floor_and_celing(const Position* position, const Direction* di
     float ray_dir_y_0 = direction->y - camera_plane->y;
     float ray_dir_x_1 = direction->x + camera_plane->x;
     float ray_dir_y_1 = direction->y + camera_plane->y;
-
-    float pos_z = 0.5 * screen_height;
 
     int starting_y = screen_height / 2 + pitch->value + 1;
 
@@ -354,14 +354,16 @@ void RaycasterMapUpdate(ecs_iter_t* it)
     int screen_width = pixel_buffer->width;
     int screen_height = pixel_buffer->height;
 
+    float pos_z = 0.5 * screen_height;
+
     write_floor_and_celing(
-        position, direction, camera_plane, pitch, pixel_buffer, screen_width, screen_height, texture_map);
+        position, direction, camera_plane, pitch, pixel_buffer, screen_width, screen_height, texture_map, pos_z);
 
     for (int x = 0; x < screen_width; x++) {
         Ray ray = { 0 };
 
         dda(position, direction, camera_plane, x, screen_width, screen_height, &ray);
-        write_vertical_wall_strip(&ray, position, pitch, x, pixel_buffer, texture_map);
+        write_vertical_wall_strip(&ray, position, pitch, x, pixel_buffer, texture_map, pos_z);
 
         z_buffer[x] = ray.perp_wall_dist;
     }
