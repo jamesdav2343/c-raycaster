@@ -386,9 +386,12 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
     const Position* position = ecs_get(it->world, player, Position);
     const Direction* direction = ecs_get(it->world, player, Direction);
     const Camera* camera_plane = ecs_get(it->world, player, Camera);
+    const Pitch* pitch = ecs_get(it->world, player, Pitch);
 
     int screen_width = video_config->screen_size.x;
     int screen_height = video_config->screen_size.y;
+
+    float pos_z = 0.5 * screen_height;
 
     // Sorts the sprites from far to close
     for (int i = 0; i < it->count; i++) {
@@ -416,17 +419,24 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
 
         int sprite_screen_x = (int)((screen_width / 2) * (1 + transform_x / transform_y));
 
-        int sprite_height = abs((int)(screen_height / (transform_y)));
+        // parameters for scaling and moving the sprites
+#define uDiv 1
+#define vDiv 1
+#define vMove 0.0
+#define SPRITE_HEIGHT_MODIFIER 4
+        int vMoveScreen = (int)(vMove / transform_y) + pitch->value + (pos_z / SPRITE_HEIGHT_MODIFIER) / transform_y;
 
-        int draw_start_y = -sprite_height / 2 + screen_height / 2;
+        int sprite_height = abs((int)(screen_height / (transform_y))) / vDiv;
+
+        int draw_start_y = -sprite_height / 2 + screen_height / 2 + vMoveScreen;
         if (draw_start_y < 0)
             draw_start_y = 0;
 
-        int draw_end_y = sprite_height / 2 + screen_height / 2;
+        int draw_end_y = sprite_height / 2 + screen_height / 2 + vMoveScreen;
         if (draw_end_y >= screen_height)
             draw_end_y = screen_height - 1;
 
-        int sprite_width = abs((int)(screen_height / (transform_y)));
+        int sprite_width = abs((int)(screen_height / (transform_y))) / uDiv;
         int draw_start_x = -sprite_width / 2 + sprite_screen_x;
         if (draw_start_x < 0)
             draw_start_x = 0;
@@ -452,18 +462,20 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
             return;
         }
 
+        int unsure_val = 256;
+
         Uint32* pixels = (Uint32*)sprite_surface->pixels;
 
         for (int stripe = draw_start_x; stripe < draw_end_x; stripe++) {
-            int tex_x = (int)(256 * (stripe - (-sprite_width / 2 + sprite_screen_x)) * sprite_surface->w / sprite_width)
-                / 256;
+            int tex_x = (int)(unsure_val * (stripe - (-sprite_width / 2 + sprite_screen_x)) * sprite_surface->w / sprite_width)
+                / unsure_val;
 
             if (transform_y > 0 && stripe > 0 && stripe < screen_width && transform_y < z_buffer[stripe]) {
 
                 for (int y = draw_start_y; y < draw_end_y; y++) {
-                    int d = (y) * 256 - screen_height * 128 + sprite_height * 128;
+                    int d = (y - vMoveScreen) * unsure_val - screen_height * (unsure_val / 2) + sprite_height * (unsure_val / 2);
 
-                    int tex_y = ((d * sprite_surface->h) / sprite_height) / 256;
+                    int tex_y = ((d * sprite_surface->h) / sprite_height) / unsure_val;
 
                     Uint32 color = pixels[sprite_surface->w * tex_y + tex_x];
 

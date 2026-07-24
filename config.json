@@ -38,6 +38,14 @@
         "y": 18.0
       },
       "sprite_id": 1
+    },
+    {
+      "tag": "barrel",
+      "position": {
+        "x": 2.0,
+        "y": 5.0
+      },
+      "sprite_id": 2
     }
   ]
 }
