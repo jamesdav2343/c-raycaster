@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(raycasting-engine C)
+project(raycaster C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SRC_FILES
