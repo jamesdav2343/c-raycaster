@@ -1,51 +1,53 @@
 {
   "video": {
     "resolution": {
-      "width": 640,
-      "height": 480
+      "width": 1920,
+      "height": 1080
     },
     "fps_cap": 60,
     "enable_lighting": true
   },
   "textures": {
     "walls": {
-      "1": "assets/Wall_1.png"
+      "1": "assets/Stone_Brick.png",
+      "2": "assets/Stone_Brick_2.png",
+      "3": "assets/Gold_Brick.png",
+      "4": "assets/Stone_Brick_Door.png"
     },
     "ceilings": {
-      "1": "assets/Ceiling_1.png"
+      "1": "assets/Stoney_Wall.png"
     },
     "floors": {
-      "1": "assets/Floor_1.png"
+      "1": "assets/Floor_Boards.png"
     },
     "sprites": {
-      "1": "test/barrel.png",
-      "2": "test/pillar.png"
+      "1": "assets/Incense_Burner.png"
     }
   },
   "entities": [
     {
-      "tag": "barrel",
-      "position": {
-        "x": 12.0,
-        "y": 14.0
-      },
-      "sprite_id": 2
-    },
-    {
       "tag": "torch",
       "position": {
-        "x": 14.0,
-        "y": 18.0
+        "x": 3.0,
+        "y": 2.0
       },
       "sprite_id": 1
     },
     {
-      "tag": "barrel",
+      "tag": "torch",
       "position": {
         "x": 2.0,
-        "y": 5.0
+        "y": 14.0
       },
-      "sprite_id": 2
+      "sprite_id": 1
+    },
+    {
+      "tag": "torch",
+      "position": {
+        "x": 10.0,
+        "y": 16.0
+      },
+      "sprite_id": 1
     }
   ]
 }

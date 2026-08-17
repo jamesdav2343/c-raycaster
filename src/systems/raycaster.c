@@ -118,8 +118,8 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, const 
 
     double tex_pos = (draw_start - pitch->value - buffer_height / 2 + line_height / 2) * tex_step;
 
-    float base_lighting_level = 1.0f
-        - get_wall_light_intensity(ray->wall.position.x, ray->wall.position.y, ray->direction, ray->wall.orientation);
+    // float base_lighting_level = 1.0f
+    //     - get_wall_light_intensity(ray->wall.position.x, ray->wall.position.y, ray->direction, ray->wall.orientation);
 
     int pos = ray->wall.position.x + (ray->wall.position.y * COLS);
 
@@ -129,23 +129,14 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, const 
         tex_pos += tex_step;
 
         Uint32 color = tex_pixels != NULL ? tex_pixels[tex_x + (tex_y * tex_width)] : WHITE;
-        // color = WHITE;
 
         // Updated smooth version
-        // float base_lighting_level = 1.0f
-        //     - get_lighting_wall(
-        //         (float)tex_x / tex_width, (float)tex_y * 0.0234375 /*(3.0f / tex_height)*/, pos,
-        //         ray->wall.orientation);
+        float base_lighting_level = 1.0f
+            - get_lighting_wall(
+                (float)tex_x / tex_width, (float)tex_y * 0.0234375 /*(3.0f / tex_height)*/, pos,
+                ray->wall.orientation);
 
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
-
-        // DEBUGGING
-        const int SCREEN_WIDTH = 1920;
-        const int SCREEN_HEIGHT = 1080;
-
-        if (current_x == SCREEN_WIDTH / 2 && y >= SCREEN_HEIGHT / 2 && y <= SCREEN_HEIGHT - 200) {
-            color = RED;
-        }
 
         dest_buffer_data->pixels[current_x + (y * buffer_width)] = color;
     }
@@ -158,7 +149,6 @@ static void write_floor_and_celing(const Position* position, const Direction* di
     const Pitch* pitch, PixelBuffer* dest_buffer_data, int screen_width, int screen_height, ht* texture_map,
     float pos_z)
 {
-    // Gets floor texture
     ht* floor_textures = (ht*)ht_get(texture_map, "floors");
     SDL_Surface* floor = (SDL_Surface*)ht_get(floor_textures, "1");
     Uint32* floor_pixels = floor != NULL ? floor->pixels : NULL;
@@ -166,7 +156,6 @@ static void write_floor_and_celing(const Position* position, const Direction* di
     int floor_width = floor != NULL ? floor->w : TEXTURE_WIDTH_FALLBACK;
     int floor_height = floor != NULL ? floor->h : TEXTURE_HEIGHT_FALLBACK;
 
-    // Gets ceiling texture
     ht* ceiling_textures = (ht*)ht_get(texture_map, "ceilings");
     SDL_Surface* ceiling = (SDL_Surface*)ht_get(ceiling_textures, "1");
     Uint32* ceiling_pixels = ceiling != NULL ? ceiling->pixels : NULL;
@@ -181,9 +170,10 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
     int starting_y = screen_height / 2 + pitch->value + 1;
 
-    // TODO: Should be able to get this all in one loop, see lodec implementation
 
     // FLOOR CASTING
+
+    // TODO: Should be able to get this all in one loop, see lodev implementation
     for (int y = starting_y, p = 1; y < screen_height; ++y, ++p) {
         float row_distance = pos_z / p;
 
@@ -201,9 +191,6 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             int ftx = (int)(cell_pos_x * ceiling_width) % ceiling_width;
             int fty = (int)(cell_pos_y * ceiling_width) % ceiling_width;
 
-            // Older version
-            // float base_lighting_level = 1.0f - all_vertices[cell_x + (cell_y * COLS)];
-
             int texture_x = (int)(floor_width * (cell_pos_x - cell_x)) & (floor_width - 1);
             int texture_y = (int)(floor_height * (cell_pos_y - cell_y)) & (floor_height - 1);
 
@@ -211,24 +198,15 @@ static void write_floor_and_celing(const Position* position, const Direction* di
             float light_val
                 = 1.0f - get_lighting_floor((float)ftx / ceiling_width, (float)fty / ceiling_height, location);
 
-            Uint32 colour;
-
             // Floor colour
-            colour = floor_pixels[texture_x + (floor_width * texture_y)];
-            colour = WHITE;
+            Uint32 colour = floor_pixels != NULL ? floor_pixels[texture_x + (floor_width * texture_y)] : WHITE;
 
-            // I can see from this that the values are still static, and not varying across the pixels in a cell
-            // if (x == screen_width / 2 && y >= screen_height / 2 && y <= screen_height - 200) {
-            //     colour = RED;
-            // }
-
-            // colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             colour = interpolate(colour, BLACK, light_val) | ALPHA_OPAQUE_HEX;
 
-            // If its the light source, draw in red
-            if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
-                colour = RED;
-            }
+            // // If its the light source, draw in red
+            // if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
+            //     colour = RED;
+            // }
 
             dest_buffer_data->pixels[x + (y * screen_width)] = colour;
 
@@ -251,44 +229,29 @@ static void write_floor_and_celing(const Position* position, const Direction* di
         float cell_pos_y = position->y + row_distance * ray_dir_y_0;
 
         for (int x = 0; x < screen_width; ++x) {
-            // Pretty sure this is the current floor x and y equivalent
             int cell_x = (int)cell_pos_x;
             int cell_y = (int)cell_pos_y;
 
             int ftx = (int)(cell_pos_x * ceiling_width) % ceiling_width;
             int fty = (int)(cell_pos_y * ceiling_width) % ceiling_width;
 
-            // Older version
-            // float base_lighting_level = 1.0f - all_vertices[cell_x + (cell_y * COLS)];
-
-            int texture_x = (int)(floor_width * (cell_pos_x - cell_x)) & (floor_width - 1);
-            int texture_y = (int)(floor_height * (cell_pos_y - cell_y)) & (floor_height - 1);
+            int texture_x = (int)(ceiling_width * (cell_pos_x - cell_x)) & (ceiling_width - 1);
+            int texture_y = (int)(ceiling_height * (cell_pos_y - cell_y)) & (ceiling_height - 1);
 
             int location = cell_x + (cell_y * COLS);
             float light_val
                 = 1.0f - get_lighting_floor((float)ftx / ceiling_width, (float)fty / ceiling_height, location);
 
-            Uint32 colour;
+            // Ceiling colour
+            Uint32 colour = ceiling_pixels != NULL ? ceiling_pixels[texture_x + (ceiling_width * texture_y)] : WHITE;
 
-            // Floor colour
-            colour = floor_pixels[texture_x + (floor_width * texture_y)];
-            colour = WHITE;
-
-            // I can see from this that the values are still static, and not varying across the pixels in a cell
-            // if (x == screen_width / 2 && y >= screen_height / 2 && y <= screen_height - 200) {
-            //     colour = RED;
-            // }
-
-            // colour = interpolate(colour, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
             colour = interpolate(colour, BLACK, light_val) | ALPHA_OPAQUE_HEX;
 
-            // If its the light source, draw in red
-            if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
-                colour = RED;
-            }
-
-            // dest_buffer_data->pixels[x + (y * screen_width)] = colour;
-
+            // // If its the light source, draw in red
+            // if (light_map[cell_x + (cell_y * COLS)] >= 1.0f) {
+            //     colour = RED;
+            // }
+            
             // Recalculate texture x and y
             texture_x = (int)(ceiling_width * (cell_pos_x - cell_x)) & (ceiling_width - 1);
             texture_y = (int)(ceiling_height * (cell_pos_y - cell_y)) & (ceiling_height - 1);
@@ -297,7 +260,6 @@ static void write_floor_and_celing(const Position* position, const Direction* di
 
             // Ceiling colour
             colour = ceiling_pixels[texture_x + (ceiling_width * texture_y)];
-            colour = WHITE;
 
             colour = interpolate(colour, BLACK, light_val) | ALPHA_OPAQUE_HEX;
             dest_buffer_data->pixels[x + y * screen_width] = colour;
@@ -372,8 +334,8 @@ void RaycasterMapUpdate(ecs_iter_t* it)
 
 void RaycasterSpriteUpdate(ecs_iter_t* it)
 {
-    Sprite* s = ecs_field(it, Sprite, 0);
-    Position* p = ecs_field(it, Position, 1);
+    Sprite* sprite = ecs_field(it, Sprite, 0);
+    Position* position = ecs_field(it, Position, 1);
     ht* texture_map = ecs_field(it, Textures, 2)->table;
     const double* z_buffer = ecs_field(it, ZBuffer, 3)->buffer;
     PixelBuffer* buffer_data = ecs_field(it, PixelBuffer, 4);
@@ -383,8 +345,8 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
     // Use src.id in query instead
     const ecs_entity_t player = ecs_lookup(it->world, PLAYER_ENTITY_NAME);
 
-    const Position* position = ecs_get(it->world, player, Position);
-    const Direction* direction = ecs_get(it->world, player, Direction);
+    const Position* player_position = ecs_get(it->world, player, Position);
+    const Direction* player_direction = ecs_get(it->world, player, Direction);
     const Camera* camera_plane = ecs_get(it->world, player, Camera);
     const Pitch* pitch = ecs_get(it->world, player, Pitch);
 
@@ -397,24 +359,24 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
     for (int i = 0; i < it->count; i++) {
         sprite_order[i] = i;
         sprite_distance[i]
-            = ((position->x - p[i].x) * (position->x - p[i].x) + (position->y - p[i].y) * (position->y - p[i].y));
+            = ((player_position->x - position[i].x) * (player_position->x - position[i].x) + (player_position->y - position[i].y) * (player_position->y - position[i].y));
     }
 
     sort_sprites(sprite_order, sprite_distance, it->count);
 
     for (int i = 0; i < it->count; i++) {
         ecs_entity_t entity = it->entities[sprite_order[i]];
-        p = ecs_get_mut(it->world, entity, Position);
-        s = ecs_get_mut(it->world, entity, Sprite);
+        position = ecs_get_mut(it->world, entity, Position);
+        sprite = ecs_get_mut(it->world, entity, Sprite);
 
-        double sprite_x = p->x - position->x;
-        double sprite_y = p->y - position->y;
+        double sprite_x = position->x - player_position->x;
+        double sprite_y = position->y - player_position->y;
 
         double inv_det = 1.0
-            / (camera_plane->x * direction->y
-                - direction->x * camera_plane->y); // required for correct matrix multiplication
+            / (camera_plane->x * player_direction->y
+                - player_direction->x * camera_plane->y); // required for correct matrix multiplication
 
-        double transform_x = inv_det * (direction->y * sprite_x - direction->x * sprite_y);
+        double transform_x = inv_det * (player_direction->y * sprite_x - player_direction->x * sprite_y);
         double transform_y = inv_det * (-camera_plane->y * sprite_x + camera_plane->x * sprite_y);
 
         int sprite_screen_x = (int)((screen_width / 2) * (1 + transform_x / transform_y));
@@ -423,7 +385,8 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
 #define uDiv 1
 #define vDiv 1
 #define vMove 0.0
-#define SPRITE_HEIGHT_MODIFIER 4
+// Higher value = starts drawing sprite from higher up, Lower value = starts drawing sprite from lower down
+#define SPRITE_HEIGHT_MODIFIER 7
         int vMoveScreen = (int)(vMove / transform_y) + pitch->value + (pos_z / SPRITE_HEIGHT_MODIFIER) / transform_y;
 
         int sprite_height = abs((int)(screen_height / (transform_y))) / vDiv;
@@ -453,7 +416,7 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
         }
 
         char buffer[BUFFER_MAX];
-        SDL_itoa(s->sprite_id, buffer, 10);
+        SDL_itoa(sprite->sprite_id, buffer, 10);
 
         SDL_Surface* sprite_surface = (SDL_Surface*)ht_get(sprites, buffer);
 
@@ -462,6 +425,7 @@ void RaycasterSpriteUpdate(ecs_iter_t* it)
             return;
         }
 
+        // Moved this value from lodev's code into a variable. Not really sure what it does, hence the name
         int unsure_val = 256;
 
         Uint32* pixels = (Uint32*)sprite_surface->pixels;

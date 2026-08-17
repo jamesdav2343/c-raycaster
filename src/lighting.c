@@ -113,10 +113,10 @@ void bake_light_map()
 {
     size_t* light_sources = calloc(NUM_LIGHTS, sizeof(size_t));
 
+    // This is where the light sources are set, this should be changed to be more flexible
     light_sources[0] = 3 + (2 * COLS); // x: 3, y: 2
-    // light_sources[1] = 6 + (2 * COLS); // x: 6, y: 2
-    light_sources[1] = 46;
-    light_sources[2] = 406;
+    light_sources[1] = 2 + (14 * COLS); // x: 2, y: 14
+    light_sources[2] = 10 + (16 * COLS); // x: 10, y: 16
 
     // Nodes in graph should be the indices of the light sources
     GQueue* light_queue = g_queue_new();
