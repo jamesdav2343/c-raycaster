@@ -118,9 +118,6 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, const 
 
     double tex_pos = (draw_start - pitch->value - buffer_height / 2 + line_height / 2) * tex_step;
 
-    // float base_lighting_level = 1.0f
-    //     - get_wall_light_intensity(ray->wall.position.x, ray->wall.position.y, ray->direction, ray->wall.orientation);
-
     int pos = ray->wall.position.x + (ray->wall.position.y * COLS);
 
     for (int y = draw_start; y < draw_end; y++) {
