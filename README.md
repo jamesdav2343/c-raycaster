@@ -56,10 +56,12 @@ Settings are loaded from `config.json` in the working directory at startup. The 
 | `resolution.height` | integer | Screen height in pixels |
 | `fps_cap` | integer | Target frames per second |
 | `enable_lighting` | boolean | Enable or disable dynamic lighting |
+> **Note:** `enable_lighting` currently does nothing.
 
 ### `textures`
 
 Maps integer IDs to PNG file paths. These IDs correspond to values in the `world_map[]` array (for walls, floors, and ceilings) or to `sprite_id` fields on entities.
+> **Note:** Currently all floors and ceilings are hardcoded to the ID value "1". The world map layout is hardcoded in src/map.c, so the `world_map[]` array will have to be modified to change the map layout. The light sources are also hardcoded in src/lighting.c. Ideally in the future this would all be changed to pull from a file instead of having hardcoded values.
 
 ```json
 "textures": {
@@ -117,16 +119,16 @@ An array of sprite entities placed in the world:
 }
 ```
 
-> **Note:** The config file is required — there are no fallback defaults. If the file is missing or malformed the application will crash.
+> **Note:** The config file is required, there are no fallback defaults. If the file is missing or malformed the application will crash.
 
 ## Controls
 
 | Key | Action |
 |-----|--------|
 | W | Move forward |
-| A | Strafe left |
+| A | Rotate left |
 | S | Move backward |
-| D | Strafe right |
+| D | Rotate right |
 | Q | Look up |
 | E | Look down |
 
