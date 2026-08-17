@@ -218,52 +218,52 @@ float get_lighting_wall(float x, float y, int pos, enum Orientation orientation)
 
         if (y > 2.0f) {
             return bilerp(
-                1.0f - x, 3.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
+                x, 3.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
         } else if (y > 1.0f) {
             return bilerp(
-                1.0f - x, 2.0f - y, quadrant.top_left, quadrant.top_right, quadrant.top_left, quadrant.top_right);
+                x, 2.0f - y, quadrant.top_left, quadrant.top_right, quadrant.top_left, quadrant.top_right);
         } else {
             return bilerp(
-                1.0f - x, 1.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.top_left, quadrant.top_right);
+                x, 1.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.top_left, quadrant.top_right);
         }
     case SOUTH:
         quadrant = get_vertices(pos + COLS, vertices);
 
         if (y > 2.0f) {
             return bilerp(
-                x, 3.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.top_left, quadrant.top_right);
+                1.0f - x, 3.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.top_left, quadrant.top_right);
         } else if (y > 1.0f) {
             return bilerp(
-                x, 2.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.bottom_left, quadrant.bottom_right);
+                1.0f - x, 2.0f - y, quadrant.bottom_left, quadrant.bottom_right, quadrant.bottom_left, quadrant.bottom_right);
         } else {
             return bilerp(
-                x, 1.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
+                1.0f - x, 1.0f - y, quadrant.top_left, quadrant.top_right, quadrant.bottom_left, quadrant.bottom_right);
         }
     case EAST:
         quadrant = get_vertices(pos - 1, vertices);
 
         if (y > 2.0f) {
             return bilerp(
-                x, 3.0f - y, quadrant.top_left, quadrant.bottom_left, quadrant.top_right, quadrant.bottom_right);
+                1.0f - x, 3.0f - y, quadrant.top_left, quadrant.bottom_left, quadrant.top_right, quadrant.bottom_right);
         } else if (y > 1.0f) {
             return bilerp(
-                x, 2.0f - y, quadrant.top_left, quadrant.bottom_left, quadrant.top_left, quadrant.bottom_left);
+                1.0f - x, 2.0f - y, quadrant.top_left, quadrant.bottom_left, quadrant.top_left, quadrant.bottom_left);
         } else {
             return bilerp(
-                x, 1.0f - y, quadrant.top_right, quadrant.bottom_right, quadrant.top_left, quadrant.bottom_left);
+                1.0f - x, 1.0f - y, quadrant.top_right, quadrant.bottom_right, quadrant.top_left, quadrant.bottom_left);
         }
     case WEST:
         quadrant = get_vertices(pos + 1, vertices);
 
         if (y > 2.0f) {
             return bilerp(
-                x, 3.0f - y, quadrant.bottom_right, quadrant.top_right, quadrant.bottom_left, quadrant.top_left);
+                1.0f - x, 3.0f - y, quadrant.bottom_right, quadrant.top_right, quadrant.bottom_left, quadrant.top_left);
         } else if (y > 1.0f) {
             return bilerp(
-                x, 2.0f - y, quadrant.bottom_right, quadrant.top_right, quadrant.bottom_right, quadrant.top_right);
+                1.0f - x, 2.0f - y, quadrant.bottom_right, quadrant.top_right, quadrant.bottom_right, quadrant.top_right);
         } else {
             return bilerp(
-                x, 1.0f - y, quadrant.bottom_left, quadrant.top_left, quadrant.bottom_right, quadrant.top_right);
+                1.0f - x, 1.0f - y, quadrant.bottom_left, quadrant.top_left, quadrant.bottom_right, quadrant.top_right);
         }
     }
 

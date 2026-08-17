@@ -130,11 +130,7 @@ static void write_vertical_wall_strip(Ray* ray, const Position* position, const 
 
         Uint32 color = tex_pixels != NULL ? tex_pixels[tex_x + (tex_y * tex_width)] : WHITE;
 
-        // Updated smooth version
-        float base_lighting_level = 1.0f
-            - get_lighting_wall(
-                (float)tex_x / tex_width, (float)tex_y * 0.0234375 /*(3.0f / tex_height)*/, pos,
-                ray->wall.orientation);
+        float base_lighting_level = 1.0f - get_lighting_wall((float)tex_x / tex_width, (float)tex_y * (3.0f / tex_height), pos, ray->wall.orientation);
 
         color = interpolate(color, BLACK, base_lighting_level) | ALPHA_OPAQUE_HEX;
 
