@@ -24,6 +24,30 @@ All dependencies are managed via [Conan](https://conan.io).
 
 ## How to build
 
+### Windows
+
+Download dependencies with Conan:
+```sh
+conan install . --build=missing
+```
+
+Configure with cmake:
+```sh
+cmake --preset conan-default
+```
+
+Build:
+```sh
+cmake --build build --config Release
+```
+
+Run the binary:
+```sh
+build\Release\raycaster.exe
+```
+
+### MacOS
+
 Download dependencies with Conan:
 ```sh
 conan install . --build=missing

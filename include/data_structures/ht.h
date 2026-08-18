@@ -2,7 +2,13 @@
 #define HT_H
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
+
+#ifndef u_int64_t
+typedef uint64_t u_int64_t;
+#endif
 
 /**
  * Hash table implementation in C, created using Ben Hoyt's

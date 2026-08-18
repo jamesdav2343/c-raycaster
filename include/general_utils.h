@@ -5,6 +5,7 @@
 #include "types.h"
 #include <SDL3/SDL.h>
 #include <cjson/cJSON.h>
+#include <stdio.h>
 
 #define ALPHA_OPAQUE_HEX 0xFF000000
 #define BUFFER_MAX 1024
